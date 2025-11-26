@@ -218,13 +218,12 @@
     } catch (storageError) {
       console.warn('Could not save to localStorage (cross-origin):', storageError);
     }
-    const message = '✅ Successfully extracted ' + validCourses.length + ' courses!\n\nOpening web app...';
+    const message = '✅ Successfully extracted ' + validCourses.length + ' courses!\n\nRedirecting to table maker...';
     alert(message);
-    const defaultUrl = 'https://SSaleh22-stack.github.io/Student-Table-Maker-Qu-Student-/';
-    const webAppUrl = prompt('Enter your Qu Student web app URL:', defaultUrl) || defaultUrl;
-    const urlWithData = webAppUrl.trim() + '#courses=' + encodedCourses;
+    const webAppUrl = 'https://SSaleh22-stack.github.io/Student-Table-Maker-Qu-Student-/';
+    const urlWithData = webAppUrl + '#courses=' + encodedCourses;
     console.log('Opening web app with courses data in URL');
-    window.open(urlWithData, '_blank');
+    window.location.href = urlWithData;
   } catch (error) {
     console.error('Bookmarklet error:', error);
     console.error('Error stack:', error.stack);
