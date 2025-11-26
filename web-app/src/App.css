@@ -133,7 +133,7 @@
 }
 
 /* Responsive for iPad and mobile */
-@media (max-width: 1200px) {
+@media (max-width: 768px) {
   .main-layout {
     flex-direction: column;
   }
@@ -143,6 +143,28 @@
     position: static;
     max-height: none;
   }
+  
+  .timetable-wrapper {
+    width: 100%;
+  }
+}
+
+/* iPad specific adjustments (768px - 1024px) */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .main-layout {
+    flex-direction: row;
+    gap: 1rem;
+  }
+  
+  .course-list-wrapper {
+    width: 350px;
+    flex-shrink: 0;
+  }
+  
+  .timetable-wrapper {
+    flex: 1;
+    min-width: 0;
+  }
 }
 
 [dir="rtl"] .app-content {
@@ -151,5 +173,23 @@
 
 [dir="rtl"] .main-layout {
   flex-direction: row-reverse;
+}
+
+/* iPad specific: Arabic layout */
+@media (min-width: 769px) and (max-width: 1024px) {
+  [dir="rtl"] .main-layout {
+    flex-direction: row-reverse;
+    gap: 1rem;
+  }
+  
+  [dir="rtl"] .course-list-wrapper {
+    width: 350px;
+    flex-shrink: 0;
+  }
+  
+  [dir="rtl"] .timetable-wrapper {
+    flex: 1;
+    min-width: 0;
+  }
 }
 
