@@ -8,11 +8,15 @@ import TimetableGrid from './components/TimetableGrid';
 import OfferedCoursesModal from './components/OfferedCoursesModal';
 import AddCourseModal from './components/AddCourseModal';
 import ReviewHelperModal from './components/ReviewHelperModal';
+import GpaCalculator from './components/GpaCalculator';
 import { Course } from './types';
 import './App.css';
 
+type ViewMode = 'timetable' | 'gpa';
+
 const AppContent: React.FC = () => {
   const { language, t } = useLanguage();
+  const [currentView, setCurrentView] = useState<ViewMode>('timetable');
   const [courses, setCourses] = useState<Course[]>([]);
   const [showOfferedCoursesModal, setShowOfferedCoursesModal] = useState(false);
   const [showAddCourseModal, setShowAddCourseModal] = useState(false);
@@ -203,138 +207,151 @@ const AppContent: React.FC = () => {
 
   return (
     <div className="app" dir={language === 'ar' ? 'rtl' : 'ltr'}>
-      <NavBar onShowReviewHelper={() => setShowReviewHelper(true)} />
-      <HeroSection onExtractCourses={handleExtractCourses} />
+      <NavBar 
+        currentView={currentView}
+        onViewChange={setCurrentView}
+        onShowReviewHelper={() => setShowReviewHelper(true)} 
+      />
       
-      {isLoading && (
-        <div className="success-message" style={{ background: '#bee3f8', color: '#2c5282' }}>
-          <span className="success-icon">⏳</span>
-          <span className="success-message-text">
-            {language === 'en' ? 'Loading courses...' : 'جاري تحميل المقررات...'}
-          </span>
-        </div>
-      )}
-      {successMessage && (
-        <div className="success-message">
-          <span className="success-icon">✅</span>
-          <span className="success-message-text">{successMessage}</span>
-        </div>
-      )}
+      {currentView === 'timetable' ? (
+        <>
+          <HeroSection onExtractCourses={handleExtractCourses} />
+          
+          {isLoading && (
+            <div className="success-message" style={{ background: '#bee3f8', color: '#2c5282' }}>
+              <span className="success-icon">⏳</span>
+              <span className="success-message-text">
+                {language === 'en' ? 'Loading courses...' : 'جاري تحميل المقررات...'}
+              </span>
+            </div>
+          )}
+          {successMessage && (
+            <div className="success-message">
+              <span className="success-icon">✅</span>
+              <span className="success-message-text">{successMessage}</span>
+            </div>
+          )}
 
-      <div className="offered-courses-button-container">
-        <button 
-          className="offered-courses-btn"
-          onClick={() => setShowOfferedCoursesModal(true)}
-        >
-          📋 {t.offeredCourses}
-        </button>
-        <button 
-          className="add-course-manually-btn"
-          onClick={() => setShowAddCourseModal(true)}
-        >
-          ➕ {language === 'en' ? 'Add Course Manually' : 'إضافة مقرر يدوياً'}
-        </button>
-        <button 
-          className="refresh-courses-btn"
-          onClick={() => {
-            console.log('Manual refresh clicked');
-            const saved = localStorage.getItem('qu-student-courses');
-            console.log('localStorage data:', saved);
-            if (saved) {
-              try {
-                const parsed = JSON.parse(saved);
-                console.log('Parsed courses:', parsed);
-                if (Array.isArray(parsed) && parsed.length > 0) {
-                  setCourses(parsed);
-                  const message = language === 'en'
-                    ? `✅ Refreshed! Loaded ${parsed.length} courses.`
-                    : `✅ تم التحديث! تم تحميل ${parsed.length} مقرر.`;
-                  setSuccessMessage(message);
-                  setTimeout(() => setSuccessMessage(null), 5000);
+          <div className="offered-courses-button-container">
+            <button 
+              className="offered-courses-btn"
+              onClick={() => setShowOfferedCoursesModal(true)}
+            >
+              📋 {t.offeredCourses}
+            </button>
+            <button 
+              className="add-course-manually-btn"
+              onClick={() => setShowAddCourseModal(true)}
+            >
+              ➕ {language === 'en' ? 'Add Course Manually' : 'إضافة مقرر يدوياً'}
+            </button>
+            <button 
+              className="refresh-courses-btn"
+              onClick={() => {
+                console.log('Manual refresh clicked');
+                const saved = localStorage.getItem('qu-student-courses');
+                console.log('localStorage data:', saved);
+                if (saved) {
+                  try {
+                    const parsed = JSON.parse(saved);
+                    console.log('Parsed courses:', parsed);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                      setCourses(parsed);
+                      const message = language === 'en'
+                        ? `✅ Refreshed! Loaded ${parsed.length} courses.`
+                        : `✅ تم التحديث! تم تحميل ${parsed.length} مقرر.`;
+                      setSuccessMessage(message);
+                      setTimeout(() => setSuccessMessage(null), 5000);
+                    } else {
+                      const message = language === 'en'
+                        ? '⚠️ No courses found in storage. Use bookmarklet to extract courses.'
+                        : '⚠️ لم يتم العثور على مقررات في التخزين. استخدم الإشارة المرجعية لاستخراج المقررات.';
+                      setSuccessMessage(message);
+                      setTimeout(() => setSuccessMessage(null), 5000);
+                    }
+                  } catch (error) {
+                    console.error('Error parsing:', error);
+                    const message = language === 'en'
+                      ? '❌ Error parsing courses data. Check console.'
+                      : '❌ خطأ في تحليل بيانات المقررات. تحقق من وحدة التحكم.';
+                    setSuccessMessage(message);
+                    setTimeout(() => setSuccessMessage(null), 5000);
+                  }
                 } else {
                   const message = language === 'en'
-                    ? '⚠️ No courses found in storage. Use bookmarklet to extract courses.'
-                    : '⚠️ لم يتم العثور على مقررات في التخزين. استخدم الإشارة المرجعية لاستخراج المقررات.';
+                    ? '⚠️ No courses in storage. Extract courses using the bookmarklet first.'
+                    : '⚠️ لا توجد مقررات في التخزين. استخرج المقررات باستخدام الإشارة المرجعية أولاً.';
                   setSuccessMessage(message);
                   setTimeout(() => setSuccessMessage(null), 5000);
                 }
-              } catch (error) {
-                console.error('Error parsing:', error);
-                const message = language === 'en'
-                  ? '❌ Error parsing courses data. Check console.'
-                  : '❌ خطأ في تحليل بيانات المقررات. تحقق من وحدة التحكم.';
-                setSuccessMessage(message);
-                setTimeout(() => setSuccessMessage(null), 5000);
-              }
-            } else {
-              const message = language === 'en'
-                ? '⚠️ No courses in storage. Extract courses using the bookmarklet first.'
-                : '⚠️ لا توجد مقررات في التخزين. استخرج المقررات باستخدام الإشارة المرجعية أولاً.';
-              setSuccessMessage(message);
-              setTimeout(() => setSuccessMessage(null), 5000);
-            }
-          }}
-        >
-          🔄 {language === 'en' ? 'Refresh Courses' : 'تحديث المقررات'}
-        </button>
-        <button 
-          className="clear-courses-btn"
-          onClick={() => {
-            if (window.confirm(
-              language === 'en' 
-                ? 'Are you sure you want to clear all courses? This action cannot be undone.'
-                : 'هل أنت متأكد أنك تريد حذف جميع المقررات؟ لا يمكن التراجع عن هذا الإجراء.'
-            )) {
-              setCourses([]);
-              localStorage.removeItem('qu-student-courses');
-              localStorage.removeItem('qu-student-courses-timestamp');
-              const message = language === 'en'
-                ? '✅ All courses have been cleared.'
-                : '✅ تم حذف جميع المقررات.';
-              setSuccessMessage(message);
-              setTimeout(() => setSuccessMessage(null), 5000);
-            }
-          }}
-        >
-          🗑️ {language === 'en' ? 'Clear All Courses' : 'حذف جميع المقررات'}
-        </button>
-      </div>
+              }}
+            >
+              🔄 {language === 'en' ? 'Refresh Courses' : 'تحديث المقررات'}
+            </button>
+            <button 
+              className="clear-courses-btn"
+              onClick={() => {
+                if (window.confirm(
+                  language === 'en' 
+                    ? 'Are you sure you want to clear all courses? This action cannot be undone.'
+                    : 'هل أنت متأكد أنك تريد حذف جميع المقررات؟ لا يمكن التراجع عن هذا الإجراء.'
+                )) {
+                  setCourses([]);
+                  localStorage.removeItem('qu-student-courses');
+                  localStorage.removeItem('qu-student-courses-timestamp');
+                  const message = language === 'en'
+                    ? '✅ All courses have been cleared.'
+                    : '✅ تم حذف جميع المقررات.';
+                  setSuccessMessage(message);
+                  setTimeout(() => setSuccessMessage(null), 5000);
+                }
+              }}
+            >
+              🗑️ {language === 'en' ? 'Clear All Courses' : 'حذف جميع المقررات'}
+            </button>
+          </div>
 
-      <OfferedCoursesModal
-        courses={courses}
-        isOpen={showOfferedCoursesModal}
-        onClose={() => setShowOfferedCoursesModal(false)}
-      />
-      
-      <AddCourseModal
-        isOpen={showAddCourseModal}
-        onClose={() => setShowAddCourseModal(false)}
-        onAdd={(course) => {
-          setCourses((prev) => [...prev, course]);
-          setShowAddCourseModal(false);
-          const message = language === 'en'
-            ? `✅ Course "${course.code}" has been added successfully!`
-            : `✅ تم إضافة المقرر "${course.code}" بنجاح!`;
-          setSuccessMessage(message);
-          setTimeout(() => setSuccessMessage(null), 5000);
-        }}
-      />
+          <OfferedCoursesModal
+            courses={courses}
+            isOpen={showOfferedCoursesModal}
+            onClose={() => setShowOfferedCoursesModal(false)}
+          />
+          
+          <AddCourseModal
+            isOpen={showAddCourseModal}
+            onClose={() => setShowAddCourseModal(false)}
+            onAdd={(course) => {
+              setCourses((prev) => [...prev, course]);
+              setShowAddCourseModal(false);
+              const message = language === 'en'
+                ? `✅ Course "${course.code}" has been added successfully!`
+                : `✅ تم إضافة المقرر "${course.code}" بنجاح!`;
+              setSuccessMessage(message);
+              setTimeout(() => setSuccessMessage(null), 5000);
+            }}
+          />
+
+          <div className="app-content">
+            <div className="main-layout">
+              <div className="timetable-wrapper">
+                <TimetableGrid />
+              </div>
+              <div className="course-list-wrapper">
+                <CourseList courses={courses} />
+              </div>
+            </div>
+          </div>
+        </>
+      ) : (
+        <div className="app-content">
+          <GpaCalculator />
+        </div>
+      )}
 
       <ReviewHelperModal
         isOpen={showReviewHelper}
         onClose={() => setShowReviewHelper(false)}
       />
-
-      <div className="app-content">
-        <div className="main-layout">
-          <div className="timetable-wrapper">
-            <TimetableGrid />
-          </div>
-          <div className="course-list-wrapper">
-            <CourseList courses={courses} />
-          </div>
-        </div>
-      </div>
     </div>
   );
 };

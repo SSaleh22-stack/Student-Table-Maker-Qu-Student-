@@ -56,6 +56,39 @@ export interface Translations {
   openQUReviewPage: string;
   reviewInstructions: string;
   reviewInstructionsContent: string;
+  // GPA Calculator translations
+  gpaCalculator: string;
+  gpaAdvanced: string;
+  gpaSettings: string;
+  gpaScale: string;
+  gpaPrevGpa: string;
+  gpaPrevHours: string;
+  gpaCurrentCourses: string;
+  gpaAddCourse: string;
+  gpaClearAll: string;
+  gpaClearAllConfirm: string;
+  gpaCourseName: string;
+  gpaCourseNamePlaceholder: string;
+  gpaGrade: string;
+  gpaHours: string;
+  gpaPoints: string;
+  gpaActions: string;
+  gpaDuplicate: string;
+  gpaRemove: string;
+  gpaResults: string;
+  gpaSemesterResults: string;
+  gpaCurrentHours: string;
+  gpaCurrentPoints: string;
+  gpaSemesterGpa: string;
+  gpaCumulativeResults: string;
+  gpaTotalHours: string;
+  gpaTotalPoints: string;
+  gpaNewCumulativeGpa: string;
+  gpaNoHoursWarning: string;
+  gpaAdvancedGradeMapping: string;
+  gpaAdvancedDescription: string;
+  gpaResetToDefaults: string;
+  gpaResetGradeMapConfirm: string;
 }
 
 export const translations: Record<Language, Translations> = {
@@ -115,6 +148,39 @@ export const translations: Record<Language, Translations> = {
     openQUReviewPage: 'Open QU Review Page',
     reviewInstructions: 'Instructions',
     reviewInstructionsContent: '1. Click "Open QU Review Page" to navigate to the course evaluation page\n2. Once on the evaluation page, a floating widget will appear in the bottom-right corner\n3. Select your preferred choice (Agree or Strongly Agree) from the dropdown\n4. Click "Agree All" to automatically fill all questions\n5. Review your selections and click "Undo" if needed',
+    // GPA Calculator
+    gpaCalculator: 'GPA Calculator',
+    gpaAdvanced: 'Advanced',
+    gpaSettings: 'Settings',
+    gpaScale: 'GPA Scale',
+    gpaPrevGpa: 'Previous GPA',
+    gpaPrevHours: 'Previous Hours',
+    gpaCurrentCourses: 'Current Courses',
+    gpaAddCourse: 'Add Course',
+    gpaClearAll: 'Clear All',
+    gpaClearAllConfirm: 'Are you sure you want to clear all courses?',
+    gpaCourseName: 'Course Name',
+    gpaCourseNamePlaceholder: 'Course name',
+    gpaGrade: 'Grade',
+    gpaHours: 'Hours',
+    gpaPoints: 'Points',
+    gpaActions: 'Actions',
+    gpaDuplicate: 'Duplicate',
+    gpaRemove: 'Remove',
+    gpaResults: 'Results',
+    gpaSemesterResults: 'Semester Results',
+    gpaCurrentHours: 'Current Hours',
+    gpaCurrentPoints: 'Current Quality Points',
+    gpaSemesterGpa: 'Semester GPA',
+    gpaCumulativeResults: 'Cumulative Results',
+    gpaTotalHours: 'Total Hours',
+    gpaTotalPoints: 'Total Quality Points',
+    gpaNewCumulativeGpa: 'New Cumulative GPA',
+    gpaNoHoursWarning: 'Please add courses with credit hours to calculate GPA.',
+    gpaAdvancedGradeMapping: 'Advanced Grade Mapping',
+    gpaAdvancedDescription: 'Customize grade point values for the selected scale.',
+    gpaResetToDefaults: 'Reset to Defaults',
+    gpaResetGradeMapConfirm: 'Reset to default grade mappings?',
   },
   ar: {
     appTitle: 'STUDENT TABLE MAKER',
@@ -172,6 +238,39 @@ export const translations: Record<Language, Translations> = {
     openQUReviewPage: 'فتح صفحة تقييم جامعة القصيم',
     reviewInstructions: 'تعليمات',
     reviewInstructionsContent: '1. انقر على "فتح صفحة تقييم جامعة القصيم" للانتقال إلى صفحة التقييم\n2. بمجرد الوصول إلى صفحة التقييم، ستظهر لوحة عائمة في الزاوية اليمنى السفلى\n3. اختر خيارك المفضل (موافق أو موافق بشدة) من القائمة المنسدلة\n4. انقر على "موافقة للجميع" لملء جميع الأسئلة تلقائياً\n5. راجع اختياراتك وانقر على "تراجع" إذا لزم الأمر',
+    // GPA Calculator
+    gpaCalculator: 'حاسبة المعدل',
+    gpaAdvanced: 'متقدم',
+    gpaSettings: 'الإعدادات',
+    gpaScale: 'نظام المعدل',
+    gpaPrevGpa: 'المعدل التراكمي السابق',
+    gpaPrevHours: 'الساعات السابقة',
+    gpaCurrentCourses: 'المقررات الحالية',
+    gpaAddCourse: 'إضافة مقرر',
+    gpaClearAll: 'مسح الكل',
+    gpaClearAllConfirm: 'هل أنت متأكد أنك تريد مسح جميع المقررات؟',
+    gpaCourseName: 'اسم المقرر',
+    gpaCourseNamePlaceholder: 'اسم المقرر',
+    gpaGrade: 'الدرجة',
+    gpaHours: 'الساعات',
+    gpaPoints: 'النقاط',
+    gpaActions: 'الإجراءات',
+    gpaDuplicate: 'نسخ',
+    gpaRemove: 'إزالة',
+    gpaResults: 'النتائج',
+    gpaSemesterResults: 'نتائج الفصل',
+    gpaCurrentHours: 'الساعات الحالية',
+    gpaCurrentPoints: 'النقاط الحالية',
+    gpaSemesterGpa: 'معدل الفصل',
+    gpaCumulativeResults: 'النتائج التراكمية',
+    gpaTotalHours: 'إجمالي الساعات',
+    gpaTotalPoints: 'إجمالي النقاط',
+    gpaNewCumulativeGpa: 'المعدل التراكمي الجديد',
+    gpaNoHoursWarning: 'يرجى إضافة مقررات بساعات معتمدة لحساب المعدل.',
+    gpaAdvancedGradeMapping: 'تعيين الدرجات المتقدم',
+    gpaAdvancedDescription: 'قم بتخصيص قيم نقاط الدرجات للنظام المحدد.',
+    gpaResetToDefaults: 'إعادة التعيين إلى الافتراضي',
+    gpaResetGradeMapConfirm: 'إعادة تعيين تعيين الدرجات إلى الافتراضي؟',
   },
 };
 

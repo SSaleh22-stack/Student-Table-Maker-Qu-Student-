@@ -1,0 +1,397 @@
+.gpa-calculator {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  background: #f5f7fa;
+  min-height: 100vh;
+}
+
+.gpa-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.gpa-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #2d3748;
+  margin: 0;
+}
+
+.gpa-advanced-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.gpa-advanced-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.gpa-card {
+  background: white;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.gpa-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.gpa-card-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 1rem 0;
+}
+
+.gpa-card-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.gpa-settings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+.gpa-setting-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.gpa-setting-item label {
+  font-weight: 600;
+  color: #555;
+  font-size: 0.9rem;
+}
+
+.gpa-input,
+.gpa-select {
+  padding: 0.75rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  transition: border-color 0.3s ease;
+}
+
+.gpa-input:focus,
+.gpa-select:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.gpa-input-text {
+  width: 100%;
+}
+
+.gpa-input-number {
+  width: 100px;
+}
+
+.gpa-table-container {
+  overflow-x: auto;
+}
+
+.gpa-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.gpa-table thead {
+  background: #f8f9fa;
+}
+
+.gpa-table th {
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: #333;
+  border-bottom: 2px solid #e0e0e0;
+  white-space: nowrap;
+}
+
+.gpa-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.gpa-table tbody tr:hover {
+  background: #f8f9fa;
+}
+
+.gpa-points-cell {
+  font-weight: 600;
+  color: #667eea;
+}
+
+.gpa-row-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.gpa-btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+}
+
+.gpa-btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.gpa-btn-secondary {
+  background: #e0e0e0;
+  color: #333;
+}
+
+.gpa-btn-danger {
+  background: #f56565;
+  color: white;
+}
+
+.gpa-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.gpa-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.gpa-btn-icon {
+  background: transparent;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  transition: background 0.2s;
+}
+
+.gpa-btn-icon:hover {
+  background: #f0f0f0;
+}
+
+.gpa-results-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-top: 1rem;
+}
+
+.gpa-result-section {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+}
+
+.gpa-result-section h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.2rem;
+  color: #333;
+  border-bottom: 2px solid #667eea;
+  padding-bottom: 0.5rem;
+}
+
+.gpa-result-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.gpa-result-item:last-child {
+  border-bottom: none;
+}
+
+.gpa-result-highlight {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-top: 0.5rem;
+  border: 2px solid #667eea;
+}
+
+.gpa-result-label {
+  font-weight: 600;
+  color: #555;
+}
+
+.gpa-result-value {
+  font-weight: 700;
+  color: #333;
+}
+
+.gpa-result-big {
+  font-size: 1.5rem;
+  color: #667eea;
+}
+
+.gpa-warning {
+  background: #fff3cd;
+  border-left: 4px solid #ffc107;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-top: 1rem;
+  color: #856404;
+}
+
+.gpa-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 2rem;
+}
+
+.gpa-modal {
+  background: white;
+  border-radius: 0.75rem;
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.gpa-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.gpa-modal-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #333;
+}
+
+.gpa-modal-close {
+  background: #e53e3e;
+  color: white;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 1.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.gpa-modal-close:hover {
+  background: #c53030;
+  transform: scale(1.1);
+}
+
+.gpa-modal-content {
+  padding: 1.5rem;
+}
+
+.gpa-modal-description {
+  color: #666;
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+}
+
+.gpa-grade-map-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.gpa-grade-map-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.gpa-grade-map-item label {
+  font-weight: 600;
+  color: #555;
+  font-size: 0.9rem;
+}
+
+.gpa-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+/* RTL Support */
+[dir="rtl"] .gpa-header {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .gpa-card-header {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .gpa-card-actions {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .gpa-table th,
+[dir="rtl"] .gpa-table td {
+  text-align: right;
+}
+
+[dir="rtl"] .gpa-result-item {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .gpa-modal-header {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .gpa-modal-actions {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .gpa-row-actions {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .gpa-warning {
+  border-left: none;
+  border-right: 4px solid #ffc107;
+}
+
