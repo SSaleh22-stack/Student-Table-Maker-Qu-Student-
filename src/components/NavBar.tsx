@@ -3,7 +3,14 @@ import { useLanguage } from '../contexts/LanguageContext';
 import LanguageToggle from './LanguageToggle';
 import './NavBar.css';
 
-const NavBar: React.FC = () => {
+type ViewMode = 'timetable' | 'gpa';
+
+interface NavBarProps {
+  currentView: ViewMode;
+  onViewChange: (view: ViewMode) => void;
+}
+
+const NavBar: React.FC<NavBarProps> = ({ currentView, onViewChange }) => {
   const { t, language } = useLanguage();
   const [showReviewHelper, setShowReviewHelper] = useState(false);
 
@@ -23,6 +30,20 @@ const NavBar: React.FC = () => {
             <span className="navbar-title">{t.appTitle}</span>
           </div>
           <div className="navbar-menu">
+            <button 
+              className={`navbar-item ${currentView === 'timetable' ? 'active' : ''}`}
+              onClick={() => onViewChange('timetable')}
+            >
+              <span className="navbar-icon">📅</span>
+              <span className="navbar-text">{t.timetable}</span>
+            </button>
+            <button 
+              className={`navbar-item ${currentView === 'gpa' ? 'active' : ''}`}
+              onClick={() => onViewChange('gpa')}
+            >
+              <span className="navbar-icon">💯</span>
+              <span className="navbar-text">{t.gpaCalculator}</span>
+            </button>
             <button 
               className="navbar-item review-helper-nav-btn"
               onClick={() => setShowReviewHelper(true)}

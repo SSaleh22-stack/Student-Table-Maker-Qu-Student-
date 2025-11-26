@@ -67,6 +67,12 @@
   transform: translateY(0);
 }
 
+.navbar-item.active {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.4);
+  font-weight: 600;
+}
+
 .navbar-icon {
   font-size: 1.1rem;
 }

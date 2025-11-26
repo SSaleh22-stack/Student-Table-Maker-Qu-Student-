@@ -8,6 +8,7 @@ import CourseList from './CourseList';
 import TimetableGrid from './TimetableGrid';
 import OfferedCoursesModal from './OfferedCoursesModal';
 import AddCourseModal from './AddCourseModal';
+import GpaCalculator from './GpaCalculator';
 import { Course } from '../types';
 import './App.css';
 
@@ -142,8 +143,11 @@ const dummyCourses: Course[] = [
   },
 ];
 
+type ViewMode = 'timetable' | 'gpa';
+
 const AppContent: React.FC = () => {
   const { language, t } = useLanguage();
+  const [currentView, setCurrentView] = useState<ViewMode>('timetable');
   const [courses, setCourses] = useState<Course[]>([]);
   const [isExtracting, setIsExtracting] = useState(false);
   const [extractionError, setExtractionError] = useState<string | null>(null);
@@ -227,65 +231,72 @@ const AppContent: React.FC = () => {
 
   return (
     <div className="app" dir={language === 'ar' ? 'rtl' : 'ltr'}>
-      <NavBar />
-      <HeroSection 
-        onExtractCourses={handleExtractCourses}
-        isExtracting={isExtracting}
-      />
-      {extractionError && (
-        <div className="extraction-error">
-          <span className="error-icon">⚠️</span>
-          <span className="error-message">{extractionError}</span>
-        </div>
-      )}
-      {successMessage && (
-        <div className="success-message">
-          <span className="success-icon">✅</span>
-          <span className="success-message-text">{successMessage}</span>
-        </div>
-      )}
-      <div className="offered-courses-button-container">
-        <button 
-          className="offered-courses-btn"
-          onClick={() => setShowOfferedCoursesModal(true)}
-        >
-          📋 {t.offeredCourses}
-        </button>
-        <button 
-          className="add-course-manually-btn"
-          onClick={() => setShowAddCourseModal(true)}
-        >
-          ➕ {language === 'en' ? 'Add Course Manually' : 'إضافة مقرر يدوياً'}
-        </button>
-      </div>
-      <OfferedCoursesModal
-        courses={courses}
-        isOpen={showOfferedCoursesModal}
-        onClose={() => setShowOfferedCoursesModal(false)}
-      />
-      <AddCourseModal
-        isOpen={showAddCourseModal}
-        onClose={() => setShowAddCourseModal(false)}
-        onAdd={(course) => {
-          setCourses((prev) => [...prev, course]);
-          setShowAddCourseModal(false);
-          const message = language === 'en'
-            ? `✅ Course "${course.code}" has been added successfully! Check the course list on the right pane.`
-            : `✅ تم إضافة المقرر "${course.code}" بنجاح! تحقق من قائمة المقررات في اللوحة اليمنى.`;
-          setSuccessMessage(message);
-          setTimeout(() => setSuccessMessage(null), 5000);
-        }}
-      />
-      <div className="app-content">
-        <div className="main-layout">
-          <div className="timetable-wrapper">
-            <TimetableGrid />
+      <NavBar currentView={currentView} onViewChange={setCurrentView} />
+      
+      {currentView === 'timetable' ? (
+        <>
+          <HeroSection 
+            onExtractCourses={handleExtractCourses}
+            isExtracting={isExtracting}
+          />
+          {extractionError && (
+            <div className="extraction-error">
+              <span className="error-icon">⚠️</span>
+              <span className="error-message">{extractionError}</span>
+            </div>
+          )}
+          {successMessage && (
+            <div className="success-message">
+              <span className="success-icon">✅</span>
+              <span className="success-message-text">{successMessage}</span>
+            </div>
+          )}
+          <div className="offered-courses-button-container">
+            <button 
+              className="offered-courses-btn"
+              onClick={() => setShowOfferedCoursesModal(true)}
+            >
+              📋 {t.offeredCourses}
+            </button>
+            <button 
+              className="add-course-manually-btn"
+              onClick={() => setShowAddCourseModal(true)}
+            >
+              ➕ {language === 'en' ? 'Add Course Manually' : 'إضافة مقرر يدوياً'}
+            </button>
           </div>
-          <div className="course-list-wrapper">
-            <CourseList courses={courses} />
+          <OfferedCoursesModal
+            courses={courses}
+            isOpen={showOfferedCoursesModal}
+            onClose={() => setShowOfferedCoursesModal(false)}
+          />
+          <AddCourseModal
+            isOpen={showAddCourseModal}
+            onClose={() => setShowAddCourseModal(false)}
+            onAdd={(course) => {
+              setCourses((prev) => [...prev, course]);
+              setShowAddCourseModal(false);
+              const message = language === 'en'
+                ? `✅ Course "${course.code}" has been added successfully! Check the course list on the right pane.`
+                : `✅ تم إضافة المقرر "${course.code}" بنجاح! تحقق من قائمة المقررات في اللوحة اليمنى.`;
+              setSuccessMessage(message);
+              setTimeout(() => setSuccessMessage(null), 5000);
+            }}
+          />
+          <div className="app-content">
+            <div className="main-layout">
+              <div className="timetable-wrapper">
+                <TimetableGrid />
+              </div>
+              <div className="course-list-wrapper">
+                <CourseList courses={courses} />
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+        </>
+      ) : (
+        <GpaCalculator />
+      )}
     </div>
   );
 };
