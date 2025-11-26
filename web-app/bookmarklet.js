@@ -281,15 +281,15 @@
     }
     
     // Show success message
-    const message = '✅ Successfully extracted '+validCourses.length+' courses!\n\nRedirecting to table maker...';
+    const message = '✅ Successfully extracted '+validCourses.length+' courses!\n\nOpening table maker...';
     alert(message);
     
-    // Automatically redirect to web app with course data in hash
+    // Automatically open web app in new tab with course data in hash
     const webAppUrl = 'https://SSaleh22-stack.github.io/Student-Table-Maker-Qu-Student-/';
     const urlWithData = webAppUrl + '#courses=' + encodedCourses;
     
     console.log('Opening web app with courses data in URL');
-    window.location.href = urlWithData;
+    window.open(urlWithData, '_blank');
   } catch (error) {
     console.error('Bookmarklet error:', error);
     console.error('Error stack:', error.stack);

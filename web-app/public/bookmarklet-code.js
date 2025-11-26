@@ -218,12 +218,12 @@
     } catch (storageError) {
       console.warn('Could not save to localStorage (cross-origin):', storageError);
     }
-    const message = '✅ Successfully extracted ' + validCourses.length + ' courses!\n\nRedirecting to table maker...';
+    const message = '✅ Successfully extracted ' + validCourses.length + ' courses!\n\nOpening table maker...';
     alert(message);
     const webAppUrl = 'https://SSaleh22-stack.github.io/Student-Table-Maker-Qu-Student-/';
     const urlWithData = webAppUrl + '#courses=' + encodedCourses;
     console.log('Opening web app with courses data in URL');
-    window.location.href = urlWithData;
+    window.open(urlWithData, '_blank');
   } catch (error) {
     console.error('Bookmarklet error:', error);
     console.error('Error stack:', error.stack);
