@@ -285,7 +285,7 @@
     alert(message);
     
     // Get web app URL and open with course data in hash
-    const defaultUrl = 'http://localhost:3000';
+    const defaultUrl = 'https://SSaleh22-stack.github.io/Student-Table-Maker-Qu-Student-/';
     const webAppUrl = prompt('Enter your Qu Student web app URL:', defaultUrl) || defaultUrl;
     const urlWithData = webAppUrl.trim() + '#courses=' + encodedCourses;
     
