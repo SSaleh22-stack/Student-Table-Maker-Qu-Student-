@@ -5,54 +5,317 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>📚 Qu Student - Extract Courses</title>
   <link rel="icon" type="image/png" href="/icon-192.png">
-  <script>
-    // Bookmarklet code
-    var bookmarkletCode = `javascript:(function() {'use strict'; var parseSingleTimeSlot, parseTimeSlots, extractCoursesFromPage; parseSingleTimeSlot = function(slotText, dayMap) {if (!slotText) return null;const dayMapLocal = dayMap || { 1: 'Sun', 2: 'Mon', 3: 'Tue', 4: 'Wed', 5: 'Thu' }; const dayNumbersMatch = slotText.match(/^\\s*((?:\\d+\\s*)+)/);if (!dayNumbersMatch) return null;const dayNumbers = dayNumbersMatch[1].trim().split(/\\s+/).map(n => parseInt(n)).filter(n => !isNaN(n));const days = dayNumbers.map(n => dayMapLocal[n]).filter(Boolean);if (days.length === 0) return null; const timeMatch = slotText.match(/@t\\s+(\\d{1,2}):(\\d{2})\\s*([صم])?\\s*-\\s*(\\d{1,2}):(\\d{2})\\s*([صم])?/i);if (!timeMatch) return null;let startHour = parseInt(timeMatch[1]);const startMin = timeMatch[2];const startPeriod = timeMatch[3];let endHour = parseInt(timeMatch[4]);const endMin = timeMatch[5];const endPeriod = timeMatch[6]; if (startPeriod === 'م' && startHour !== 12) startHour += 12;if (startPeriod === 'ص' && startHour === 12) startHour = 0;if (endPeriod === 'م' && endHour !== 12) endHour += 12;if (endPeriod === 'ص' && endHour === 12) endHour = 0; const locationMatch = slotText.match(/@r\\s+(.+?)(?:\\s*$|@n|@t|@)/);const location = locationMatch ? locationMatch[1].trim() : undefined;return {days: days,startTime: \`\${startHour.toString().padStart(2, '0')}:\${startMin}\`,endTime: \`\${endHour.toString().padStart(2, '0')}:\${endMin}\`,location: location};}; parseTimeSlots = function(input) {const slots = [];if (!input) return slots; if (input.includes('@n')) {const dayMap = { 1: 'Sun', 2: 'Mon', 3: 'Tue', 4: 'Wed', 5: 'Thu' };const parts = input.split(/@n\\s*/).filter(p => p.trim());for (const part of parts) {const slot = parseSingleTimeSlot(part.trim(), dayMap);if (slot && slot.days.length > 0) {slots.push(slot);}}return slots;} const pattern = /((?:\\d+\\s*)+)@t\\s+(\\d{1,2}):(\\d{2})\\s*([صم])?\\s*-\\s*(\\d{1,2}):(\\d{2})\\s*([صم])?/gi;const matches = input.matchAll(pattern);const dayMap = { 1: 'Sun', 2: 'Mon', 3: 'Tue', 4: 'Wed', 5: 'Thu' };for (const match of matches) {const slot = parseSingleTimeSlot(match[0], dayMap);if (slot && slot.days.length > 0) {slots.push(slot);}} if (slots.length === 0) {const slot = parseSingleTimeSlot(input, dayMap);if (slot && slot.days.length > 0) {slots.push(slot);}}return slots;}; extractCoursesFromPage = function() {const courses = [];let skippedRows = 0;let errorRows = 0;try {console.log('Extracting courses from QU portal:', window.location.href); const rows = document.querySelectorAll('tbody tr[class^=\"ROW\"]');console.log(\`Found \${rows.length} course rows\`);rows.forEach((row, index) => {try {const cells = row.querySelectorAll('td');if (cells.length < 8) {console.warn(\`Row \${index} has insufficient cells (\${cells.length}), expected 8\`);skippedRows++;return;} const code = (cells[0]?.textContent?.trim()) || \`COURSE-\${index}\`;const name = (cells[1]?.textContent?.trim()) || 'Unknown Course';const section = (cells[3]?.textContent?.trim()) || '01';const classTypeText = (cells[4]?.textContent?.trim()) || ''; let classType;if (classTypeText.includes('نظري') || classTypeText.toLowerCase().includes('theoretical')) {classType = 'theoretical';} else if (classTypeText.includes('عملي') || classTypeText.toLowerCase().includes('practical')) {classType = 'practical';} else if (classTypeText.includes('تمرين') || classTypeText.toLowerCase().includes('exercise')) {classType = 'exercise';} const statusText = (cells[6]?.textContent?.trim()) || '';const status = statusText.includes('مغلقة') || statusText.toLowerCase().includes('closed')? 'closed': statusText.includes('مفتوحة') || statusText.toLowerCase().includes('open')? 'open': undefined; const lastCell = cells[7];let instructor = '';let examPeriod = '';let timeSlots = [];if (lastCell) {const instructorInput = lastCell.querySelector('input[name*=\"instructor\"]');if (instructorInput) {instructor = instructorInput.value.trim();}const examInput = lastCell.querySelector('input[name*=\"examPeriod\"]');if (examInput) {examPeriod = examInput.value.trim();} const sectionInput = lastCell.querySelector('input[name*=\"section\"]');if (sectionInput && sectionInput.value) {try {timeSlots = parseTimeSlots(sectionInput.value);} catch (parseError) {console.warn(\`Error parsing time slots for row \${index}:\`, parseError, 'Section value:', sectionInput.value);timeSlots = [];}}} let course;if (timeSlots.length > 0) { const allDays = new Set();timeSlots.forEach(ts => ts.days.forEach(d => allDays.add(d)));const firstSlot = timeSlots[0];course = {id: \`\${code}-\${section}-\${index}\`,code: code,name: name,section: section,days: Array.from(allDays),startTime: firstSlot.startTime,endTime: firstSlot.endTime,location: firstSlot.location || undefined,timeSlots: timeSlots.length > 1 ? timeSlots.map(ts => ({days: ts.days,startTime: ts.startTime,endTime: ts.endTime,location: ts.location || undefined})) : undefined,instructor: instructor || undefined,status: status,classType: classType,finalExam: examPeriod ? {day: firstSlot.days[0] || 'Sun',startTime: '08:00',endTime: '10:00',date: examPeriod} : undefined};} else { course = {id: \`\${code}-\${section}-\${index}\`,code: code,name: name,section: section,days: ['Sun'],startTime: '08:00',endTime: '09:30',instructor: instructor || undefined,status: status,classType: classType,finalExam: examPeriod ? {day: 'Sun',startTime: '08:00',endTime: '10:00',date: examPeriod} : undefined};}courses.push(course);} catch (error) {console.error(\`Error parsing course row \${index}:\`, error, row);errorRows++;}});console.log(\`Successfully extracted \${courses.length} courses from \${rows.length} rows (\${skippedRows} skipped, \${errorRows} errors)\`);if (courses.length < rows.length * 0.5) {console.warn(\`⚠️ Warning: Only extracted \${courses.length} courses from \${rows.length} rows. This might indicate a parsing issue.\`);}return courses;} catch (error) {console.error('Error extracting courses:', error);return [];}}; try {const courses = extractCoursesFromPage();if (!courses || courses.length === 0) {alert('No courses found on this page. Make sure you are on the QU student portal course page and that courses are visible.');console.error('No courses extracted. Check the page structure.');return;} const validCourses = courses.filter(c => c && c.code && c.name);if (validCourses.length === 0) {alert('Error: Extracted courses are invalid. Check console for details.');console.error('Invalid courses:', courses);return;} const coursesJson = JSON.stringify(validCourses);const encodedCourses = encodeURIComponent(coursesJson); try {localStorage.setItem('qu-student-courses', coursesJson);localStorage.setItem('qu-student-courses-timestamp', Date.now().toString());console.log('Saved '+validCourses.length+' courses to localStorage');} catch (storageError) {console.warn('Could not save to localStorage (cross-origin):', storageError); } const message = '✅ Successfully extracted '+validCourses.length+' courses!\\n\\nOpening web app...';alert(message); const defaultUrl = 'https://SSaleh22-stack.github.io/Student-Table-Maker-Qu-Student-/'; const webAppUrl = prompt('Enter your Qu Student web app URL:', defaultUrl) || defaultUrl;const urlWithData = webAppUrl.trim() + '#courses=' + encodedCourses;console.log('Opening web app with courses data in URL');window.open(urlWithData, '_blank');} catch (error) {console.error('Bookmarklet error:', error);console.error('Error stack:', error.stack);alert('Error extracting courses: ' + (error.message || String(error)));}})();`;
-
-    // Check if we came from QU portal
-    if (document.referrer && document.referrer.includes('stu-gate.qu.edu.sa')) {
-      // Immediately redirect to the javascript: URL to execute on previous page
-      // But this won't work because we're already on a different page
-      // So we'll go back first, then execute
-      window.history.back();
-      
-      // After going back, we need to execute the code
-      // We'll use sessionStorage to pass the code
-      sessionStorage.setItem('qu-bookmarklet-execute', bookmarkletCode.replace('javascript:', ''));
-      
-      // The QU portal page won't have our script, so we need a different approach
-      // Let's use a meta refresh to go back and then inject
-      setTimeout(function() {
-        // Try to inject script into the previous page
-        // But this won't work due to cross-origin
-        // So we'll need to provide a user script or use a different method
-      }, 100);
-    } else if (!document.referrer || !document.referrer.includes('stu-gate.qu.edu.sa')) {
-      // Not from QU portal - show instructions
-      document.body.innerHTML = '<div style="padding: 2rem; text-align: center; font-family: sans-serif;"><h1>📚 Qu Student</h1><p style="color: #666; margin: 1rem 0;">⚠️ Please go to the QU student portal course page first, then click this bookmark.</p><p><a href="https://stu-gate.qu.edu.sa" style="color: #667eea; text-decoration: none; font-weight: 600;">Go to QU Portal →</a></p></div>';
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
-  </script>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      direction: ltr;
+    }
+    .instructions-container {
+      background: white;
+      border-radius: 16px;
+      padding: 2.5rem;
+      max-width: 600px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      animation: slideUp 0.4s ease-out;
+    }
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .logo {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+    .logo-icon {
+      font-size: 4rem;
+      margin-bottom: 0.5rem;
+    }
+    .logo-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #667eea;
+      margin-bottom: 0.25rem;
+    }
+    .logo-subtitle {
+      font-size: 0.9rem;
+      color: #666;
+    }
+    .instructions {
+      margin-bottom: 2rem;
+    }
+    .instructions h2 {
+      color: #333;
+      margin-bottom: 1rem;
+      font-size: 1.3rem;
+    }
+    .instructions ol {
+      margin-left: 1.5rem;
+      color: #555;
+      line-height: 1.8;
+    }
+    .instructions li {
+      margin-bottom: 0.75rem;
+    }
+    .instructions li strong {
+      color: #667eea;
+    }
+    .action-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .extract-btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 1rem 2rem;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+    .extract-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5);
+    }
+    .extract-btn:active {
+      transform: translateY(0);
+    }
+    .extract-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .cancel-btn {
+      background: #e0e0e0;
+      color: #666;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .cancel-btn:hover {
+      background: #d0d0d0;
+    }
+    .warning {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: 1rem;
+      border-radius: 6px;
+      margin-bottom: 1.5rem;
+      color: #856404;
+      font-size: 0.9rem;
+    }
+    .warning.success {
+      background: #c6f6d5;
+      border-left-color: #48bb78;
+      color: #22543d;
+    }
+    .warning strong {
+      display: block;
+      margin-bottom: 0.5rem;
+    }
+    .status-message {
+      text-align: center;
+      padding: 1rem;
+      margin-top: 1rem;
+      border-radius: 8px;
+      font-weight: 500;
+      display: none;
+    }
+    .status-message.success {
+      background: #c6f6d5;
+      color: #22543d;
+      display: block;
+    }
+    .status-message.error {
+      background: #fed7d7;
+      color: #c53030;
+      display: block;
+    }
+    .status-message.info {
+      background: #bee3f8;
+      color: #2c5282;
+      display: block;
+    }
+  </style>
 </head>
 <body>
-  <p style="text-align: center; padding: 2rem; font-family: sans-serif;">Executing bookmarklet...</p>
+  <div class="instructions-container">
+    <div class="logo">
+      <div class="logo-icon">📚</div>
+      <div class="logo-title">Qu Student</div>
+      <div class="logo-subtitle">Course Extractor</div>
+    </div>
+    
+    <div class="warning" id="warningMessage">
+      <strong>⚠️ Instructions:</strong>
+      <span id="warningText">Please read the instructions below before extracting courses.</span>
+    </div>
+    
+    <div class="instructions">
+      <h2>How to Extract Courses:</h2>
+      <ol>
+        <li><strong>Make sure</strong> you are on the QU student portal course page</li>
+        <li><strong>Click</strong> this bookmark from your bookmarks bar</li>
+        <li><strong>Click</strong> "Extract Courses" button below</li>
+        <li><strong>Wait</strong> for the extraction to complete</li>
+        <li><strong>You'll be redirected</strong> to the table maker automatically</li>
+      </ol>
+    </div>
+    
+    <div class="action-buttons">
+      <button id="extractBtn" class="extract-btn">
+        📥 Extract Courses
+      </button>
+      <button id="cancelBtn" class="cancel-btn">
+        Cancel
+      </button>
+    </div>
+    
+    <div id="statusMessage" class="status-message"></div>
+  </div>
+
   <script>
-    // Since we can't inject into QU portal directly, the simplest solution is:
-    // Make the bookmarklet link directly to the javascript: URL
-    // But we want title/icon, so we'll use this page as an intermediary
-    
-    // The best solution: Update bookmarklet.html to link directly to javascript: URL
-    // But preserve title/icon by using this page's title/icon when dragged
-    
-    // For now, let's make it work by redirecting to javascript: URL immediately
-    if (document.referrer && document.referrer.includes('stu-gate.qu.edu.sa')) {
-      // Redirect to javascript: URL - this should execute on the previous page
-      // But browsers block this for security
-      // So we'll need to use a different approach
+    (function() {
+      'use strict';
       
-      // Final solution: Make bookmarklet.html link directly to javascript: URL
-      // The title and icon will come from the page when dragged
-      // But when clicked, it will execute the javascript: URL directly
-    }
+      const extractBtn = document.getElementById('extractBtn');
+      const cancelBtn = document.getElementById('cancelBtn');
+      const statusMessage = document.getElementById('statusMessage');
+      const warningMessage = document.getElementById('warningMessage');
+      const warningText = document.getElementById('warningText');
+      
+      // Check if we're on the QU portal page
+      const isOnQUPortal = window.location.hostname.includes('stu-gate.qu.edu.sa') || 
+                          window.location.hostname.includes('qu.edu.sa');
+      
+      // Check if we came from QU portal or have an opener
+      const cameFromQUPortal = document.referrer && (
+        document.referrer.includes('stu-gate.qu.edu.sa') || 
+        document.referrer.includes('qu.edu.sa')
+      );
+      const hasOpener = window.opener && !window.opener.closed;
+      
+      // Function to inject script into opener (QU portal page)
+      function injectIntoOpener() {
+        if (!hasOpener) {
+          statusMessage.textContent = '⚠️ Could not access QU portal page. Please go back to the QU portal and click this bookmark again.';
+          statusMessage.className = 'status-message error';
+          statusMessage.style.display = 'block';
+          return false;
+        }
+        
+        try {
+          // Try to inject the bookmarklet code into the opener
+          const script = window.opener.document.createElement('script');
+          script.src = 'https://SSaleh22-stack.github.io/Student-Table-Maker-Qu-Student-/bookmarklet-code.js?v=' + Date.now();
+          script.onerror = function() {
+            // Fallback
+            script.src = './bookmarklet-code.js?v=' + Date.now();
+            window.opener.document.head.appendChild(script);
+          };
+          window.opener.document.head.appendChild(script);
+          
+          // Close this window after a delay
+          setTimeout(function() {
+            window.close();
+          }, 1000);
+          
+          return true;
+        } catch (e) {
+          // Cross-origin error - can't inject
+          console.error('Cross-origin error:', e);
+          return false;
+        }
+      }
+      
+      // Function to run extraction on current page (if on QU portal)
+      function runExtractionOnCurrentPage() {
+        extractBtn.disabled = true;
+        extractBtn.textContent = '⏳ Extracting...';
+        statusMessage.textContent = 'Loading extraction script...';
+        statusMessage.className = 'status-message info';
+        statusMessage.style.display = 'block';
+        
+        // Load and execute the bookmarklet code
+        const script = document.createElement('script');
+        const scriptUrl = 'https://SSaleh22-stack.github.io/Student-Table-Maker-Qu-Student-/bookmarklet-code.js';
+        
+        script.src = scriptUrl + '?v=' + Date.now();
+        script.onerror = function() {
+          // Fallback: try to load from same origin
+          script.src = './bookmarklet-code.js?v=' + Date.now();
+          document.head.appendChild(script);
+        };
+        script.onload = function() {
+          statusMessage.textContent = '✅ Extraction script loaded! Processing...';
+          statusMessage.className = 'status-message success';
+        };
+        document.head.appendChild(script);
+      }
+      
+      // Handle extract button click
+      extractBtn.addEventListener('click', function() {
+        if (isOnQUPortal) {
+          // We're on QU portal - run extraction here
+          runExtractionOnCurrentPage();
+        } else if (hasOpener) {
+          // We have an opener (QU portal page) - try to inject
+          if (injectIntoOpener()) {
+            statusMessage.textContent = '✅ Injecting extraction script into QU portal page...';
+            statusMessage.className = 'status-message success';
+            statusMessage.style.display = 'block';
+          } else {
+            statusMessage.textContent = '⚠️ Could not inject script due to browser security. Please go back to the QU portal page and click this bookmark again, then click "Extract Courses".';
+            statusMessage.className = 'status-message error';
+            statusMessage.style.display = 'block';
+          }
+        } else {
+          // No opener and not on QU portal
+          statusMessage.textContent = '⚠️ Please navigate to the QU student portal course page first, then click this bookmark again.';
+          statusMessage.className = 'status-message error';
+          statusMessage.style.display = 'block';
+        }
+      });
+      
+      cancelBtn.addEventListener('click', function() {
+        window.close();
+      });
+      
+      // Update warning based on context
+      if (isOnQUPortal) {
+        warningMessage.className = 'warning success';
+        warningText.textContent = '✅ You are on the QU portal. Click "Extract Courses" to begin.';
+      } else if (hasOpener) {
+        warningMessage.className = 'warning success';
+        warningText.textContent = '✅ QU portal page detected. Click "Extract Courses" to extract courses from that page.';
+      } else {
+        warningText.textContent = '⚠️ Please navigate to the QU student portal course page first, then click this bookmark again.';
+      }
+    })();
   </script>
 </body>
 </html>
