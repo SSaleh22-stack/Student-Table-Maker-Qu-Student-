@@ -222,20 +222,24 @@
     const urlWithData = webAppUrl + '#courses=' + encodedCourses;
     console.log('Opening web app with courses data in URL');
     
-    // Try to open in new tab first (works in Chrome)
-    // If that fails or is blocked (Safari), fall back to redirecting current page
-    const newWindow = window.open(urlWithData, '_blank');
+    // Detect Safari browser
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent) || 
+                     (navigator.vendor && navigator.vendor.indexOf('Apple') > -1 && navigator.userAgent && !navigator.userAgent.match('CriOS') && !navigator.userAgent.match('FxiOS'));
     
-    // Check if popup was blocked (Safari often blocks this)
-    if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
-      // Safari blocked the popup, redirect current page instead
+    if (isSafari) {
+      // Safari: Use location.href directly (Safari blocks window.open from bookmarklets)
       const message = '✅ Successfully extracted ' + validCourses.length + ' courses!\n\nRedirecting to table maker...';
       alert(message);
       window.location.href = urlWithData;
     } else {
-      // Successfully opened in new tab (Chrome)
+      // Chrome and other browsers: Try to open in new tab
       const message = '✅ Successfully extracted ' + validCourses.length + ' courses!\n\nOpening table maker in new tab...';
       alert(message);
+      const newWindow = window.open(urlWithData, '_blank');
+      // If popup was blocked, fall back to redirect
+      if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+        window.location.href = urlWithData;
+      }
     }
   } catch (error) {
     console.error('Bookmarklet error:', error);
