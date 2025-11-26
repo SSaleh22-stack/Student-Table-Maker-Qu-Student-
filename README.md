@@ -1,193 +1,76 @@
-<div align="center">
+# STUDENT TABLE MAKER
 
-# 📚 Qu Student - Table Maker
+Chrome Extension for Qassim University students to extract courses and build visual timetables.
 
-**Chrome Extension & Web App for Qassim University Students**
+## Phase 1: Boilerplate & Skeleton ✅
 
-[![Chrome Extension](https://img.shields.io/badge/Chrome-Extension-4285F4?logo=google-chrome&logoColor=white)](https://chrome.google.com/webstore)
-[![React](https://img.shields.io/badge/React-18.2.0-61DAFB?logo=react&logoColor=white)](https://reactjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.3.3-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Vite](https://img.shields.io/badge/Vite-5.1.0-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
+This phase includes:
+- React + TypeScript + Vite setup
+- Manifest V3 configuration
+- Basic "Hello World" dashboard
+- Project structure foundation
 
-**Extract courses, build timetables, and manage your schedule with ease!**
+## Phase 2: Core Dashboard Layout ✅
 
-</div>
+This phase includes:
+- Hero section with animated title (fade-in + translateY animation)
+- Bilingual support (English/Arabic) with language toggle
+- Language preference persistence in chrome.storage
+- Static course list component with dummy data (4 sample courses)
+- Static timetable grid view (Sunday-Thursday, 8:00-20:00)
+- Responsive card-based UI with modern styling
+- RTL layout support for Arabic
 
----
+## Setup & Installation
 
-## 🎯 Features
+1. Install dependencies:
+```bash
+npm install
+```
 
-- ✅ **Auto-Extract Courses** - Automatically extract courses from QU student portal
-- 📅 **Visual Timetable** - Beautiful, interactive weekly timetable view
-- 🔄 **Conflict Detection** - Automatically detect schedule conflicts
-- 🌐 **Bilingual Support** - Full English/Arabic support with RTL layout
-- 📱 **Web App** - Standalone web application with bookmarklet support
-- 📊 **Export Options** - Export timetable as PDF, Excel, or Calendar (ICS)
-- 🎨 **Modern UI** - Clean, responsive design with smooth animations
+2. Build the extension:
+```bash
+npm run build
+```
 
----
-
-## 🚀 Quick Start
-
-### Chrome Extension
-
-1. **Install dependencies:**
-   ```bash
-   npm install
-   ```
-
-2. **Build the extension:**
-   ```bash
-   npm run build
-   ```
-
-3. **Load in Chrome:**
-   - Open `chrome://extensions/`
-   - Enable "Developer mode"
+3. Load the extension in Chrome:
+   - Open Chrome and navigate to `chrome://extensions/`
+   - Enable "Developer mode" (toggle in top right)
    - Click "Load unpacked"
-   - Select the `dist` folder
+   - Select the `dist` folder from this project
 
-### Web App
+4. Test the extension:
+   - Click the extension icon in Chrome toolbar
+   - The dashboard should open in a new tab showing "STUDENT TABLE MAKER"
 
-1. **Navigate to web app directory:**
-   ```bash
-   cd web-app
-   npm install
-   ```
+## Development
 
-2. **Start development server:**
-   ```bash
-   npm run dev
-   ```
-
-3. **Access the app:**
-   - Open `http://localhost:3000` in your browser
-
----
-
-## 📖 Usage
-
-### Using the Chrome Extension
-
-1. Go to the QU student portal course page
-2. Click the extension icon
-3. Click "Extract Courses" to automatically extract all courses
-4. View and manage your timetable in the dashboard
-
-### Using the Web App (iPad/Other Devices)
-
-1. Set up the bookmarklet:
-   - Go to `/bookmarklet.html` in the web app
-   - Drag the bookmarklet button to your bookmarks bar
-2. Extract courses:
-   - Visit the QU student portal course page
-   - Click the bookmarklet from your bookmarks
-   - Courses will be automatically extracted
-3. View your timetable in the web app
-
----
-
-## 🛠️ Development
-
-### Extension Development
-
+For development with auto-rebuild:
 ```bash
-# Watch mode (auto-rebuild on changes)
 npm run dev
-
-# Production build
-npm run build
 ```
 
-### Web App Development
+After building, reload the extension in `chrome://extensions/` to see changes.
 
-```bash
-cd web-app
-
-# Development server
-npm run dev
-
-# Production build
-npm run build
-```
-
----
-
-## 📁 Project Structure
+## Project Structure
 
 ```
 /
-├── src/                    # Extension source code
-│   ├── components/         # React components
-│   ├── content/           # Content scripts
-│   ├── background/         # Service worker
-│   ├── contexts/          # React contexts
-│   ├── i18n/              # Translations
-│   └── types/             # TypeScript types
-├── web-app/               # Standalone web application
-│   ├── src/              # Web app source code
-│   ├── public/           # Static assets
-│   └── bookmarklet.html  # Bookmarklet setup page
-├── manifest.json         # Chrome extension manifest
+├── src/
+│   ├── components/     # React components
+│   ├── pages/          # Dashboard page
+│   ├── background/     # Service worker
+│   ├── types/          # TypeScript types
+│   └── ...
+├── manifest.json       # Chrome extension manifest
 ├── package.json
 └── vite.config.ts
 ```
 
----
+## Next Steps
 
-## 🌟 Features in Detail
-
-### Course Extraction
-- Automatic extraction from QU portal
-- Supports multiple time slots per course
-- Handles Arabic and English course data
-- Validates and parses course information
-
-### Timetable Management
-- Add/remove courses with one click
-- Visual conflict highlighting
-- Exam period conflict detection
-- Group courses by code and section
-
-### Export & Share
-- **PDF Export** - Print-ready timetable
-- **Excel/CSV Export** - Spreadsheet format
-- **Calendar Export** - Import to Google Calendar, Outlook, etc.
-
-### Course Review Helper
-- Auto-fill course review forms
-- Support for all Likert scale options
-- Undo functionality
-- Bilingual interface
-
----
-
-## 🎨 Screenshots
-
-*Add screenshots here*
-
----
-
-## 📝 License
-
-This project is open source and available for Qassim University students.
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
----
-
-## 📧 Support
-
-For issues, questions, or suggestions, please open an issue on GitHub.
-
----
-
-<div align="center">
-
-**Made with ❤️ for Qassim University Students**
-
-</div>
+Phase 3 will add:
+- Real timetable logic (add/remove courses)
+- Conflict detection and visual highlighting
+- Timetable state persistence in chrome.storage
+- Interactive course blocks in the timetable grid
