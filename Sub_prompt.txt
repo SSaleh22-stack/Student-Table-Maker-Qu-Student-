@@ -1,0 +1,102 @@
+You are a senior Chrome Extension (Manifest V3) + React + TypeScript engineer. 
+I already have a Chrome extension project (Student Table Maker). Now add a NEW feature: 
+AUTO-FILL the QU course review form on https://stu-gate.qu.edu.sa/*.
+
+GOAL
+On the QU review page (survey with many Likert radio buttons), add a floating widget:
+- Dropdown: targetChoice = ["STRONGLY_AGREE", "AGREE"] (default: AGREE)
+- Button: "Agree All" (Arabic: "موافقة للجميع")
+- Button: "Undo" (Arabic: "تراجع")
+When user clicks "Agree All", every question’s radio group should be set to the chosen option.
+If user clicks Undo, restore the previous selections.
+
+IMPORTANT SAFETY/UX
+- Only run on https://stu-gate.qu.edu.sa/*
+- Do NOT auto-run on page load. Only act after user clicks the button.
+- Show a confirmation dialog before applying (EN/AR).
+- Show success message: how many questions were filled.
+- Leave text/open-ended questions untouched (only radio groups).
+
+REFERENCE UI
+I provided a screenshot of the review layout (Likert scale columns like: موافق بشدة / موافق / غير متأكد / غير موافق / غير موافق بشدة).
+(Internal reference path: /mnt/data/2ae5ba87-74e9-480b-be5f-871d22fa808f.png)
+
+IMPLEMENTATION REQUIREMENTS
+1) Manifest + Permissions
+- Ensure manifest.json includes:
+  - host_permissions: ["https://stu-gate.qu.edu.sa/*"]
+  - permissions: ["activeTab", "scripting", "storage", "tabs"]
+- Prefer a content script that is either:
+  A) statically registered for these pages, OR
+  B) injected programmatically when the user clicks extension icon.
+Choose the simplest stable approach.
+
+2) Content Script (core)
+Create: src/content/reviewAutofill.ts (or similar)
+- Inject a small floating panel (light theme) in bottom-right.
+- Panel must support EN/AR strings (reuse the extension i18n approach you already implemented).
+- The panel should mount only once (idempotent).
+
+3) Autofill Algorithm (robust)
+Because DOM may change, make extraction resilient:
+- Find all radio inputs: input[type="radio"][name]
+- Group by `name` (each question has one group)
+- For each group, choose the radio to select based on the targetChoice.
+
+Selection strategy (use best effort):
+A) If the radios are inside a table:
+   - detect the header row text and map column index by Arabic keywords:
+     - "موافق بشدة" => STRONGLY_AGREE
+     - "موافق" => AGREE (but not "بشدة")
+     - "غير متأكد" => NEUTRAL
+     - "غير موافق" => DISAGREE
+     - "غير موافق بشدة" => STRONGLY_DISAGREE
+   - Then for each question row, click the radio that is in the mapped column.
+B) Fallback if table mapping fails:
+   - If radios have numeric value, pick the maximum value for STRONGLY_AGREE, and the next (or second max) for AGREE.
+   - Else fallback to DOM order heuristic:
+     - Prefer the last radio in the group for STRONGLY_AGREE,
+     - Prefer the 2nd last for AGREE.
+
+When selecting:
+- Prefer `.click()` to trigger all site listeners.
+- Also ensure change event fires (if needed) using dispatchEvent(new Event("change", {bubbles:true})).
+
+4) Undo
+Before applying, snapshot the currently checked radio per group:
+- Map<groupName, checkedRadioId or value>
+Store it in memory in the content script (no need to persist).
+Undo should restore exactly what was checked.
+
+5) SPA / dynamic loading support
+The review page might load content late:
+- Use a MutationObserver or simple retry loop to detect when radio groups appear.
+- The widget can always render, but “Agree All” should show: “No questions found” if nothing detected yet.
+
+6) Connect it with the existing extension
+- Add to the main dashboard a new card/section: “Course Review Helper”
+  - Button: “Open QU Review Page” (opens a tab to https://stu-gate.qu.edu.sa/)
+  - Show instructions in EN/AR: “Open the evaluation page, then click Agree All.”
+- Store the preferred targetChoice (AGREE/STRONGLY_AGREE) in chrome.storage.sync so it’s remembered.
+
+DELIVERABLES
+- Provide the exact file changes:
+  - manifest.json updates
+  - new content script file(s)
+  - background wiring if needed
+  - dashboard UI addition
+- Provide clear local testing steps:
+  - npm install / npm run build
+  - chrome://extensions → Load unpacked
+  - Navigate to https://stu-gate.qu.edu.sa/* (logged in)
+  - Use the floating panel to apply/undo
+
+QUALITY
+- TypeScript types everywhere.
+- Small reusable helper functions:
+  - groupRadiosByName()
+  - detectLikertTableMapping()
+  - chooseRadioForGroup()
+  - applySelection()
+- Clean, modern light UI.
+- No major refactors to the existing codebase.

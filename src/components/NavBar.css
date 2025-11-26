@@ -1,0 +1,364 @@
+.navbar {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  width: 100%;
+}
+
+.navbar-container {
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 0.75rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-direction: row;
+}
+
+.navbar-brand {
+  display: flex;
+  align-items: center;
+}
+
+.navbar-title {
+  color: white;
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.navbar-menu {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-direction: row;
+}
+
+.navbar-menu .language-toggle {
+  margin: 0;
+}
+
+.navbar-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: white;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.navbar-item:hover {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.navbar-item:active {
+  transform: translateY(0);
+}
+
+.navbar-icon {
+  font-size: 1.1rem;
+}
+
+.navbar-text {
+  white-space: nowrap;
+}
+
+/* Review Helper Modal */
+.review-helper-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 1rem;
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.review-helper-modal {
+  background: white;
+  border-radius: 16px;
+  max-width: 800px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.review-helper-modal-header {
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 16px 16px 0 0;
+}
+
+.review-helper-modal-title {
+  color: white;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.review-helper-modal-close {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.review-helper-modal-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.review-helper-modal-body {
+  padding: 2rem;
+}
+
+.review-helper-section-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.review-helper-intro {
+  background: #f7fafc;
+  padding: 1.5rem;
+  border-radius: 12px;
+  border-left: 4px solid #667eea;
+}
+
+.review-helper-intro-text {
+  color: #4a5568;
+  line-height: 1.7;
+  font-size: 1rem;
+  margin: 0;
+}
+
+.review-helper-instructions {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.review-helper-instructions-title {
+  color: #2d3748;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0 0 1rem 0;
+}
+
+.review-helper-steps {
+  color: #4a5568;
+  line-height: 1.8;
+  font-size: 0.95rem;
+  padding-left: 1.5rem;
+  margin: 0;
+}
+
+.review-helper-steps li {
+  margin-bottom: 0.75rem;
+}
+
+.review-helper-options {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  padding-left: 1.5rem;
+  list-style-type: disc;
+}
+
+.review-helper-options li {
+  margin-bottom: 0.25rem;
+  color: #667eea;
+  font-weight: 500;
+}
+
+.review-helper-features {
+  background: #f0fff4;
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid #9ae6b4;
+}
+
+.review-helper-features-title {
+  color: #22543d;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0 0 1rem 0;
+}
+
+.review-helper-features-list {
+  color: #2f855a;
+  line-height: 1.8;
+  font-size: 0.95rem;
+  padding-left: 1.5rem;
+  margin: 0;
+}
+
+.review-helper-features-list li {
+  margin-bottom: 0.5rem;
+}
+
+.review-helper-action {
+  display: flex;
+  justify-content: center;
+  padding-top: 1rem;
+}
+
+.review-helper-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 2rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.review-helper-action-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+}
+
+.review-helper-action-btn:active {
+  transform: translateY(0);
+}
+
+.review-helper-action-icon {
+  font-size: 1.25rem;
+}
+
+.review-helper-action-text {
+  white-space: nowrap;
+}
+
+/* RTL Support */
+[dir="rtl"] .navbar-container {
+  flex-direction: row-reverse;
+}
+
+/* Ensure language toggle is always at the end in both directions */
+[dir="ltr"] .navbar-menu {
+  flex-direction: row;
+}
+
+[dir="rtl"] .navbar-menu {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .review-helper-modal-header {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .review-helper-intro {
+  border-left: none;
+  border-right: 4px solid #667eea;
+}
+
+[dir="rtl"] .review-helper-steps {
+  padding-right: 1.5rem;
+  padding-left: 0;
+}
+
+[dir="rtl"] .review-helper-options {
+  padding-right: 1.5rem;
+  padding-left: 0;
+}
+
+[dir="rtl"] .review-helper-features-list {
+  padding-right: 1.5rem;
+  padding-left: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .navbar-container {
+    padding: 0.5rem 1rem;
+    flex-wrap: wrap;
+  }
+
+  .navbar-title {
+    font-size: 1rem;
+  }
+
+  .navbar-item {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  .review-helper-modal {
+    max-width: 95%;
+    max-height: 95vh;
+  }
+
+  .review-helper-modal-header {
+    padding: 1rem 1.5rem;
+  }
+
+  .review-helper-modal-title {
+    font-size: 1.25rem;
+  }
+
+  .review-helper-modal-body {
+    padding: 1.5rem;
+  }
+
+  .review-helper-action-btn {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+  }
+}
+

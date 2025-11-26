@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Qu Student - Bookmarklet Setup</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      max-width: 600px;
+      margin: 2rem auto;
+      padding: 1rem;
+      line-height: 1.6;
+      text-align: center;
+    }
+    .setup-container {
+      background: white;
+      border-radius: 12px;
+      padding: 2rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      margin: 2rem 0;
+    }
+    .setup-btn {
+      display: inline-block;
+      padding: 1rem 2rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      text-decoration: none;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 1.1rem;
+      margin: 1rem 0;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .setup-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5);
+    }
+    .setup-btn:active {
+      transform: translateY(0);
+    }
+    .instructions {
+      background: #f0fff4;
+      border-left: 4px solid #48bb78;
+      padding: 1rem;
+      margin: 1rem 0;
+      text-align: left;
+      border-radius: 6px;
+    }
+    .success-message {
+      background: #c6f6d5;
+      color: #22543d;
+      padding: 1rem;
+      border-radius: 6px;
+      margin: 1rem 0;
+      display: none;
+    }
+    .bookmarklet-link {
+      display: inline-block;
+      padding: 0.75rem 1.5rem;
+      background: #667eea;
+      color: white;
+      text-decoration: none;
+      border-radius: 6px;
+      margin: 0.5rem;
+      font-weight: 500;
+      cursor: move;
+    }
+    .bookmarklet-link:hover {
+      background: #5568d3;
+    }
+    h1 { color: #2d3748; }
+    .highlight {
+      background: #fff3cd;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <h1>📚 Qu Student - Bookmarklet Setup</h1>
+  
+  <div class="setup-container">
+    <h2>One-Click Setup</h2>
+    <p>Click the button below to open the bookmark dialog:</p>
+    
+    <button class="setup-btn" id="setupBtn" onclick="openBookmarkDialog()">
+      ➕ Add to Bookmarks
+    </button>
+    
+    <div class="success-message" id="successMsg">
+      ✅ If the bookmark dialog opened, click "Save" to add the bookmarklet!
+    </div>
+    
+    <div class="instructions" id="dragInstructions" style="display: none; margin-top: 1rem;">
+      <h3>📌 Drag the link below to your bookmarks bar:</h3>
+      <p style="font-size: 0.9rem; color: #666; margin-bottom: 0.5rem;">
+        <strong>First:</strong> Press <kbd style="background: #f0f0f0; padding: 0.2rem 0.4rem; border-radius: 3px;">Ctrl+Shift+B</kbd> (or <kbd style="background: #f0f0f0; padding: 0.2rem 0.4rem; border-radius: 3px;">Cmd+Shift+B</kbd> on Mac) to show your bookmarks bar if it's hidden.
+      </p>
+      <a href="javascript:(function() {'use strict'; var parseSingleTimeSlot, parseTimeSlots, extractCoursesFromPage; parseSingleTimeSlot = function(slotText, dayMap) {if (!slotText) return null;const dayMapLocal = dayMap || { 1: 'Sun', 2: 'Mon', 3: 'Tue', 4: 'Wed', 5: 'Thu' }; const dayNumbersMatch = slotText.match(/^\s*((?:\d+\s*)+)/);if (!dayNumbersMatch) return null;const dayNumbers = dayNumbersMatch[1].trim().split(/\s+/).map(n => parseInt(n)).filter(n => !isNaN(n));const days = dayNumbers.map(n => dayMapLocal[n]).filter(Boolean);if (days.length === 0) return null; const timeMatch = slotText.match(/@t\s+(\d{1,2}):(\d{2})\s*([صم])?\s*-\s*(\d{1,2}):(\d{2})\s*([صم])?/i);if (!timeMatch) return null;let startHour = parseInt(timeMatch[1]);const startMin = timeMatch[2];const startPeriod = timeMatch[3];let endHour = parseInt(timeMatch[4]);const endMin = timeMatch[5];const endPeriod = timeMatch[6]; if (startPeriod === 'م' && startHour !== 12) startHour += 12;if (startPeriod === 'ص' && startHour === 12) startHour = 0;if (endPeriod === 'م' && endHour !== 12) endHour += 12;if (endPeriod === 'ص' && endHour === 12) endHour = 0; const locationMatch = slotText.match(/@r\s+(.+?)(?:\s*$|@n|@t|@)/);const location = locationMatch ? locationMatch[1].trim() : undefined;return {days: days,startTime: `${startHour.toString().padStart(2, '0')}:${startMin}`,endTime: `${endHour.toString().padStart(2, '0')}:${endMin}`,location: location};}; parseTimeSlots = function(input) {const slots = [];if (!input) return slots; if (input.includes('@n')) {const dayMap = { 1: 'Sun', 2: 'Mon', 3: 'Tue', 4: 'Wed', 5: 'Thu' };const parts = input.split(/@n\s*/).filter(p => p.trim());for (const part of parts) {const slot = parseSingleTimeSlot(part.trim(), dayMap);if (slot && slot.days.length > 0) {slots.push(slot);}}return slots;} const pattern = /((?:\d+\s*)+)@t\s+(\d{1,2}):(\d{2})\s*([صم])?\s*-\s*(\d{1,2}):(\d{2})\s*([صم])?/gi;const matches = input.matchAll(pattern);const dayMap = { 1: 'Sun', 2: 'Mon', 3: 'Tue', 4: 'Wed', 5: 'Thu' };for (const match of matches) {const slot = parseSingleTimeSlot(match[0], dayMap);if (slot && slot.days.length > 0) {slots.push(slot);}} if (slots.length === 0) {const slot = parseSingleTimeSlot(input, dayMap);if (slot && slot.days.length > 0) {slots.push(slot);}}return slots;}; extractCoursesFromPage = function() {const courses = [];let skippedRows = 0;let errorRows = 0;try {console.log('Extracting courses from QU portal:', window.location.href); const rows = document.querySelectorAll('tbody tr[class^=\"ROW\"]');console.log(`Found ${rows.length} course rows`);rows.forEach((row, index) => {try {const cells = row.querySelectorAll('td');if (cells.length < 8) {console.warn(`Row ${index} has insufficient cells (${cells.length}), expected 8`);skippedRows++;return;} const code = (cells[0]?.textContent?.trim()) || `COURSE-${index}`;const name = (cells[1]?.textContent?.trim()) || 'Unknown Course';const section = (cells[3]?.textContent?.trim()) || '01';const classTypeText = (cells[4]?.textContent?.trim()) || ''; let classType;if (classTypeText.includes('نظري') || classTypeText.toLowerCase().includes('theoretical')) {classType = 'theoretical';} else if (classTypeText.includes('عملي') || classTypeText.toLowerCase().includes('practical')) {classType = 'practical';} else if (classTypeText.includes('تمرين') || classTypeText.toLowerCase().includes('exercise')) {classType = 'exercise';} const statusText = (cells[6]?.textContent?.trim()) || '';const status = statusText.includes('مغلقة') || statusText.toLowerCase().includes('closed')? 'closed': statusText.includes('مفتوحة') || statusText.toLowerCase().includes('open')? 'open': undefined; const lastCell = cells[7];let instructor = '';let examPeriod = '';let timeSlots = [];if (lastCell) {const instructorInput = lastCell.querySelector('input[name*=\"instructor\"]');if (instructorInput) {instructor = instructorInput.value.trim();}const examInput = lastCell.querySelector('input[name*=\"examPeriod\"]');if (examInput) {examPeriod = examInput.value.trim();} const sectionInput = lastCell.querySelector('input[name*=\"section\"]');if (sectionInput && sectionInput.value) {try {timeSlots = parseTimeSlots(sectionInput.value);} catch (parseError) {console.warn(`Error parsing time slots for row ${index}:`, parseError, 'Section value:', sectionInput.value);timeSlots = [];}}} let course;if (timeSlots.length > 0) { const allDays = new Set();timeSlots.forEach(ts => ts.days.forEach(d => allDays.add(d)));const firstSlot = timeSlots[0];course = {id: `${code}-${section}-${index}`,code: code,name: name,section: section,days: Array.from(allDays),startTime: firstSlot.startTime,endTime: firstSlot.endTime,location: firstSlot.location || undefined,timeSlots: timeSlots.length > 1 ? timeSlots.map(ts => ({days: ts.days,startTime: ts.startTime,endTime: ts.endTime,location: ts.location || undefined})) : undefined,instructor: instructor || undefined,status: status,classType: classType,finalExam: examPeriod ? {day: firstSlot.days[0] || 'Sun',startTime: '08:00',endTime: '10:00',date: examPeriod} : undefined};} else { course = {id: `${code}-${section}-${index}`,code: code,name: name,section: section,days: ['Sun'],startTime: '08:00',endTime: '09:30',instructor: instructor || undefined,status: status,classType: classType,finalExam: examPeriod ? {day: 'Sun',startTime: '08:00',endTime: '10:00',date: examPeriod} : undefined};}courses.push(course);} catch (error) {console.error(`Error parsing course row ${index}:`, error, row);errorRows++;}});console.log(`Successfully extracted ${courses.length} courses from ${rows.length} rows (${skippedRows} skipped, ${errorRows} errors)`);if (courses.length < rows.length * 0.5) {console.warn(`⚠️ Warning: Only extracted ${courses.length} courses from ${rows.length} rows. This might indicate a parsing issue.`);}return courses;} catch (error) {console.error('Error extracting courses:', error);return [];}}; try {const courses = extractCoursesFromPage();if (!courses || courses.length === 0) {alert('No courses found on this page. Make sure you are on the QU student portal course page and that courses are visible.');console.error('No courses extracted. Check the page structure.');return;} const validCourses = courses.filter(c => c && c.code && c.name);if (validCourses.length === 0) {alert('Error: Extracted courses are invalid. Check console for details.');console.error('Invalid courses:', courses);return;} const coursesJson = JSON.stringify(validCourses);const encodedCourses = encodeURIComponent(coursesJson); try {localStorage.setItem('qu-student-courses', coursesJson);localStorage.setItem('qu-student-courses-timestamp', Date.now().toString());console.log('Saved '+validCourses.length+' courses to localStorage');} catch (storageError) {console.warn('Could not save to localStorage (cross-origin):', storageError); } const message = '✅ Successfully extracted '+validCourses.length+' courses!\n\nOpening web app...';alert(message); const defaultUrl = 'http://localhost:3000'; const webAppUrl = prompt('Enter your Qu Student web app URL:', defaultUrl) || defaultUrl;const urlWithData = webAppUrl.trim() + '#courses=' + encodedCourses;console.log('Opening web app with courses data in URL');window.open(urlWithData, '_blank');} catch (error) {console.error('Bookmarklet error:', error);console.error('Error stack:', error.stack);alert('Error extracting courses: ' + (error.message || String(error)));}})();" class="bookmarklet-link" id="bookmarkletLink" draggable="true">📚 Extract QU Courses</a>
+      <p style="font-size: 0.85rem; color: #888; margin-top: 0.5rem; font-style: italic;">
+        💡 Tip: Just click and drag this link to your bookmarks bar (the bar below the address bar)
+      </p>
+    </div>
+  </div>
+
+  <div class="instructions">
+    <h3>How to Use:</h3>
+    <ol style="text-align: left;">
+      <li>After adding the bookmarklet, go to the QU student portal course page</li>
+      <li>Click the bookmarklet from your bookmarks</li>
+      <li>Wait for extraction - you'll see a success message</li>
+      <li>Enter your web app URL (or use default)</li>
+      <li>Courses will be automatically loaded in the web app!</li>
+    </ol>
+  </div>
+
+  <script>
+    const bookmarkletCode = `javascript:(function() {'use strict'; var parseSingleTimeSlot, parseTimeSlots, extractCoursesFromPage; parseSingleTimeSlot = function(slotText, dayMap) {if (!slotText) return null;const dayMapLocal = dayMap || { 1: 'Sun', 2: 'Mon', 3: 'Tue', 4: 'Wed', 5: 'Thu' }; const dayNumbersMatch = slotText.match(/^\\s*((?:\\d+\\s*)+)/);if (!dayNumbersMatch) return null;const dayNumbers = dayNumbersMatch[1].trim().split(/\\s+/).map(n => parseInt(n)).filter(n => !isNaN(n));const days = dayNumbers.map(n => dayMapLocal[n]).filter(Boolean);if (days.length === 0) return null; const timeMatch = slotText.match(/@t\\s+(\\d{1,2}):(\\d{2})\\s*([صم])?\\s*-\\s*(\\d{1,2}):(\\d{2})\\s*([صم])?/i);if (!timeMatch) return null;let startHour = parseInt(timeMatch[1]);const startMin = timeMatch[2];const startPeriod = timeMatch[3];let endHour = parseInt(timeMatch[4]);const endMin = timeMatch[5];const endPeriod = timeMatch[6]; if (startPeriod === 'م' && startHour !== 12) startHour += 12;if (startPeriod === 'ص' && startHour === 12) startHour = 0;if (endPeriod === 'م' && endHour !== 12) endHour += 12;if (endPeriod === 'ص' && endHour === 12) endHour = 0; const locationMatch = slotText.match(/@r\\s+(.+?)(?:\\s*$|@n|@t|@)/);const location = locationMatch ? locationMatch[1].trim() : undefined;return {days: days,startTime: \`\${startHour.toString().padStart(2, '0')}:\${startMin}\`,endTime: \`\${endHour.toString().padStart(2, '0')}:\${endMin}\`,location: location};}; parseTimeSlots = function(input) {const slots = [];if (!input) return slots; if (input.includes('@n')) {const dayMap = { 1: 'Sun', 2: 'Mon', 3: 'Tue', 4: 'Wed', 5: 'Thu' };const parts = input.split(/@n\\s*/).filter(p => p.trim());for (const part of parts) {const slot = parseSingleTimeSlot(part.trim(), dayMap);if (slot && slot.days.length > 0) {slots.push(slot);}}return slots;} const pattern = /((?:\\d+\\s*)+)@t\\s+(\\d{1,2}):(\\d{2})\\s*([صم])?\\s*-\\s*(\\d{1,2}):(\\d{2})\\s*([صم])?/gi;const matches = input.matchAll(pattern);const dayMap = { 1: 'Sun', 2: 'Mon', 3: 'Tue', 4: 'Wed', 5: 'Thu' };for (const match of matches) {const slot = parseSingleTimeSlot(match[0], dayMap);if (slot && slot.days.length > 0) {slots.push(slot);}} if (slots.length === 0) {const slot = parseSingleTimeSlot(input, dayMap);if (slot && slot.days.length > 0) {slots.push(slot);}}return slots;}; extractCoursesFromPage = function() {const courses = [];let skippedRows = 0;let errorRows = 0;try {console.log('Extracting courses from QU portal:', window.location.href); const rows = document.querySelectorAll('tbody tr[class^=\"ROW\"]');console.log(\`Found \${rows.length} course rows\`);rows.forEach((row, index) => {try {const cells = row.querySelectorAll('td');if (cells.length < 8) {console.warn(\`Row \${index} has insufficient cells (\${cells.length}), expected 8\`);skippedRows++;return;} const code = (cells[0]?.textContent?.trim()) || \`COURSE-\${index}\`;const name = (cells[1]?.textContent?.trim()) || 'Unknown Course';const section = (cells[3]?.textContent?.trim()) || '01';const classTypeText = (cells[4]?.textContent?.trim()) || ''; let classType;if (classTypeText.includes('نظري') || classTypeText.toLowerCase().includes('theoretical')) {classType = 'theoretical';} else if (classTypeText.includes('عملي') || classTypeText.toLowerCase().includes('practical')) {classType = 'practical';} else if (classTypeText.includes('تمرين') || classTypeText.toLowerCase().includes('exercise')) {classType = 'exercise';} const statusText = (cells[6]?.textContent?.trim()) || '';const status = statusText.includes('مغلقة') || statusText.toLowerCase().includes('closed')? 'closed': statusText.includes('مفتوحة') || statusText.toLowerCase().includes('open')? 'open': undefined; const lastCell = cells[7];let instructor = '';let examPeriod = '';let timeSlots = [];if (lastCell) {const instructorInput = lastCell.querySelector('input[name*=\"instructor\"]');if (instructorInput) {instructor = instructorInput.value.trim();}const examInput = lastCell.querySelector('input[name*=\"examPeriod\"]');if (examInput) {examPeriod = examInput.value.trim();} const sectionInput = lastCell.querySelector('input[name*=\"section\"]');if (sectionInput && sectionInput.value) {try {timeSlots = parseTimeSlots(sectionInput.value);} catch (parseError) {console.warn(\`Error parsing time slots for row \${index}:\`, parseError, 'Section value:', sectionInput.value);timeSlots = [];}}} let course;if (timeSlots.length > 0) { const allDays = new Set();timeSlots.forEach(ts => ts.days.forEach(d => allDays.add(d)));const firstSlot = timeSlots[0];course = {id: \`\${code}-\${section}-\${index}\`,code: code,name: name,section: section,days: Array.from(allDays),startTime: firstSlot.startTime,endTime: firstSlot.endTime,location: firstSlot.location || undefined,timeSlots: timeSlots.length > 1 ? timeSlots.map(ts => ({days: ts.days,startTime: ts.startTime,endTime: ts.endTime,location: ts.location || undefined})) : undefined,instructor: instructor || undefined,status: status,classType: classType,finalExam: examPeriod ? {day: firstSlot.days[0] || 'Sun',startTime: '08:00',endTime: '10:00',date: examPeriod} : undefined};} else { course = {id: \`\${code}-\${section}-\${index}\`,code: code,name: name,section: section,days: ['Sun'],startTime: '08:00',endTime: '09:30',instructor: instructor || undefined,status: status,classType: classType,finalExam: examPeriod ? {day: 'Sun',startTime: '08:00',endTime: '10:00',date: examPeriod} : undefined};}courses.push(course);} catch (error) {console.error(\`Error parsing course row \${index}:\`, error, row);errorRows++;}});console.log(\`Successfully extracted \${courses.length} courses from \${rows.length} rows (\${skippedRows} skipped, \${errorRows} errors)\`);if (courses.length < rows.length * 0.5) {console.warn(\`⚠️ Warning: Only extracted \${courses.length} courses from \${rows.length} rows. This might indicate a parsing issue.\`);}return courses;} catch (error) {console.error('Error extracting courses:', error);return [];}}; try {const courses = extractCoursesFromPage();if (!courses || courses.length === 0) {alert('No courses found on this page. Make sure you are on the QU student portal course page and that courses are visible.');console.error('No courses extracted. Check the page structure.');return;} const validCourses = courses.filter(c => c && c.code && c.name);if (validCourses.length === 0) {alert('Error: Extracted courses are invalid. Check console for details.');console.error('Invalid courses:', courses);return;} const coursesJson = JSON.stringify(validCourses);const encodedCourses = encodeURIComponent(coursesJson); try {localStorage.setItem('qu-student-courses', coursesJson);localStorage.setItem('qu-student-courses-timestamp', Date.now().toString());console.log('Saved '+validCourses.length+' courses to localStorage');} catch (storageError) {console.warn('Could not save to localStorage (cross-origin):', storageError); } const message = '✅ Successfully extracted '+validCourses.length+' courses!\\n\\nOpening web app...';alert(message); const defaultUrl = 'http://localhost:3000'; const webAppUrl = prompt('Enter your Qu Student web app URL:', defaultUrl) || defaultUrl;const urlWithData = webAppUrl.trim() + '#courses=' + encodedCourses;console.log('Opening web app with courses data in URL');window.open(urlWithData, '_blank');} catch (error) {console.error('Bookmarklet error:', error);console.error('Error stack:', error.stack);alert('Error extracting courses: ' + (error.message || String(error)));}})();`;
+
+    function openBookmarkDialog() {
+      const successMsg = document.getElementById('successMsg');
+      const dragInstructions = document.getElementById('dragInstructions');
+      
+      // Hide previous messages
+      successMsg.style.display = 'none';
+      dragInstructions.style.display = 'none';
+      
+      let bookmarkAdded = false;
+      
+      // Method 1: Try IE/Edge AddFavorite (legacy support)
+      if (window.external && typeof window.external.AddFavorite !== 'undefined') {
+        try {
+          // Create a temporary page with the bookmarklet
+          const tempUrl = 'data:text/html,<html><head><title>Extract QU Courses</title></head><body><script>' + bookmarkletCode.replace('javascript:', '') + '<\/script></body></html>';
+          window.external.AddFavorite(tempUrl, 'Extract QU Courses');
+          bookmarkAdded = true;
+          successMsg.style.display = 'block';
+          return;
+        } catch (e) {
+          console.log('AddFavorite not available');
+        }
+      }
+      
+      // Method 2: For modern browsers, we'll use keyboard shortcut simulation
+      // Create a link and try to trigger Ctrl+D (bookmark shortcut)
+      // Note: This won't work due to browser security, but we'll show instructions
+      
+      // Method 3: Create a bookmarklet link that can be easily added
+      // We'll create a visible link and show instructions
+      if (!bookmarkAdded) {
+        // Detect browser
+        const isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
+        const isFirefox = /Firefox/.test(navigator.userAgent);
+        const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
+        const isEdge = /Edg/.test(navigator.userAgent);
+        
+        // Show the drag-and-drop option
+        dragInstructions.style.display = 'block';
+        successMsg.style.display = 'block';
+        
+        let instructionText = '';
+        if (isChrome || isEdge) {
+          instructionText = '📌 <strong>Method 1 (Easiest):</strong> Make sure your bookmarks bar is visible (Ctrl+Shift+B), then <span class="highlight">drag the link below to your bookmarks bar</span>!<br><br><strong>Method 2:</strong> Right-click the link → <span class="highlight">"Copy link address"</span>, then go to Bookmarks → Bookmark Manager → Add new bookmark → Paste the link.';
+        } else if (isFirefox) {
+          instructionText = '📌 <strong>Method 1 (Easiest):</strong> Make sure your bookmarks toolbar is visible (Ctrl+Shift+B), then <span class="highlight">drag the link below to your bookmarks toolbar</span>!<br><br><strong>Method 2:</strong> Right-click the link → <span class="highlight">"Bookmark Link"</span>, then click <span class="highlight">"Save"</span>!';
+        } else if (isSafari) {
+          instructionText = '📌 <strong>Method 1 (Easiest):</strong> Make sure your bookmarks bar is visible (Cmd+Shift+B), then <span class="highlight">drag the link below to your bookmarks bar</span>!<br><br><strong>Method 2:</strong> Right-click the link → <span class="highlight">"Add Bookmark"</span>, then click <span class="highlight">"Add"</span>!';
+        } else {
+          instructionText = '📌 <strong>Method 1 (Easiest):</strong> Make sure your bookmarks bar is visible, then <span class="highlight">drag the link below to your bookmarks bar</span>!<br><br><strong>Method 2:</strong> Right-click the link → <span class="highlight">"Bookmark Link"</span> or <span class="highlight">"Add to Favorites"</span>, then click <span class="highlight">"Save"</span>!';
+        }
+        
+        successMsg.innerHTML = instructionText;
+        
+        // Scroll to the link
+        setTimeout(() => {
+          const bookmarkletLink = document.getElementById('bookmarkletLink');
+          if (bookmarkletLink) {
+            bookmarkletLink.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            bookmarkletLink.style.border = '3px solid #48bb78';
+            bookmarkletLink.style.boxShadow = '0 0 20px rgba(72, 187, 120, 0.5)';
+            bookmarkletLink.style.cursor = 'grab';
+            bookmarkletLink.draggable = true;
+            
+            // Add drag start handler
+            bookmarkletLink.addEventListener('dragstart', function(e) {
+              e.dataTransfer.setData('text/uri-list', bookmarkletCode);
+              e.dataTransfer.setData('text/plain', bookmarkletCode);
+              this.style.cursor = 'grabbing';
+            });
+            
+            bookmarkletLink.addEventListener('dragend', function() {
+              this.style.cursor = 'grab';
+            });
+          }
+        }, 100);
+      }
+    }
+  </script>
+</body>
+</html>

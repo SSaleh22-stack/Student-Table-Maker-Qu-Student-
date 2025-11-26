@@ -1,0 +1,73 @@
+.language-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.15);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+}
+
+/* When used outside navbar (legacy support) */
+.language-toggle:not(.navbar .language-toggle) {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1000;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.lang-btn {
+  background: none;
+  border: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  transition: all 0.2s;
+  border-radius: 0.25rem;
+}
+
+.lang-btn:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.lang-btn.active {
+  color: white;
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* When used outside navbar (legacy support) */
+.language-toggle:not(.navbar .language-toggle) .lang-btn {
+  color: #666;
+}
+
+.language-toggle:not(.navbar .language-toggle) .lang-btn:hover {
+  color: #333;
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.language-toggle:not(.navbar .language-toggle) .lang-btn.active {
+  color: #667eea;
+  background: rgba(102, 126, 234, 0.1);
+}
+
+.lang-separator {
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 300;
+}
+
+/* When used outside navbar (legacy support) */
+.language-toggle:not(.navbar .language-toggle) .lang-separator {
+  color: #ccc;
+}
+
+[dir="rtl"] .language-toggle {
+  right: auto;
+  left: 1rem;
+}
+

@@ -1,0 +1,144 @@
+/* Import shared styles from extension - simplified for web app */
+.app {
+  min-height: 100vh;
+  background: #f5f7fa;
+  position: relative;
+}
+
+.success-message {
+  max-width: 1800px;
+  margin: 1rem auto;
+  padding: 1rem 2rem;
+  background: #c6f6d5;
+  color: #22543d;
+  border: 1px solid #9ae6b4;
+  border-radius: 0.5rem;
+  text-align: center;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  animation: slideDown 0.3s ease-out;
+  box-shadow: 0 2px 8px rgba(34, 84, 61, 0.2);
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.success-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.success-message-text {
+  flex: 1;
+}
+
+.offered-courses-button-container {
+  max-width: 1800px;
+  margin: 1rem auto;
+  padding: 0 1rem;
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.offered-courses-btn,
+.add-course-manually-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.offered-courses-btn:hover,
+.add-course-manually-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.add-course-manually-btn {
+  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+}
+
+.refresh-courses-btn {
+  background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(237, 137, 54, 0.3);
+}
+
+.refresh-courses-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(237, 137, 54, 0.4);
+}
+
+.app-content {
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 0 1rem 3rem 1rem;
+}
+
+.main-layout {
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-start;
+}
+
+.timetable-wrapper {
+  flex: 1;
+  min-width: 0;
+}
+
+.course-list-wrapper {
+  width: 400px;
+  flex-shrink: 0;
+  position: sticky;
+  top: calc(60px + 1rem);
+  max-height: calc(100vh - 60px - 2rem);
+  overflow-y: auto;
+}
+
+/* Responsive for iPad and mobile */
+@media (max-width: 1200px) {
+  .main-layout {
+    flex-direction: column;
+  }
+  
+  .course-list-wrapper {
+    width: 100%;
+    position: static;
+    max-height: none;
+  }
+}
+
+[dir="rtl"] .app-content {
+  direction: rtl;
+}
+
+[dir="rtl"] .main-layout {
+  flex-direction: row-reverse;
+}
+

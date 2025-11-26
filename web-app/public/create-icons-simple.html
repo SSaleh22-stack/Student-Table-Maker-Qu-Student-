@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Create Icons - Qu Student</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 2rem auto;
+      padding: 2rem;
+    }
+    canvas {
+      border: 1px solid #ccc;
+      margin: 1rem;
+      display: block;
+    }
+    button {
+      padding: 1rem 2rem;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      margin: 1rem 0;
+    }
+    button:hover {
+      background: #5568d3;
+    }
+    .downloads {
+      margin-top: 2rem;
+    }
+    .downloads a {
+      display: block;
+      margin: 0.5rem 0;
+      padding: 0.5rem;
+      background: #f7fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      text-decoration: none;
+      color: #2d3748;
+    }
+  </style>
+</head>
+<body>
+  <h1>📱 Icon Generator for Qu Student</h1>
+  <p>Click the button below to generate icon files. Then download and save them to the <code>public/</code> folder.</p>
+  
+  <canvas id="icon192" width="192" height="192"></canvas>
+  <canvas id="icon512" width="512" height="512"></canvas>
+  
+  <button onclick="generateIcons()">Generate Icons</button>
+  
+  <div class="downloads" id="downloads"></div>
+  
+  <div style="margin-top: 2rem; padding: 1rem; background: #f0fff4; border-left: 4px solid #48bb78; border-radius: 4px;">
+    <h3>Instructions:</h3>
+    <ol>
+      <li>Click "Generate Icons" button above</li>
+      <li>Download both icon files</li>
+      <li>Save them to: <code>web-app/public/</code> folder</li>
+      <li>Replace the existing icon files</li>
+      <li>Refresh your web app</li>
+    </ol>
+  </div>
+
+  <script>
+    function generateIcons() {
+      const sizes = [192, 512];
+      const downloads = document.getElementById('downloads');
+      downloads.innerHTML = '<h3>Download Icons:</h3>';
+
+      sizes.forEach(size => {
+        const canvas = document.getElementById(`icon${size}`);
+        const ctx = canvas.getContext('2d');
+        
+        // Create gradient background matching app theme
+        const gradient = ctx.createLinearGradient(0, 0, size, size);
+        gradient.addColorStop(0, '#667eea');
+        gradient.addColorStop(1, '#764ba2');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, size, size);
+        
+        // Add white border for better visibility
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.lineWidth = size / 20;
+        ctx.strokeRect(size / 10, size / 10, size * 0.8, size * 0.8);
+        
+        // Add "QU" text
+        ctx.fillStyle = 'white';
+        ctx.font = `bold ${size / 3}px Arial, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+        ctx.shadowBlur = size / 20;
+        ctx.fillText('QU', size / 2, size / 2);
+        
+        // Convert to blob and create download link
+        canvas.toBlob((blob) => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `icon-${size}.png`;
+          a.textContent = `⬇️ Download icon-${size}.png`;
+          a.style.display = 'block';
+          a.style.margin = '10px 0';
+          a.style.padding = '10px';
+          a.style.background = '#e2e8f0';
+          a.style.borderRadius = '4px';
+          downloads.appendChild(a);
+          
+          console.log(`Generated icon-${size}.png`);
+        }, 'image/png');
+      });
+      
+      alert('Icons generated! Click the download links below to save them.');
+    }
+    
+    // Auto-generate on load
+    window.addEventListener('load', () => {
+      setTimeout(generateIcons, 500);
+    });
+  </script>
+</body>
+</html>
+

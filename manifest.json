@@ -1,0 +1,37 @@
+{
+  "manifest_version": 3,
+  "name": "Qu Student",
+  "version": "3.0.0",
+  "description": "Help Qassim University students extract courses and build visual timetables and autofill course reviews",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "tabs",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://*.qu.edu.sa/*",
+    "https://stu-gate.qu.edu.sa/*"
+  ],
+  "action": {
+    "default_title": "Open Student Table Maker"
+  },
+  "background": {
+    "service_worker": "src/background/index.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://stu-gate.qu.edu.sa/*"],
+      "js": ["src/content/reviewAutofill.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["dashboard.html", "assets/*"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
+
