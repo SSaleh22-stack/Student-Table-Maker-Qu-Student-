@@ -277,6 +277,27 @@ const AppContent: React.FC = () => {
         >
           🔄 {language === 'en' ? 'Refresh Courses' : 'تحديث المقررات'}
         </button>
+        <button 
+          className="clear-courses-btn"
+          onClick={() => {
+            if (window.confirm(
+              language === 'en' 
+                ? 'Are you sure you want to clear all courses? This action cannot be undone.'
+                : 'هل أنت متأكد أنك تريد حذف جميع المقررات؟ لا يمكن التراجع عن هذا الإجراء.'
+            )) {
+              setCourses([]);
+              localStorage.removeItem('qu-student-courses');
+              localStorage.removeItem('qu-student-courses-timestamp');
+              const message = language === 'en'
+                ? '✅ All courses have been cleared.'
+                : '✅ تم حذف جميع المقررات.';
+              setSuccessMessage(message);
+              setTimeout(() => setSuccessMessage(null), 5000);
+            }
+          }}
+        >
+          🗑️ {language === 'en' ? 'Clear All Courses' : 'حذف جميع المقررات'}
+        </button>
       </div>
 
       <OfferedCoursesModal

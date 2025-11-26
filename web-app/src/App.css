@@ -77,7 +77,8 @@
   background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
 }
 
-.refresh-courses-btn {
+.refresh-courses-btn,
+.clear-courses-btn {
   background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
   color: white;
   border: none;
@@ -90,9 +91,19 @@
   box-shadow: 0 2px 8px rgba(237, 137, 54, 0.3);
 }
 
-.refresh-courses-btn:hover {
+.refresh-courses-btn:hover,
+.clear-courses-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(237, 137, 54, 0.4);
+}
+
+.clear-courses-btn {
+  background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+  box-shadow: 0 2px 8px rgba(245, 101, 101, 0.3);
+}
+
+.clear-courses-btn:hover {
+  box-shadow: 0 4px 12px rgba(245, 101, 101, 0.4);
 }
 
 .app-content {

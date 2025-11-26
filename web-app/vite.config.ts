@@ -3,7 +3,12 @@ import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
 
 export default defineConfig({
-  base: './',
+  // Base path for GitHub Pages (repository name)
+  // For local development, use './' (relative paths)
+  // For production build, use the repository name as base path
+  base: process.env.NODE_ENV === 'production' 
+    ? '/Student-Table-Maker-Qu-Student-/' 
+    : './',
   plugins: [react()],
   build: {
     outDir: 'dist',
