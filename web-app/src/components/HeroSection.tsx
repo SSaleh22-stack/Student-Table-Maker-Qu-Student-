@@ -25,7 +25,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onExtractCourses }) => {
               {t.extractCourses}
             </button>
             <a 
-              href="/bookmarklet.html" 
+              href="./bookmarklet.html" 
               className="extract-btn bookmarklet-link"
               style={{ textDecoration: 'none', display: 'inline-block' }}
             >
