@@ -101,7 +101,7 @@
     <p style="font-size: 0.9rem; color: #666; margin-bottom: 1rem;">
       <strong>First:</strong> Press <kbd style="background: #f0f0f0; padding: 0.2rem 0.4rem; border-radius: 3px;">Ctrl+Shift+B</kbd> (or <kbd style="background: #f0f0f0; padding: 0.2rem 0.4rem; border-radius: 3px;">Cmd+Shift+B</kbd> on Mac) to show your bookmarks bar if it's hidden.
     </p>
-    <a href="./extract-courses.html" class="bookmarklet-button" id="bookmarkletLink" draggable="true" title="📚 Qu Student - Extract Courses">📚 Qu Student</a>
+    <a href="#" class="bookmarklet-button" id="bookmarkletLink" draggable="true" title="📚 Qu Student - Extract Courses">📚 Qu Student</a>
     <p style="font-size: 0.85rem; color: #888; margin-top: 0.5rem; font-style: italic;">
       💡 Tip: Just click and drag this button to your bookmarks bar (the bar below the address bar)
     </p>
@@ -119,23 +119,28 @@
   </div>
 
   <script>
-    // Use the extract-courses.html page as the bookmark target
-    // This allows the bookmark to have a proper title and favicon
+    // Create a javascript: URL that loads the bookmarklet code directly
+    // This works better than opening a separate page due to cross-origin restrictions
+    const bookmarkletLoaderCode = `javascript:(function(){if(window.__QU_BOOKMARKLET_LOADED__)return;window.__QU_BOOKMARKLET_LOADED__=true;var s=document.createElement('script');s.src='https://SSaleh22-stack.github.io/Student-Table-Maker-Qu-Student-/bookmarklet-code.js?v='+Date.now();s.onerror=function(){s.src='./bookmarklet-code.js?v='+Date.now();document.head.appendChild(s);};document.head.appendChild(s);})();`;
+    
+    // Use the extract-courses.html page as the bookmark target for title/logo
+    // But we'll update it to use the javascript: URL when clicked
     const bookmarkletUrl = window.location.origin + window.location.pathname.replace('bookmarklet.html', 'extract-courses.html');
 
     // Initialize drag functionality on page load
     window.addEventListener('DOMContentLoaded', function() {
       const bookmarkletButton = document.getElementById('bookmarkletLink');
       if (bookmarkletButton) {
-        // Set href to the extract-courses.html page
-        bookmarkletButton.href = bookmarkletUrl;
+        // Set href to the javascript: URL for direct execution
+        bookmarkletButton.href = bookmarkletLoaderCode;
         bookmarkletButton.draggable = true;
         bookmarkletButton.style.cursor = 'grab';
         
         bookmarkletButton.addEventListener('dragstart', function(e) {
-          // Set the dataTransfer with the URL
-          e.dataTransfer.setData('text/uri-list', bookmarkletUrl);
-          e.dataTransfer.setData('text/plain', bookmarkletUrl);
+          // Set the dataTransfer with the javascript: URL for direct execution
+          // This allows the bookmarklet to run directly on the QU portal page
+          e.dataTransfer.setData('text/uri-list', bookmarkletLoaderCode);
+          e.dataTransfer.setData('text/plain', bookmarkletLoaderCode);
           e.dataTransfer.effectAllowed = 'copy';
           this.style.cursor = 'grabbing';
         });

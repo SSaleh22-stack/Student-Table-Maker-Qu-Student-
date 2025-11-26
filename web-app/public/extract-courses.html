@@ -222,9 +222,15 @@
       // Function to inject script into opener (QU portal page)
       function injectIntoOpener() {
         if (!hasOpener) {
-          statusMessage.textContent = '⚠️ Could not access QU portal page. Please go back to the QU portal and click this bookmark again.';
-          statusMessage.className = 'status-message error';
-          statusMessage.style.display = 'block';
+          // No opener - redirect back to QU portal with instructions
+          if (cameFromQUPortal) {
+            alert('⚠️ Please go back to the QU portal page and click this bookmark again. The extraction will run directly on that page.');
+            window.close();
+          } else {
+            statusMessage.textContent = '⚠️ Could not access QU portal page. Please go back to the QU portal and click this bookmark again.';
+            statusMessage.className = 'status-message error';
+            statusMessage.style.display = 'block';
+          }
           return false;
         }
         
@@ -246,8 +252,14 @@
           
           return true;
         } catch (e) {
-          // Cross-origin error - can't inject
+          // Cross-origin error - can't inject, redirect back
           console.error('Cross-origin error:', e);
+          alert('⚠️ Due to browser security, please go back to the QU portal page. The bookmarklet will execute directly on that page when you click it again.');
+          if (cameFromQUPortal && document.referrer) {
+            window.location.href = document.referrer;
+          } else {
+            window.close();
+          }
           return false;
         }
       }
