@@ -6,7 +6,7 @@ export default defineConfig({
   // Base path for GitHub Pages (repository name)
   // For local development, use './' (relative paths)
   // For production build, use the repository name as base path
-  base: process.env.NODE_ENV === 'production' 
+  base: (process.env.NODE_ENV === 'production' || process.env.CI) 
     ? '/Student-Table-Maker-Qu-Student-/' 
     : './',
   plugins: [react()],
