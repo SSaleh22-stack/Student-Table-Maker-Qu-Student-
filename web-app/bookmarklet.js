@@ -280,16 +280,27 @@
       // Continue anyway - we'll pass via URL
     }
     
-    // Show success message
-    const message = '✅ Successfully extracted '+validCourses.length+' courses!\n\nOpening table maker...';
-    alert(message);
-    
-    // Automatically open web app in new tab with course data in hash
+    // Automatically open web app with course data in hash
     const webAppUrl = 'https://SSaleh22-stack.github.io/Student-Table-Maker-Qu-Student-/';
     const urlWithData = webAppUrl + '#courses=' + encodedCourses;
     
     console.log('Opening web app with courses data in URL');
-    window.open(urlWithData, '_blank');
+    
+    // Try to open in new tab first (works in Chrome)
+    // If that fails or is blocked (Safari), fall back to redirecting current page
+    const newWindow = window.open(urlWithData, '_blank');
+    
+    // Check if popup was blocked (Safari often blocks this)
+    if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+      // Safari blocked the popup, redirect current page instead
+      const message = '✅ Successfully extracted '+validCourses.length+' courses!\n\nRedirecting to table maker...';
+      alert(message);
+      window.location.href = urlWithData;
+    } else {
+      // Successfully opened in new tab (Chrome)
+      const message = '✅ Successfully extracted '+validCourses.length+' courses!\n\nOpening table maker in new tab...';
+      alert(message);
+    }
   } catch (error) {
     console.error('Bookmarklet error:', error);
     console.error('Error stack:', error.stack);
