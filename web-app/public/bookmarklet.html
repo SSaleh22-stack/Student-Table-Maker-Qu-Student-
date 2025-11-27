@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" dir="auto">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Qu Student - Bookmarklet Setup</title>
+  <title>Qu Student - Bookmarklet Setup | إعداد الإشارة المرجعية</title>
   <link rel="icon" type="image/png" href="/icon-192.png">
   <style>
     body {
@@ -93,32 +93,61 @@
   </style>
 </head>
 <body>
-  <h1>📚 Qu Student - Bookmarklet Setup</h1>
+  <h1>📚 Qu Student - Bookmarklet Setup | إعداد الإشارة المرجعية</h1>
   
   <div class="setup-container">
-    <h2>Quick Setup</h2>
-    <p><strong>Drag the button below to your bookmarks bar:</strong></p>
-    <p style="font-size: 0.9rem; color: #666; margin-bottom: 1rem;">
+    <h2 class="lang-en">Quick Setup</h2>
+    <h2 class="lang-ar" style="display: none;">الإعداد السريع</h2>
+    <p class="lang-en"><strong>Drag the button below to your bookmarks bar:</strong></p>
+    <p class="lang-ar" style="display: none;"><strong>اسحب الزر أدناه إلى شريط الإشارات المرجعية:</strong></p>
+    <p style="font-size: 0.9rem; color: #666; margin-bottom: 1rem;" class="lang-en">
       <strong>First:</strong> Press <kbd style="background: #f0f0f0; padding: 0.2rem 0.4rem; border-radius: 3px;">Ctrl+Shift+B</kbd> (or <kbd style="background: #f0f0f0; padding: 0.2rem 0.4rem; border-radius: 3px;">Cmd+Shift+B</kbd> on Mac) to show your bookmarks bar if it's hidden.
     </p>
-    <a href="#" class="bookmarklet-button" id="bookmarkletLink" draggable="true" title="📚 Qu Student - Extract Courses">📚 Qu Student</a>
-    <p style="font-size: 0.85rem; color: #888; margin-top: 0.5rem; font-style: italic;">
+    <p style="font-size: 0.9rem; color: #666; margin-bottom: 1rem; display: none;" class="lang-ar">
+      <strong>أولاً:</strong> اضغط <kbd style="background: #f0f0f0; padding: 0.2rem 0.4rem; border-radius: 3px;">Ctrl+Shift+B</kbd> (أو <kbd style="background: #f0f0f0; padding: 0.2rem 0.4rem; border-radius: 3px;">Cmd+Shift+B</kbd> على Mac) لإظهار شريط الإشارات المرجعية إذا كان مخفياً.
+    </p>
+    <a href="#" class="bookmarklet-button" id="bookmarkletLink" draggable="true" title="📚 Qu Student - Extract Courses | استخراج المقررات">📚 Qu Student</a>
+    <p style="font-size: 0.85rem; color: #888; margin-top: 0.5rem; font-style: italic;" class="lang-en">
       💡 Tip: Just click and drag this button to your bookmarks bar (the bar below the address bar)
+    </p>
+    <p style="font-size: 0.85rem; color: #888; margin-top: 0.5rem; font-style: italic; display: none;" class="lang-ar">
+      💡 نصيحة: فقط انقر واسحب هذا الزر إلى شريط الإشارات المرجعية (الشريط أسفل شريط العنوان)
     </p>
   </div>
 
   <div class="instructions">
-    <h3>How to Use:</h3>
-    <ol style="text-align: left;">
+    <h3 class="lang-en">How to Use:</h3>
+    <h3 class="lang-ar" style="display: none;">كيفية الاستخدام:</h3>
+    <ol style="text-align: left;" class="lang-en">
       <li>After adding the bookmarklet, go to the QU student portal course page</li>
       <li>Click the bookmarklet from your bookmarks</li>
       <li>Wait for extraction - you'll see a success message</li>
       <li>Enter your web app URL (or use default)</li>
       <li>Courses will be automatically loaded in the web app!</li>
     </ol>
+    <ol style="text-align: right; direction: rtl; display: none;" class="lang-ar">
+      <li>بعد إضافة الإشارة المرجعية، اذهب إلى صفحة المقررات المطروحة في بوابة الطالب</li>
+      <li>انقر على الإشارة المرجعية من الإشارات المرجعية الخاصة بك</li>
+      <li>انتظر الاستخراج - سترى رسالة نجاح</li>
+      <li>سيتم تحميل المقررات تلقائياً في التطبيق!</li>
+    </ol>
   </div>
 
   <script>
+    // Detect language and update UI
+    (function() {
+      const isArabic = navigator.language.startsWith('ar') || document.documentElement.lang === 'ar' || document.documentElement.dir === 'rtl';
+      if (isArabic) {
+        document.documentElement.dir = 'rtl';
+        document.documentElement.lang = 'ar';
+        document.querySelectorAll('.lang-en').forEach(el => el.style.display = 'none');
+        document.querySelectorAll('.lang-ar').forEach(el => el.style.display = 'block');
+      } else {
+        document.querySelectorAll('.lang-en').forEach(el => el.style.display = 'block');
+        document.querySelectorAll('.lang-ar').forEach(el => el.style.display = 'none');
+      }
+    })();
+    
     // Create a javascript: URL that loads the bookmarklet code directly
     // This works better than opening a separate page due to cross-origin restrictions
     const bookmarkletLoaderCode = `javascript:(function(){if(window.__QU_BOOKMARKLET_LOADED__)return;window.__QU_BOOKMARKLET_LOADED__=true;var s=document.createElement('script');s.src='https://SSaleh22-stack.github.io/Student-Table-Maker-Qu-Student-/bookmarklet-code.js?v='+Date.now();s.onerror=function(){s.src='./bookmarklet-code.js?v='+Date.now();document.head.appendChild(s);};document.head.appendChild(s);})();`;

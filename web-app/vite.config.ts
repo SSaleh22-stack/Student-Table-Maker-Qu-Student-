@@ -13,7 +13,10 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
+    // Ensure .nojekyll is copied from public folder
+    copyPublicDir: true,
   },
+  publicDir: 'public',
   resolve: {
     alias: {
       '@': resolve(__dirname, './src'),

@@ -106,6 +106,15 @@ export interface Translations {
   absenceCanStillAttend: string;
   absenceCannotAttend: string;
   absenceResults: string;
+  // Contact Us translations
+  contactUs: string;
+  contactEmail: string;
+  contactTelegram: string;
+  contactEmailLabel: string;
+  contactTelegramLabel: string;
+  contactCopyEmail: string;
+  contactCopyTelegram: string;
+  contactCopied: string;
 }
 
 export const translations: Record<Language, Translations> = {
@@ -215,6 +224,15 @@ export const translations: Record<Language, Translations> = {
     absenceCanStillAttend: 'You can still attend',
     absenceCannotAttend: 'You cannot attend (exceeded limit)',
     absenceResults: 'Results',
+    // Contact Us
+    contactUs: 'Contact Us',
+    contactEmail: 'Email',
+    contactTelegram: 'Telegram',
+    contactEmailLabel: 'Email Address',
+    contactTelegramLabel: 'Telegram Username',
+    contactCopyEmail: 'Copy Email',
+    contactCopyTelegram: 'Copy Telegram',
+    contactCopied: 'Copied!',
   },
   ar: {
     appTitle: 'STUDENT TABLE MAKER',

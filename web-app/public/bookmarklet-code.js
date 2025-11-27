@@ -197,15 +197,24 @@
   };
   
   try {
+    // Detect language (Arabic or English)
+    const isArabic = navigator.language.startsWith('ar') || document.documentElement.lang === 'ar' || document.documentElement.dir === 'rtl';
+    
     const courses = extractCoursesFromPage();
     if (!courses || courses.length === 0) {
-      alert('No courses found on this page. Make sure you are on the QU student portal course page and that courses are visible.');
+      const message = isArabic 
+        ? 'لم يتم العثور على مقررات في هذه الصفحة. تأكد من أنك في صفحة المقررات المطروحة في بوابة الطالب وأن المقررات مرئية.'
+        : 'No courses found on this page. Make sure you are on the QU student portal course page and that courses are visible.';
+      alert(message);
       console.error('No courses extracted. Check the page structure.');
       return;
     }
     const validCourses = courses.filter(c => c && c.code && c.name);
     if (validCourses.length === 0) {
-      alert('Error: Extracted courses are invalid. Check console for details.');
+      const message = isArabic
+        ? 'خطأ: المقررات المستخرجة غير صالحة. تحقق من وحدة التحكم للتفاصيل.'
+        : 'Error: Extracted courses are invalid. Check console for details.';
+      alert(message);
       console.error('Invalid courses:', courses);
       return;
     }
@@ -228,12 +237,16 @@
     
     if (isSafari) {
       // Safari: Use location.href directly (Safari blocks window.open from bookmarklets)
-      const message = '✅ Successfully extracted ' + validCourses.length + ' courses!\n\nRedirecting to table maker...';
+      const message = isArabic
+        ? '✅ تم استخراج ' + validCourses.length + ' مقرر بنجاح!\n\nجاري إعادة التوجيه إلى صانع الجدول...'
+        : '✅ Successfully extracted ' + validCourses.length + ' courses!\n\nRedirecting to table maker...';
       alert(message);
       window.location.href = urlWithData;
     } else {
       // Chrome and other browsers: Try to open in new tab
-      const message = '✅ Successfully extracted ' + validCourses.length + ' courses!\n\nOpening table maker in new tab...';
+      const message = isArabic
+        ? '✅ تم استخراج ' + validCourses.length + ' مقرر بنجاح!\n\nجاري فتح صانع الجدول في تبويب جديد...'
+        : '✅ Successfully extracted ' + validCourses.length + ' courses!\n\nOpening table maker in new tab...';
       alert(message);
       const newWindow = window.open(urlWithData, '_blank');
       // If popup was blocked, fall back to redirect
@@ -244,7 +257,10 @@
   } catch (error) {
     console.error('Bookmarklet error:', error);
     console.error('Error stack:', error.stack);
-    alert('Error extracting courses: ' + (error.message || String(error)));
+    const errorMessage = isArabic
+      ? 'خطأ في استخراج المقررات: ' + (error.message || String(error))
+      : 'Error extracting courses: ' + (error.message || String(error));
+    alert(errorMessage);
   }
 })();
 
