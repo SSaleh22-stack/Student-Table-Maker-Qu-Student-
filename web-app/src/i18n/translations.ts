@@ -89,6 +89,23 @@ export interface Translations {
   gpaAdvancedDescription: string;
   gpaResetToDefaults: string;
   gpaResetGradeMapConfirm: string;
+  // Absence Calculator translations
+  absenceCalculator: string;
+  absenceStudyWeeks: string;
+  absenceHoursPerWeek: string;
+  absenceHoursAbsent: string;
+  absenceMaxPercent: string;
+  absenceTotalHours: string;
+  absencePercent: string;
+  absenceHoursRemaining: string;
+  absenceStatus: string;
+  absenceSafe: string;
+  absenceWarning: string;
+  absenceDanger: string;
+  absenceExceeded: string;
+  absenceCanStillAttend: string;
+  absenceCannotAttend: string;
+  absenceResults: string;
 }
 
 export const translations: Record<Language, Translations> = {
@@ -181,6 +198,23 @@ export const translations: Record<Language, Translations> = {
     gpaAdvancedDescription: 'Customize grade point values for the selected scale.',
     gpaResetToDefaults: 'Reset to Defaults',
     gpaResetGradeMapConfirm: 'Reset to default grade mappings?',
+    // Absence Calculator
+    absenceCalculator: 'Absence Calculator',
+    absenceStudyWeeks: 'Study Weeks',
+    absenceHoursPerWeek: 'Hours Per Week',
+    absenceHoursAbsent: 'Hours Absent',
+    absenceMaxPercent: 'Max Absence Percent',
+    absenceTotalHours: 'Total Hours',
+    absencePercent: 'Absence Percent',
+    absenceHoursRemaining: 'Hours Remaining',
+    absenceStatus: 'Status',
+    absenceSafe: 'Safe',
+    absenceWarning: 'Warning',
+    absenceDanger: 'Danger',
+    absenceExceeded: 'Exceeded',
+    absenceCanStillAttend: 'You can still attend',
+    absenceCannotAttend: 'You cannot attend (exceeded limit)',
+    absenceResults: 'Results',
   },
   ar: {
     appTitle: 'STUDENT TABLE MAKER',
@@ -271,6 +305,23 @@ export const translations: Record<Language, Translations> = {
     gpaAdvancedDescription: 'قم بتخصيص قيم نقاط الدرجات للنظام المحدد.',
     gpaResetToDefaults: 'إعادة التعيين إلى الافتراضي',
     gpaResetGradeMapConfirm: 'إعادة تعيين تعيين الدرجات إلى الافتراضي؟',
+    // Absence Calculator
+    absenceCalculator: 'حاسبة الغياب',
+    absenceStudyWeeks: 'أسابيع الدراسة',
+    absenceHoursPerWeek: 'ساعات في الأسبوع',
+    absenceHoursAbsent: 'ساعات الغياب',
+    absenceMaxPercent: 'نسبة الغياب المسموحة',
+    absenceTotalHours: 'إجمالي الساعات',
+    absencePercent: 'نسبة الغياب',
+    absenceHoursRemaining: 'الساعات المتبقية',
+    absenceStatus: 'الحالة',
+    absenceSafe: 'آمن',
+    absenceWarning: 'تحذير',
+    absenceDanger: 'خطر',
+    absenceExceeded: 'تم تجاوز الحد',
+    absenceCanStillAttend: 'يمكنك الحضور',
+    absenceCannotAttend: 'لا يمكنك الحضور (تم تجاوز الحد)',
+    absenceResults: 'النتائج',
   },
 };
 

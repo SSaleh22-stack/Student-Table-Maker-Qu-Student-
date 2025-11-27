@@ -9,10 +9,11 @@ import OfferedCoursesModal from './components/OfferedCoursesModal';
 import AddCourseModal from './components/AddCourseModal';
 import ReviewHelperModal from './components/ReviewHelperModal';
 import GpaCalculator from './components/GpaCalculator';
+import AbsenceCalculator from './components/AbsenceCalculator';
 import { Course } from './types';
 import './App.css';
 
-type ViewMode = 'timetable' | 'gpa';
+type ViewMode = 'timetable' | 'gpa' | 'absence';
 
 const AppContent: React.FC = () => {
   const { language, t } = useLanguage();
@@ -342,9 +343,13 @@ const AppContent: React.FC = () => {
             </div>
           </div>
         </>
-      ) : (
+      ) : currentView === 'gpa' ? (
         <div className="app-content">
           <GpaCalculator />
+        </div>
+      ) : (
+        <div className="app-content">
+          <AbsenceCalculator />
         </div>
       )}
 

@@ -1,0 +1,159 @@
+.absence-calculator {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  background: #f5f7fa;
+  min-height: 100vh;
+}
+
+.absence-header {
+  margin-bottom: 2rem;
+}
+
+.absence-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #2d3748;
+  margin: 0;
+}
+
+.absence-card {
+  background: white;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.absence-card-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 1.5rem 0;
+}
+
+.absence-input-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.absence-input-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.absence-input-item label {
+  font-weight: 600;
+  color: #555;
+  font-size: 0.9rem;
+}
+
+.absence-input,
+.absence-select {
+  padding: 0.75rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  transition: border-color 0.3s ease;
+}
+
+.absence-input:focus,
+.absence-select:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.absence-error {
+  background: #fee;
+  border-left: 4px solid #e53e3e;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-top: 1rem;
+  color: #742a2a;
+  font-size: 0.95rem;
+}
+
+.absence-results-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.absence-result-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 0.5rem;
+  border: 1px solid #e0e0e0;
+}
+
+.absence-result-label {
+  font-weight: 500;
+  color: #555;
+  font-size: 0.9rem;
+}
+
+.absence-result-value {
+  font-weight: 700;
+  color: #333;
+  font-size: 1.5rem;
+}
+
+.absence-result-percent {
+  font-size: 2rem;
+}
+
+.absence-result-status {
+  grid-column: 1 / -1;
+}
+
+.absence-result-badge {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  font-size: 1rem;
+  text-align: center;
+}
+
+.absence-status-message {
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  border: 2px solid;
+  margin-top: 1rem;
+}
+
+.absence-status-message strong {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+}
+
+.absence-status-message p {
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* RTL Support */
+[dir="rtl"] .absence-calculator {
+  text-align: right;
+}
+
+[dir="rtl"] .absence-input-item {
+  text-align: right;
+}
+
+[dir="rtl"] .absence-result-item {
+  text-align: right;
+}
+
+[dir="rtl"] .absence-error {
+  border-left: none;
+  border-right: 4px solid #e53e3e;
+}
+

@@ -1,0 +1,126 @@
+You are a senior engineer for React + TypeScript + Chrome Extension (Manifest V3).
+I already have a React dashboard for my Chrome extension and a webapp. Now add a NEW feature:
+GPA Calculator (4-scale or 5-scale, user chooses), with NO connection to QU websites.
+
+MAIN GOAL
+Compute:
+- Semester GPA (based on entered current courses)
+- New cumulative GPA (based on previous GPA + previous earned hours + current semester)
+Formulas:
+QualityPoints = Σ(gradePoint * creditHours)
+SemesterGPA = CurrentQualityPoints / CurrentHours
+NewCumulativeGPA = (PrevGPA*PrevHours + CurrentQualityPoints) / (PrevHours + CurrentHours)
+
+USER INPUTS
+A) Scale selector (required):
+- GPA Scale: [5.0, 4.0]
+B) Previous cumulative info:
+- Previous GPA (number)
+- Previous earned hours (number)
+C) Current courses (editable table):
+- course code/name (string, optional)
+- credit hours (number)
+- grade (dropdown: A+, A, B+, B, C+, C, D+, D, F, DN)
+Buttons:
+- + Add row
+- Remove row
+- Clear all
+Optional convenience:
+- Duplicate row / quick add
+
+GRADING POINTS (DEFAULT MAPPING)
+Implement these defaults:
+
+For 5.0 scale:
+A+ = 5.00
+A  = 4.75
+B+ = 4.50
+B  = 4.00
+C+ = 3.50
+C  = 3.00
+D+ = 2.50
+D  = 2.00
+F  = 1.00
+DN = 1.00
+
+For 4.0 scale:
+A+ = 4.00
+A  = 3.75
+B+ = 3.50
+B  = 3.00
+C+ = 2.50
+C  = 2.00
+D+ = 1.50
+D  = 1.00
+F  = 0.00
+DN = 0.00
+
+ADVANCED (EDITABLE MAPPING)
+Add an “Advanced” modal that allows the user to edit grade points per letter grade for the selected scale.
+- Save the custom mapping.
+- Add a “Reset to defaults” button.
+
+BILINGUAL UI (EN/AR) + RTL
+All labels must be in English and Arabic with a language toggle consistent with the existing project.
+Arabic UI should be RTL and right-aligned where appropriate.
+Examples:
+- "GPA Calculator" / "حاسبة المعدل"
+- "Previous GPA" / "المعدل السابق"
+- "Previous Hours" / "الساعات السابقة"
+- "Semester GPA" / "معدل الفصل"
+- "New Cumulative GPA" / "المعدل التراكمي الجديد"
+
+UI REQUIREMENTS
+Light theme, clean cards:
+- Card 1: Scale + Previous GPA + Previous Hours
+- Card 2: Current courses entry table
+- Card 3: Results summary (big numbers + breakdown)
+Show:
+- Current Hours
+- Current Quality Points
+- Semester GPA
+- New Cumulative GPA
+Validation:
+- No negative hours
+- GPA must be within [0..scale]
+- If hours = 0, do not divide; show friendly message.
+
+PERSISTENCE
+Persist user data:
+- Extension: chrome.storage.sync
+- Webapp: localStorage
+Persist:
+- language
+- selected scale
+- custom grade mapping
+- previous GPA/hours
+- current courses list
+
+SHARED LOGIC (IMPORTANT)
+Create a shared module used by both website + extension:
+src/lib/gpa.ts
+Types:
+- GradeLetter = "A+" | "A" | "B+" | "B" | "C+" | "C" | "D+" | "D" | "F" | "DN"
+- CourseGrade { id: string; title?: string; hours: number; grade: GradeLetter }
+- GradePointMap = Record<GradeLetter, number>
+Functions:
+- getDefaultGradePoints(scale: 4 | 5): GradePointMap
+- calcQualityPoints(courses: CourseGrade[], map: GradePointMap): number
+- calcSemesterGpa(courses: CourseGrade[], map: GradePointMap): number | null
+- calcNewCumulativeGpa(prevGpa: number, prevHours: number, courses: CourseGrade[], map: GradePointMap): number | null
+
+INTEGRATION: EXTENSION + WEBAPP
+- Add a new page/route/tab: GPA Calculator
+- Reuse the same React component in both (e.g., GpaCalculatorPage.tsx).
+- Add a card/link in the main dashboard navigation.
+
+DELIVERABLES
+1) Exact file changes (added/edited)
+2) Working GPA Calculator in extension + webapp
+3) Shared calculation module and clean TypeScript types
+4) Advanced grade mapping editor + reset
+
+CONSTRAINTS
+- Do NOT add any QU connection, content scripts, or host_permissions.
+- Do not refactor unrelated parts.
+- Keep design light and bilingual.

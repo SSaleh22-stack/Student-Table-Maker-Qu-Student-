@@ -9,6 +9,7 @@ import TimetableGrid from './TimetableGrid';
 import OfferedCoursesModal from './OfferedCoursesModal';
 import AddCourseModal from './AddCourseModal';
 import GpaCalculator from './GpaCalculator';
+import AbsenceCalculator from './AbsenceCalculator';
 import { Course } from '../types';
 import './App.css';
 
@@ -143,7 +144,7 @@ const dummyCourses: Course[] = [
   },
 ];
 
-type ViewMode = 'timetable' | 'gpa';
+type ViewMode = 'timetable' | 'gpa' | 'absence';
 
 const AppContent: React.FC = () => {
   const { language, t } = useLanguage();
@@ -294,8 +295,10 @@ const AppContent: React.FC = () => {
             </div>
           </div>
         </>
-      ) : (
+      ) : currentView === 'gpa' ? (
         <GpaCalculator />
+      ) : (
+        <AbsenceCalculator />
       )}
     </div>
   );

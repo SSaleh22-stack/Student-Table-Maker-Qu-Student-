@@ -3,7 +3,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import LanguageToggle from './LanguageToggle';
 import './NavBar.css';
 
-type ViewMode = 'timetable' | 'gpa';
+type ViewMode = 'timetable' | 'gpa' | 'absence';
 
 interface NavBarProps {
   currentView: ViewMode;
@@ -34,6 +34,13 @@ const NavBar: React.FC<NavBarProps> = ({ currentView, onViewChange, onShowReview
           >
             <span className="navbar-icon">💯</span>
             <span className="navbar-text">{t.gpaCalculator}</span>
+          </button>
+          <button 
+            className={`navbar-item ${currentView === 'absence' ? 'active' : ''}`}
+            onClick={() => onViewChange('absence')}
+          >
+            <span className="navbar-icon">📊</span>
+            <span className="navbar-text">{t.absenceCalculator}</span>
           </button>
           <button 
             className="navbar-item review-helper-nav-btn"
