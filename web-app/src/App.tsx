@@ -250,7 +250,7 @@ const AppContent: React.FC = () => {
         isPhone={isPhone}
       />
       
-      {currentView === 'timetable' ? (
+      {currentView === 'timetable' && !isPhone ? (
         <>
           <HeroSection onExtractCourses={handleExtractCourses} />
           
