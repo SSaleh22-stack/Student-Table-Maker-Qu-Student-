@@ -48,15 +48,14 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
+      - name: Create .nojekyll file
+        working-directory: ./web-app/dist
+        run: touch .nojekyll
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: './web-app/dist'
-      
-      # Ensure .nojekyll file exists to prevent Jekyll processing
-      - name: Create .nojekyll file
-        working-directory: ./web-app/dist
-        run: touch .nojekyll || echo '' > .nojekyll
 
   deploy:
     environment:
