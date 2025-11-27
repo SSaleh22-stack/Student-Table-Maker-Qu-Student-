@@ -165,6 +165,7 @@
 
 .contact-us-modal-body {
   padding: 1.5rem;
+  direction: inherit;
 }
 
 .contact-us-intro {
@@ -264,44 +265,13 @@
   flex-direction: row-reverse;
 }
 
-[dir="rtl"] .contact-us-modal-title {
-  text-align: right;
-}
-
-[dir="rtl"] .contact-us-modal-body {
-  direction: rtl;
-  text-align: right;
-}
-
 [dir="rtl"] .contact-us-intro {
   border-left: none;
   border-right: 4px solid #667eea;
-  text-align: right;
-}
-
-[dir="rtl"] .contact-us-intro-text {
-  text-align: right;
 }
 
 [dir="rtl"] .contact-us-item-header {
   flex-direction: row-reverse;
-}
-
-[dir="rtl"] .contact-us-item-title {
-  text-align: right;
-}
-
-[dir="rtl"] .contact-us-item-content {
-  text-align: right;
-}
-
-[dir="rtl"] .contact-us-item-value {
-  text-align: right;
-  direction: ltr; /* Keep email/telegram LTR */
-}
-
-[dir="rtl"] .contact-us-copy-btn {
-  text-align: center;
 }
 
 /* Responsive for Contact Us */
