@@ -134,18 +134,15 @@
 
 /* Responsive for iPad and mobile */
 @media (max-width: 768px) {
-  .main-layout {
-    flex-direction: column;
+  /* Hide timetable on phones - only show GPA and Absence calculators */
+  .timetable-wrapper,
+  .course-list-wrapper,
+  .offered-courses-button-container {
+    display: none !important;
   }
   
-  .course-list-wrapper {
-    width: 100%;
-    position: static;
-    max-height: none;
-  }
-  
-  .timetable-wrapper {
-    width: 100%;
+  .app-content {
+    padding: 0 0.5rem 2rem 0.5rem;
   }
 }
 

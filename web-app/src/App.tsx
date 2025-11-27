@@ -17,7 +17,42 @@ type ViewMode = 'timetable' | 'gpa' | 'absence';
 
 const AppContent: React.FC = () => {
   const { language, t } = useLanguage();
-  const [currentView, setCurrentView] = useState<ViewMode>('timetable');
+  
+  // Detect if device is a phone (max-width: 768px)
+  const [isPhone, setIsPhone] = useState(false);
+  
+  React.useEffect(() => {
+    const checkIsPhone = () => {
+      setIsPhone(window.innerWidth <= 768);
+    };
+    
+    checkIsPhone();
+    window.addEventListener('resize', checkIsPhone);
+    return () => window.removeEventListener('resize', checkIsPhone);
+  }, []);
+  
+  // On phones, default to GPA calculator instead of timetable
+  const [currentView, setCurrentView] = useState<ViewMode>(() => {
+    if (typeof window !== 'undefined' && window.innerWidth <= 768) {
+      return 'gpa';
+    }
+    return 'timetable';
+  });
+  
+  // Redirect to GPA if trying to access timetable on phone
+  React.useEffect(() => {
+    if (isPhone && currentView === 'timetable') {
+      setCurrentView('gpa');
+    }
+  }, [isPhone, currentView]);
+  
+  const handleViewChange = (view: ViewMode) => {
+    // Prevent accessing timetable on phones
+    if (view === 'timetable' && isPhone) {
+      return;
+    }
+    setCurrentView(view);
+  };
   const [courses, setCourses] = useState<Course[]>([]);
   const [showOfferedCoursesModal, setShowOfferedCoursesModal] = useState(false);
   const [showAddCourseModal, setShowAddCourseModal] = useState(false);
@@ -210,8 +245,9 @@ const AppContent: React.FC = () => {
     <div className="app" dir={language === 'ar' ? 'rtl' : 'ltr'}>
       <NavBar 
         currentView={currentView}
-        onViewChange={setCurrentView}
-        onShowReviewHelper={() => setShowReviewHelper(true)} 
+        onViewChange={handleViewChange}
+        onShowReviewHelper={() => setShowReviewHelper(true)}
+        isPhone={isPhone}
       />
       
       {currentView === 'timetable' ? (

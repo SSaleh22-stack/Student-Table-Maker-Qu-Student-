@@ -9,9 +9,10 @@ interface NavBarProps {
   currentView: ViewMode;
   onViewChange: (view: ViewMode) => void;
   onShowReviewHelper: () => void;
+  isPhone?: boolean;
 }
 
-const NavBar: React.FC<NavBarProps> = ({ currentView, onViewChange, onShowReviewHelper }) => {
+const NavBar: React.FC<NavBarProps> = ({ currentView, onViewChange, onShowReviewHelper, isPhone = false }) => {
   const { t, language } = useLanguage();
   const [showContactUs, setShowContactUs] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
@@ -49,13 +50,15 @@ const NavBar: React.FC<NavBarProps> = ({ currentView, onViewChange, onShowReview
             <span className="navbar-title">{t.appTitle}</span>
           </div>
           <div className="navbar-menu">
-            <button 
-              className={`navbar-item ${currentView === 'timetable' ? 'active' : ''}`}
-              onClick={() => onViewChange('timetable')}
-            >
-              <span className="navbar-icon">📅</span>
-              <span className="navbar-text">{t.timetable}</span>
-            </button>
+            {!isPhone && (
+              <button 
+                className={`navbar-item ${currentView === 'timetable' ? 'active' : ''}`}
+                onClick={() => onViewChange('timetable')}
+              >
+                <span className="navbar-icon">📅</span>
+                <span className="navbar-text">{t.timetable}</span>
+              </button>
+            )}
             <button 
               className={`navbar-item ${currentView === 'gpa' ? 'active' : ''}`}
               onClick={() => onViewChange('gpa')}

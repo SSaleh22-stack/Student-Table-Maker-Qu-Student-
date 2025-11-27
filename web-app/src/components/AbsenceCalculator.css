@@ -157,3 +157,48 @@
   border-right: 4px solid #e53e3e;
 }
 
+/* Responsive for phones */
+@media (max-width: 768px) {
+  .absence-calculator {
+    padding: 1rem;
+  }
+  
+  .absence-title {
+    font-size: 1.5rem;
+  }
+  
+  .absence-card {
+    padding: 1rem;
+  }
+  
+  .absence-card-title {
+    font-size: 1.25rem;
+  }
+  
+  .absence-input-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .absence-results-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .absence-result-item {
+    padding: 0.75rem;
+  }
+  
+  .absence-result-value {
+    font-size: 1.25rem;
+  }
+  
+  .absence-result-percent {
+    font-size: 1.5rem;
+  }
+  
+  .absence-status-message {
+    padding: 1rem;
+  }
+}
+

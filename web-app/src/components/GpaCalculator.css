@@ -395,3 +395,71 @@
   border-right: 4px solid #ffc107;
 }
 
+/* Responsive for phones */
+@media (max-width: 768px) {
+  .gpa-calculator {
+    padding: 1rem;
+  }
+  
+  .gpa-title {
+    font-size: 1.5rem;
+  }
+  
+  .gpa-card {
+    padding: 1rem;
+  }
+  
+  .gpa-card-title {
+    font-size: 1.25rem;
+  }
+  
+  .gpa-settings-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .gpa-table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .gpa-table {
+    font-size: 0.9rem;
+  }
+  
+  .gpa-table th,
+  .gpa-table td {
+    padding: 0.5rem;
+  }
+  
+  .gpa-results-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .gpa-modal {
+    max-width: 95%;
+    max-height: 95vh;
+  }
+  
+  .gpa-modal-content {
+    padding: 1rem;
+  }
+  
+  .gpa-grade-map-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 0.75rem;
+  }
+  
+  .gpa-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .gpa-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+}
+
