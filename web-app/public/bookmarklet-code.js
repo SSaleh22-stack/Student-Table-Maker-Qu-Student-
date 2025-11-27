@@ -197,8 +197,17 @@
   };
   
   try {
-    // Detect language (Arabic or English)
-    const isArabic = navigator.language.startsWith('ar') || document.documentElement.lang === 'ar' || document.documentElement.dir === 'rtl';
+    // Get language preference from web app's dashboard
+    // The bookmarklet loader sets window.__QU_BOOKMARKLET_LANG__ before loading this script
+    // true = Arabic, false = English, null = detect from page
+    var isArabic;
+    if (typeof window.__QU_BOOKMARKLET_LANG__ !== 'undefined' && window.__QU_BOOKMARKLET_LANG__ !== null) {
+      // Use the language preference from the web app dashboard
+      isArabic = window.__QU_BOOKMARKLET_LANG__ === true;
+    } else {
+      // Fall back to detecting from page/browser
+      isArabic = navigator.language.startsWith('ar') || document.documentElement.lang === 'ar' || document.documentElement.dir === 'rtl';
+    }
     
     const courses = extractCoursesFromPage();
     if (!courses || courses.length === 0) {

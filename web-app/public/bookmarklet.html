@@ -148,9 +148,27 @@
       }
     })();
     
+    // Get language preference from web app's localStorage
+    // This allows the bookmarklet to use the same language as the dashboard
+    const getLanguagePreference = function() {
+      try {
+        // Try to access localStorage from the web app (same origin)
+        const saved = localStorage.getItem('qu-student-language');
+        if (saved === 'en' || saved === 'ar') {
+          return saved;
+        }
+      } catch (e) {
+        // If localStorage is not accessible (cross-origin), return null
+      }
+      return null;
+    };
+    
     // Create a javascript: URL that loads the bookmarklet code directly
     // This works better than opening a separate page due to cross-origin restrictions
-    const bookmarkletLoaderCode = `javascript:(function(){if(window.__QU_BOOKMARKLET_LOADED__)return;window.__QU_BOOKMARKLET_LOADED__=true;var s=document.createElement('script');s.src='https://SSaleh22-stack.github.io/Student-Table-Maker-Qu-Student-/bookmarklet-code.js?v='+Date.now();s.onerror=function(){s.src='./bookmarklet-code.js?v='+Date.now();document.head.appendChild(s);};document.head.appendChild(s);})();`;
+    // We embed the language preference as a global variable before loading the script
+    const languagePref = getLanguagePreference();
+    const langCode = languagePref === 'ar' ? 'true' : (languagePref === 'en' ? 'false' : 'null');
+    const bookmarkletLoaderCode = `javascript:(function(){if(window.__QU_BOOKMARKLET_LOADED__)return;window.__QU_BOOKMARKLET_LOADED__=true;window.__QU_BOOKMARKLET_LANG__=${langCode};var s=document.createElement('script');s.src='https://SSaleh22-stack.github.io/Student-Table-Maker-Qu-Student-/bookmarklet-code.js?v='+Date.now();s.onerror=function(){s.src='./bookmarklet-code.js?v='+Date.now();document.head.appendChild(s);};document.head.appendChild(s);})();`;
     
     // Use the extract-courses.html page as the bookmark target for title/logo
     // But we'll update it to use the javascript: URL when clicked
