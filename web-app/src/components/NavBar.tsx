@@ -91,7 +91,7 @@ const NavBar: React.FC<NavBarProps> = ({ currentView, onViewChange, onShowReview
 
       {showContactUs && (
         <div className="contact-us-modal-overlay" onClick={() => setShowContactUs(false)}>
-          <div className="contact-us-modal" dir={language === 'ar' ? 'rtl' : 'ltr'} onClick={(e) => e.stopPropagation()}>
+          <div className="contact-us-modal" onClick={(e) => e.stopPropagation()}>
             <div className="contact-us-modal-header">
               <h2 className="contact-us-modal-title">{t.contactUs}</h2>
               <button 
