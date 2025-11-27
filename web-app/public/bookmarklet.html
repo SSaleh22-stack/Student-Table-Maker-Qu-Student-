@@ -51,6 +51,11 @@
       text-align: left;
       border-radius: 6px;
     }
+    [dir="rtl"] .instructions {
+      border-left: none;
+      border-right: 4px solid #48bb78;
+      text-align: right;
+    }
     .success-message {
       background: #c6f6d5;
       color: #22543d;
@@ -134,19 +139,76 @@
   </div>
 
   <script>
+    // Get language preference from web app's localStorage
+    // This allows the bookmarklet setup page to use the same language as the dashboard
+    const getLanguagePreference = function() {
+      try {
+        // Try to access localStorage from the web app (same origin)
+        const saved = localStorage.getItem('qu-student-language');
+        if (saved === 'en' || saved === 'ar') {
+          return saved;
+        }
+      } catch (e) {
+        // If localStorage is not accessible (cross-origin), return null
+      }
+      return null;
+    };
+    
     // Detect language and update UI
     (function() {
-      const isArabic = navigator.language.startsWith('ar') || document.documentElement.lang === 'ar' || document.documentElement.dir === 'rtl';
+      // First, try to get language from web app's localStorage
+      const savedLang = getLanguagePreference();
+      let isArabic = false;
+      
+      if (savedLang === 'ar') {
+        isArabic = true;
+      } else if (savedLang === 'en') {
+        isArabic = false;
+      } else {
+        // Fall back to detecting from browser/page
+        isArabic = navigator.language.startsWith('ar') || document.documentElement.lang === 'ar' || document.documentElement.dir === 'rtl';
+      }
+      
       if (isArabic) {
         document.documentElement.dir = 'rtl';
         document.documentElement.lang = 'ar';
         document.querySelectorAll('.lang-en').forEach(el => el.style.display = 'none');
         document.querySelectorAll('.lang-ar').forEach(el => el.style.display = 'block');
+        // Update instructions alignment for RTL
+        const instructions = document.querySelector('.instructions');
+        if (instructions) {
+          instructions.style.textAlign = 'right';
+        }
       } else {
+        document.documentElement.dir = 'ltr';
+        document.documentElement.lang = 'en';
         document.querySelectorAll('.lang-en').forEach(el => el.style.display = 'block');
         document.querySelectorAll('.lang-ar').forEach(el => el.style.display = 'none');
+        // Update instructions alignment for LTR
+        const instructions = document.querySelector('.instructions');
+        if (instructions) {
+          instructions.style.textAlign = 'left';
+        }
       }
     })();
+    
+    // Listen for storage changes to update language when it changes in the web app
+    window.addEventListener('storage', function(e) {
+      if (e.key === 'qu-student-language') {
+        const savedLang = e.newValue;
+        if (savedLang === 'ar' || savedLang === 'en') {
+          const isArabic = savedLang === 'ar';
+          document.documentElement.dir = isArabic ? 'rtl' : 'ltr';
+          document.documentElement.lang = savedLang;
+          document.querySelectorAll('.lang-en').forEach(el => el.style.display = isArabic ? 'none' : 'block');
+          document.querySelectorAll('.lang-ar').forEach(el => el.style.display = isArabic ? 'block' : 'none');
+          const instructions = document.querySelector('.instructions');
+          if (instructions) {
+            instructions.style.textAlign = isArabic ? 'right' : 'left';
+          }
+        }
+      }
+    });
     
     // Get language preference from web app's localStorage
     // This allows the bookmarklet to use the same language as the dashboard
