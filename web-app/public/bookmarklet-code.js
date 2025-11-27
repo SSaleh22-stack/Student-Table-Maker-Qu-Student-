@@ -202,7 +202,7 @@
     // true = Arabic, false = English, null = detect from page
     var isArabic;
     if (typeof window.__QU_BOOKMARKLET_LANG__ !== 'undefined' && window.__QU_BOOKMARKLET_LANG__ !== null) {
-      // Use the language preference from the web app dashboard
+      // Use the language preference from the web app dashboard (set by bookmarklet loader)
       isArabic = window.__QU_BOOKMARKLET_LANG__ === true;
     } else {
       // Fall back to detecting from page/browser
