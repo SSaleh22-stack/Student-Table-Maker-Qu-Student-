@@ -8,6 +8,9 @@ on:
       - 'web-app/**'
       - '.github/workflows/deploy-web-app.yml'
   workflow_dispatch:
+  # Also trigger on repository settings changes (when Pages is enabled)
+  repository_dispatch:
+    types: [pages-build]
 
 permissions:
   contents: read
