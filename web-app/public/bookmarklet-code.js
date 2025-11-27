@@ -198,14 +198,48 @@
   
   try {
     // Get language preference from web app's dashboard
-    // The bookmarklet loader sets window.__QU_BOOKMARKLET_LANG__ before loading this script
-    // true = Arabic, false = English, null = detect from page
-    var isArabic;
+    // Try multiple methods to get the language preference
+    
+    var isArabic = null;
+    
+    // Method 1: Check if language was set by bookmarklet loader
     if (typeof window.__QU_BOOKMARKLET_LANG__ !== 'undefined' && window.__QU_BOOKMARKLET_LANG__ !== null) {
-      // Use the language preference from the web app dashboard (set by bookmarklet loader)
       isArabic = window.__QU_BOOKMARKLET_LANG__ === true;
-    } else {
-      // Fall back to detecting from page/browser
+    }
+    
+    // Method 2: Try to read from localStorage (works if same origin)
+    if (isArabic === null) {
+      try {
+        var saved = localStorage.getItem('qu-student-language');
+        if (saved === 'ar') {
+          isArabic = true;
+        } else if (saved === 'en') {
+          isArabic = false;
+        }
+      } catch (e) {
+        // localStorage not accessible (cross-origin), continue to next method
+      }
+    }
+    
+    // Method 3: Check URL hash for language parameter (if passed from web app)
+    if (isArabic === null) {
+      try {
+        var hash = window.location.hash;
+        if (hash) {
+          var langMatch = hash.match(/[#&]lang=([^&]+)/);
+          if (langMatch && langMatch[1] === 'ar') {
+            isArabic = true;
+          } else if (langMatch && langMatch[1] === 'en') {
+            isArabic = false;
+          }
+        }
+      } catch (e) {
+        // URL check failed, continue
+      }
+    }
+    
+    // Method 4: Fall back to detecting from page/browser
+    if (isArabic === null) {
       isArabic = navigator.language.startsWith('ar') || document.documentElement.lang === 'ar' || document.documentElement.dir === 'rtl';
     }
     
@@ -236,8 +270,10 @@
     } catch (storageError) {
       console.warn('Could not save to localStorage (cross-origin):', storageError);
     }
+    // Get current language preference to pass to web app
+    var currentLang = isArabic ? 'ar' : 'en';
     const webAppUrl = 'https://SSaleh22-stack.github.io/Student-Table-Maker-Qu-Student-/';
-    const urlWithData = webAppUrl + '#courses=' + encodedCourses;
+    const urlWithData = webAppUrl + '#courses=' + encodedCourses + '&lang=' + currentLang;
     console.log('Opening web app with courses data in URL');
     
     // Detect Safari browser
