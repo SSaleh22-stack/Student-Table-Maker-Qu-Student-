@@ -50,7 +50,18 @@ jobs:
 
       - name: Create .nojekyll file
         working-directory: ./web-app/dist
-        run: touch .nojekyll
+        run: |
+          # Create .nojekyll file to prevent Jekyll processing
+          # This file tells GitHub Pages to skip Jekyll and serve files as-is
+          touch .nojekyll
+          # Verify it was created
+          if [ -f .nojekyll ]; then
+            echo "✅ .nojekyll file created successfully"
+            ls -la .nojekyll
+          else
+            echo "❌ Warning: .nojekyll file not found after creation"
+            exit 1
+          fi
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

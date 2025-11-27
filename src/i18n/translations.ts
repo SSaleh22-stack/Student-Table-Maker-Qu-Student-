@@ -112,6 +112,15 @@ export interface Translations {
   absenceCanStillAttend: string;
   absenceCannotAttend: string;
   absenceResults: string;
+  // Contact Us translations
+  contactUs: string;
+  contactEmail: string;
+  contactTelegram: string;
+  contactEmailLabel: string;
+  contactTelegramLabel: string;
+  contactCopyEmail: string;
+  contactCopyTelegram: string;
+  contactCopied: string;
 }
 
 export const translations: Record<Language, Translations> = {
@@ -221,6 +230,15 @@ export const translations: Record<Language, Translations> = {
     absenceCanStillAttend: 'You can still attend',
     absenceCannotAttend: 'You cannot attend (exceeded limit)',
     absenceResults: 'Results',
+    // Contact Us
+    contactUs: 'Contact Us',
+    contactEmail: 'Email',
+    contactTelegram: 'Telegram',
+    contactEmailLabel: 'Email Address',
+    contactTelegramLabel: 'Telegram Username',
+    contactCopyEmail: 'Copy Email',
+    contactCopyTelegram: 'Copy Telegram',
+    contactCopied: 'Copied!',
   },
   ar: {
     appTitle: 'STUDENT TABLE MAKER',
@@ -328,6 +346,15 @@ export const translations: Record<Language, Translations> = {
     absenceCanStillAttend: 'يمكنك الحضور',
     absenceCannotAttend: 'لا يمكنك الحضور (تم تجاوز الحد)',
     absenceResults: 'النتائج',
+    // Contact Us
+    contactUs: 'اتصل بنا',
+    contactEmail: 'البريد الإلكتروني',
+    contactTelegram: 'تيليجرام',
+    contactEmailLabel: 'عنوان البريد الإلكتروني',
+    contactTelegramLabel: 'اسم المستخدم في تيليجرام',
+    contactCopyEmail: 'نسخ البريد الإلكتروني',
+    contactCopyTelegram: 'نسخ تيليجرام',
+    contactCopied: 'تم النسخ!',
   },
 };
 

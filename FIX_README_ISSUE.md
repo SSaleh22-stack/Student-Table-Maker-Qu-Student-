@@ -1,79 +1,107 @@
 # Fix: GitHub Pages Showing README Instead of Web App
 
-## Problem
-After clearing cache, the site loads but shows the README.md file instead of the web app.
+## Quick Fix Steps
 
-## Root Cause
-GitHub Pages is either:
-1. Serving from a branch instead of GitHub Actions deployment
-2. Jekyll is processing the files (needs .nojekyll file)
+### Step 1: Check GitHub Pages Source (MOST IMPORTANT)
 
-## Solution
+1. Go to your repository on GitHub:
+   ```
+   https://github.com/SSaleh22-stack/Student-Table-Maker-Qu-Student-/
+   ```
 
-### Step 1: Verify GitHub Pages Source
+2. Click **Settings** (top menu bar)
 
-1. Go to: https://github.com/SSaleh22-stack/Student-Table-Maker-Qu-Student-/settings/pages
-2. Under **"Source"**, make sure it says:
-   - ✅ **"GitHub Actions"** (NOT "Deploy from a branch")
-3. If it says "Deploy from a branch" or "None":
-   - Change it to **"GitHub Actions"**
+3. In the left sidebar, click **Pages** (under "Code and automation")
+
+4. Under **"Build and deployment"** → **"Source"**, check what it's set to:
+   - ✅ **CORRECT**: Should be **"GitHub Actions"**
+   - ❌ **WRONG**: If it says **"Deploy from a branch"** (with options like `main` or `/ (root)`)
+
+5. **If it's wrong:**
+   - Change **Source** to **"GitHub Actions"**
    - Click **Save**
+   - Wait 2-5 minutes for GitHub to process the change
 
-### Step 2: Check Workflow Status
+### Step 2: Trigger a New Deployment
 
-1. Go to: https://github.com/SSaleh22-stack/Student-Table-Maker-Qu-Student-/actions
-2. Look for **"Deploy Web App to GitHub Pages"** workflow
-3. Check if it has run and completed successfully:
-   - ✅ Green checkmark = Success
-   - ❌ Red X = Failed (check logs)
-   - ⚪ No runs = Needs to be triggered
+After changing the source to "GitHub Actions":
 
-### Step 3: Manually Trigger Deployment
-
-If the workflow hasn't run or failed:
-
-1. Go to: https://github.com/SSaleh22-stack/Student-Table-Maker-Qu-Student-/actions
-2. Click **"Deploy Web App to GitHub Pages"** in left sidebar
-3. Click **"Run workflow"** (top right)
-4. Select branch: **main**
+1. Go to the **Actions** tab in your repository
+2. Click on **"Deploy Web App to GitHub Pages"** workflow (in the left sidebar)
+3. Click the **"Run workflow"** button (green button, top right)
+4. Select `main` branch
 5. Click **"Run workflow"**
-6. Wait 2-3 minutes for completion
+6. Wait for both jobs to complete:
+   - ✅ **build** job (builds the web app)
+   - ✅ **deploy** job (deploys to GitHub Pages)
 
-### Step 4: Verify Deployment
+### Step 3: Verify the Deployment
 
-After the workflow completes:
+1. Wait 2-5 minutes after the workflow completes
+2. Clear your browser cache (Ctrl+Shift+Delete or Cmd+Shift+Delete)
+3. Or use an incognito/private window
+4. Visit: `https://ssaleh22-stack.github.io/Student-Table-Maker-Qu-Student-/`
 
-1. Go to: https://github.com/SSaleh22-stack/Student-Table-Maker-Qu-Student-/settings/pages
-2. You should see: **"Your site is live at https://ssaleh22-stack.github.io/Student-Table-Maker-Qu-Student-/"**
-3. Visit that URL
-4. You should see the **"STUDENT TABLE MAKER"** web app, NOT the README
+You should now see:
+- ✅ The React web app (not the README)
+- ✅ Navigation bar with Timetable, GPA Calculator, Absence Calculator, etc.
+- ✅ Fully functional web application
 
-## What Should You See?
+## Why This Happens
 
-**✅ Correct (Web App):**
-- "STUDENT TABLE MAKER" title
-- Navigation bar with buttons (Timetable, GPA Calculator, etc.)
-- Hero section with "Extract Courses" button
-- Full React app interface
+**The Problem:**
+- GitHub Pages can serve content from two sources:
+  1. **A branch** (like `main` or `gh-pages`) - This is the OLD way
+  2. **GitHub Actions** - This is the NEW way (what we're using)
 
-**❌ Wrong (README):**
-- "# STUDENT TABLE MAKER" (markdown heading)
-- Installation instructions
-- Code blocks
-- Just the README.md content
+- If GitHub Pages is set to serve from a **branch**, it looks for `index.html` in the root of that branch
+- Since your `index.html` is in `web-app/dist/` (not the root), GitHub Pages can't find it
+- When Jekyll (GitHub Pages' default processor) can't find a proper `index.html`, it falls back to rendering `README.md`
 
-## If Still Showing README
+**The Solution:**
+- Set GitHub Pages source to **"GitHub Actions"**
+- This tells GitHub Pages to use the output from your workflow (which deploys `web-app/dist/`)
+- The workflow also creates a `.nojekyll` file to prevent Jekyll from processing the files
 
-1. **Clear browser cache again** (Ctrl+Shift+Delete)
-2. **Try incognito mode**
-3. **Wait 5 minutes** after changing GitHub Pages source
-4. **Check the workflow logs** for any errors
-5. **Verify the artifact was uploaded** - in the workflow run, check the "Upload artifact" step
+## Verification Checklist
 
-## Important Notes
+After following the steps above, verify:
 
-- The `.nojekyll` file has been added to prevent Jekyll from processing files
-- The workflow now creates this file automatically during build
-- GitHub Pages must be set to **"GitHub Actions"**, not a branch
-- The web app is built from `web-app/dist` directory
+- [ ] GitHub Pages source is set to **"GitHub Actions"** (not a branch)
+- [ ] The workflow completed successfully (green checkmarks)
+- [ ] You waited 2-5 minutes after the workflow completed
+- [ ] You cleared your browser cache or used incognito mode
+- [ ] The URL shows the web app (not README)
 
+## Still Not Working?
+
+If you still see the README after following all steps:
+
+1. **Check the Actions tab:**
+   - Make sure the workflow ran successfully
+   - Check the "build" job logs to see if `.nojekyll` was created
+   - Check the "deploy" job logs for any errors
+
+2. **Try a different browser or device:**
+   - Sometimes browser cache is persistent
+   - Try on your phone or another computer
+
+3. **Check the URL:**
+   - Make sure you're visiting: `https://ssaleh22-stack.github.io/Student-Table-Maker-Qu-Student-/`
+   - Note the trailing slash `/` at the end
+   - The repository name must match exactly (case-sensitive)
+
+4. **Wait longer:**
+   - GitHub Pages can take up to 10 minutes to update after deployment
+   - Be patient and try again after a few minutes
+
+## Summary
+
+**The fix is simple:**
+1. Go to Settings → Pages
+2. Change Source from "Deploy from a branch" to **"GitHub Actions"**
+3. Save
+4. Trigger a new deployment from Actions tab
+5. Wait and clear cache
+
+This should resolve the issue!
