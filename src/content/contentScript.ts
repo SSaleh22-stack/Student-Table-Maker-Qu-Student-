@@ -180,6 +180,33 @@ function injectExtractButton() {
         return;
       }
 
+      // Check if extension context is still valid
+      try {
+        if (!chrome.runtime.id) {
+          throw new Error('Extension context invalidated');
+        }
+      } catch (contextError) {
+        button.classList.remove('loading');
+        button.classList.add('error');
+        const errorText = getCurrentLanguage() === 'ar' 
+          ? '⚠️ تم إعادة تحميل الإضافة. يرجى تحديث الصفحة والمحاولة مرة أخرى.'
+          : '⚠️ Extension was reloaded. Please refresh the page and try again.';
+        button.innerHTML = errorText;
+        button.style.background = 'linear-gradient(135deg, #e53e3e 0%, #c53030 100%)';
+        button.style.backgroundSize = '200% auto';
+        setTimeout(() => {
+          button.classList.remove('error');
+          button.innerHTML = getButtonText();
+          button.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+          button.style.backgroundSize = '200% auto';
+          button.disabled = false;
+          button.style.opacity = '1';
+          button.style.cursor = 'pointer';
+          button.style.animation = 'none';
+        }, 3000);
+        return;
+      }
+
       const courses = extractCoursesFromDom(document);
       
       console.log(`Extracted ${courses.length} courses from ${document.querySelectorAll('tbody tr[class^="ROW"]').length} rows`);
