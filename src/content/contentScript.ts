@@ -6,15 +6,21 @@
 import { extractCoursesFromDom } from './extractCourses';
 import { Course } from '../types';
 
-// Prevent multiple executions
-if ((window as any).__QU_COURSE_EXTRACTOR_LOADED__) {
-  // Script already loaded, prevent redeclaration by using existing variables
-  // Exit early by checking if button exists
-  if (document.getElementById('qu-course-extractor-btn')) {
-    // Already initialized, do nothing
+// Wrap entire script execution in try-catch to handle Extension context invalidated errors
+try {
+  // Prevent multiple executions
+  if ((window as any).__QU_COURSE_EXTRACTOR_LOADED__) {
+    // Script already loaded, prevent redeclaration by using existing variables
+    // Exit early by checking if button exists
+    if (document.getElementById('qu-course-extractor-btn')) {
+      // Already initialized, do nothing
+    }
+  } else {
+    (window as any).__QU_COURSE_EXTRACTOR_LOADED__ = true;
   }
-} else {
-  (window as any).__QU_COURSE_EXTRACTOR_LOADED__ = true;
+} catch (initError) {
+  console.error('Error during script initialization:', initError);
+  // Continue execution - don't throw
 }
 
 // Language preference - use window object to avoid redeclaration
