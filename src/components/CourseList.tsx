@@ -136,8 +136,8 @@ const CourseList: React.FC<CourseListProps> = ({ courses }) => {
         {t.courses} ({courses.length} {language === 'en' ? 'total' : 'إجمالي'})
       </h2>
       <div className="course-groups">
-        {coursesInOrder.map((course) => (
-          <div key={course.id} className="course-group">
+        {coursesInOrder.map((course, index) => (
+          <div key={`${course.id}-${index}`} className="course-group">
             <div className="course-group-header">
               <div className="course-group-title">
                 <h3 className="course-code">{course.code}</h3>
