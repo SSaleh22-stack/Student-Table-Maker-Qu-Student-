@@ -8,66 +8,17 @@ interface CourseListProps {
   courses: Course[];
 }
 
-interface GroupedCourse {
-  key: string; // course code + name combination
-  code: string;
-  name: string;
-  sections: Course[];
-}
-
 const CourseList: React.FC<CourseListProps> = ({ courses }) => {
   const { t, language } = useLanguage();
   const { addCourse, removeCourse, isInTimetable, hasConflict, getConflictInfo } = useTimetable();
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
-  // Group courses by code + name, preserving original order
-  const groupedCourses = useMemo(() => {
-    const groups = new Map<string, GroupedCourse>();
-    const groupOrder: string[] = []; // Track order of first appearance
-    
-    courses.forEach((course, originalIndex) => {
-      const key = `${course.code}|${course.name}`;
-      if (!groups.has(key)) {
-        groups.set(key, {
-          key,
-          code: course.code,
-          name: course.name,
-          sections: [],
-        });
-        groupOrder.push(key); // Track first appearance order
-      }
-      // Store original index to preserve order
-      const courseWithIndex = { ...course, __originalIndex: originalIndex };
-      groups.get(key)!.sections.push(courseWithIndex);
-    });
-
-    // Sort sections within each group by original index (preserve original order)
-    groups.forEach((group) => {
-      group.sections.sort((a: any, b: any) => {
-        const aIndex = a.__originalIndex ?? 0;
-        const bIndex = b.__originalIndex ?? 0;
-        return aIndex - bIndex;
-      });
-      // Remove the temporary index property
-      group.sections.forEach((course: any) => {
-        delete course.__originalIndex;
-      });
-    });
-
-    // Return groups in order of first appearance (preserve original order)
-    return groupOrder.map(key => groups.get(key)!).filter(Boolean);
+  // Display courses in exact DOM order without grouping
+  // This preserves the original order from the website
+  const coursesInOrder = useMemo(() => {
+    return courses; // Use courses array directly as it's already in DOM order
   }, [courses]);
 
-  const toggleGroup = (key: string) => {
-    const newExpanded = new Set(expandedGroups);
-    if (newExpanded.has(key)) {
-      newExpanded.delete(key);
-    } else {
-      newExpanded.add(key);
-    }
-    setExpandedGroups(newExpanded);
-  };
 
   const handleAddToTimetable = (course: Course) => {
     if (isInTimetable(course.id)) {
@@ -185,126 +136,110 @@ const CourseList: React.FC<CourseListProps> = ({ courses }) => {
         {t.courses} ({courses.length} {language === 'en' ? 'total' : 'إجمالي'})
       </h2>
       <div className="course-groups">
-        {groupedCourses.map((group) => {
-          const isExpanded = expandedGroups.has(group.key);
-          return (
-            <div key={group.key} className="course-group">
-              <div 
-                className="course-group-header"
-                onClick={() => toggleGroup(group.key)}
-              >
-                <div className="course-group-title">
-                  <h3 className="course-code">{group.code}</h3>
-                  <p className="course-name">{group.name}</p>
+        {coursesInOrder.map((course) => (
+          <div key={course.id} className="course-group">
+            <div className="course-group-header">
+              <div className="course-group-title">
+                <h3 className="course-code">{course.code}</h3>
+                <p className="course-name">{course.name}</p>
+              </div>
+              <div className="course-group-info">
+                <span className="section-badge">{t.section}: {course.section}</span>
+              </div>
+            </div>
+            <div className="course-sections">
+              <div className="course-section-item">
+                <div className="section-header">
+                  <div className="section-actions">
+                    {isInTimetable(course.id) ? (
+                      <button
+                        className="remove-section-btn"
+                        onClick={() => handleRemoveFromTimetable(course)}
+                        title={language === 'en' ? 'Remove from timetable' : 'إزالة من الجدول'}
+                      >
+                        {language === 'en' ? '🗑️ Remove' : '🗑️ إزالة'}
+                      </button>
+                    ) : (
+                      <button
+                        className={`add-section-btn ${hasConflict(course) && getConflictInfo(course)?.type === 'schedule' ? 'conflict' : ''}`}
+                        onClick={() => handleAddToTimetable(course)}
+                        disabled={hasConflict(course) && getConflictInfo(course)?.type === 'schedule'}
+                      >
+                        {hasConflict(course) && getConflictInfo(course)?.type === 'schedule'
+                          ? (language === 'en' ? '⚠️ Conflict' : '⚠️ تعارض')
+                          : `➕ ${t.addToTimetable}`}
+                      </button>
+                    )}
+                  </div>
                 </div>
-                <div className="course-group-info">
-                  <span className="section-count">
-                    {group.sections.length} {language === 'en' ? 'section(s)' : 'شعبة'}
-                  </span>
-                  <span className={`expand-icon ${isExpanded ? 'expanded' : ''}`}>
-                    ▼
-                  </span>
+                <div className="section-details">
+                  {/* Display multiple time slots if they exist */}
+                  {course.timeSlots && course.timeSlots.length > 1 ? (
+                    <>
+                      <span className="detail-label">{t.time}:</span>
+                      <div className="time-slots-list">
+                        {course.timeSlots.map((slot, slotIndex) => (
+                          <div key={slotIndex} className="time-slot-item">
+                            <span className="time-slot-days">{slot.days.join(', ')}</span>
+                            <span className="time-slot-time">{slot.startTime} - {slot.endTime}</span>
+                            {slot.location && (
+                              <span className="time-slot-location">{slot.location}</span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <span className="detail-label">{t.days}:</span>
+                      <span className="detail-value">{course.days.join(', ')}</span>
+                      <span className="detail-label">{t.time}:</span>
+                      <span className="detail-value">{course.startTime} - {course.endTime}</span>
+                      {course.location && (
+                        <>
+                          <span className="detail-label">{t.location}:</span>
+                          <span className="detail-value">{course.location}</span>
+                        </>
+                      )}
+                    </>
+                  )}
+                  {course.instructor && (
+                    <>
+                      <span className="detail-label">{t.instructor}:</span>
+                      <span className="detail-value">{course.instructor}</span>
+                    </>
+                  )}
+                  {course.status && (
+                    <>
+                      <span className="detail-label">{t.status}:</span>
+                      <span className={`status-badge ${course.status}`}>
+                        {course.status === 'open' ? t.open : t.closed}
+                      </span>
+                    </>
+                  )}
+                  {course.classType && (
+                    <>
+                      <span className="detail-label">{t.classType}:</span>
+                      <span className={`class-type-badge ${course.classType}`}>
+                        {course.classType === 'practical' ? t.practical :
+                         course.classType === 'theoretical' ? t.theoretical :
+                         t.exercise}
+                      </span>
+                    </>
+                  )}
+                  {course.finalExam && (
+                    <div className="section-detail-row exam-info">
+                      <span className="detail-label">{t.finalExam}:</span>
+                      <span className="detail-value">
+                        {course.finalExam.date ? `Period ${course.finalExam.date}` : 'N/A'}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
-              {isExpanded && (
-                <div className="course-sections">
-                  {group.sections.map((course) => (
-                    <div key={course.id} className="course-section-item">
-                      <div className="section-header">
-                        <span className="section-badge">{t.section}: {course.section}</span>
-                        <div className="section-actions">
-                          {isInTimetable(course.id) ? (
-                            <button
-                              className="remove-section-btn"
-                              onClick={() => handleRemoveFromTimetable(course)}
-                              title={language === 'en' ? 'Remove from timetable' : 'إزالة من الجدول'}
-                            >
-                              {language === 'en' ? '🗑️ Remove' : '🗑️ إزالة'}
-                            </button>
-                          ) : (
-                            <button
-                              className={`add-section-btn ${hasConflict(course) && getConflictInfo(course)?.type === 'schedule' ? 'conflict' : ''}`}
-                              onClick={() => handleAddToTimetable(course)}
-                              disabled={hasConflict(course) && getConflictInfo(course)?.type === 'schedule'}
-                            >
-                              {hasConflict(course) && getConflictInfo(course)?.type === 'schedule'
-                                ? (language === 'en' ? '⚠️ Conflict' : '⚠️ تعارض')
-                                : `➕ ${t.addToTimetable}`}
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                      <div className="section-details">
-                        {/* Display multiple time slots if they exist */}
-                        {course.timeSlots && course.timeSlots.length > 1 ? (
-                          <>
-                            <span className="detail-label">{t.time}:</span>
-                            <div className="time-slots-list">
-                              {course.timeSlots.map((slot, slotIndex) => (
-                                <div key={slotIndex} className="time-slot-item">
-                                  <span className="time-slot-days">{slot.days.join(', ')}</span>
-                                  <span className="time-slot-time">{slot.startTime} - {slot.endTime}</span>
-                                  {slot.location && (
-                                    <span className="time-slot-location">{slot.location}</span>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                          </>
-                        ) : (
-                          <>
-                            <span className="detail-label">{t.days}:</span>
-                            <span className="detail-value">{course.days.join(', ')}</span>
-                            <span className="detail-label">{t.time}:</span>
-                            <span className="detail-value">{course.startTime} - {course.endTime}</span>
-                            {course.location && (
-                              <>
-                                <span className="detail-label">{t.location}:</span>
-                                <span className="detail-value">{course.location}</span>
-                              </>
-                            )}
-                          </>
-                        )}
-                        {course.instructor && (
-                          <>
-                            <span className="detail-label">{t.instructor}:</span>
-                            <span className="detail-value">{course.instructor}</span>
-                          </>
-                        )}
-                        {course.status && (
-                          <>
-                            <span className="detail-label">{t.status}:</span>
-                            <span className={`status-badge ${course.status}`}>
-                              {course.status === 'open' ? t.open : t.closed}
-                            </span>
-                          </>
-                        )}
-                        {course.classType && (
-                          <>
-                            <span className="detail-label">{t.classType}:</span>
-                            <span className={`class-type-badge ${course.classType}`}>
-                              {course.classType === 'practical' ? t.practical :
-                               course.classType === 'theoretical' ? t.theoretical :
-                               t.exercise}
-                            </span>
-                          </>
-                        )}
-                        {course.finalExam && (
-                          <div className="section-detail-row exam-info">
-                            <span className="detail-label">{t.finalExam}:</span>
-                            <span className="detail-value">
-                              {course.finalExam.date ? `Period ${course.finalExam.date}` : 'N/A'}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
-          );
-        })}
+          </div>
+        ))}
       </div>
     </section>
   );
