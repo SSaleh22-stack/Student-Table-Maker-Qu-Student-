@@ -393,7 +393,7 @@ export function extractCoursesFromDom(doc: Document): Course[] {
             
             if (timeSlots.length === 0) {
               // No time slots found, create a default course
-              const course: Course = {
+              const course: Course & { __originalIndex?: number } = {
                 id: `${code}-${sectionNumber}-${index}`,
                 code,
                 name,
@@ -405,6 +405,7 @@ export function extractCoursesFromDom(doc: Document): Course[] {
                 status,
                 classType,
                 finalExam: examPeriod ? { day: 'Sun', startTime: '08:00', endTime: '10:00' } : undefined,
+                __originalIndex: courses.length, // Preserve DOM order
               };
               courses.push(course);
             } else {
@@ -426,7 +427,7 @@ export function extractCoursesFromDom(doc: Document): Course[] {
               // Use first time slot for backwards compatibility (days, startTime, endTime, location)
               const firstSlot = timeSlots[0];
               
-              const course: Course = {
+              const course: Course & { __originalIndex?: number } = {
                 id: `${code}-${sectionNumber}-${index}`,
                 code,
                 name,
@@ -445,13 +446,14 @@ export function extractCoursesFromDom(doc: Document): Course[] {
                   endTime: '10:00',
                   date: examPeriod // Store exam period as date for now
                 } : undefined,
+                __originalIndex: courses.length, // Preserve DOM order
               };
               console.log(`Extracted course with ${timeSlots.length} time slot(s):`, course);
               courses.push(course);
             }
           } else {
             // No section input found, create a default course
-            const course: Course = {
+            const course: Course & { __originalIndex?: number } = {
               id: `${code}-${sectionNumber}-${index}`,
               code,
               name,
@@ -463,12 +465,13 @@ export function extractCoursesFromDom(doc: Document): Course[] {
               status,
               classType,
               finalExam: examPeriod ? { day: 'Sun', startTime: '08:00', endTime: '10:00' } : undefined,
+              __originalIndex: courses.length, // Preserve DOM order
             };
             courses.push(course);
           }
         } else {
           // No details cell, create a minimal course
-          const course: Course = {
+          const course: Course & { __originalIndex?: number } = {
             id: `${code}-${sectionNumber}-${index}`,
             code,
             name,
@@ -478,6 +481,7 @@ export function extractCoursesFromDom(doc: Document): Course[] {
             endTime: '09:30',
             status,
             classType,
+            __originalIndex: courses.length, // Preserve DOM order
           };
           courses.push(course);
         }
