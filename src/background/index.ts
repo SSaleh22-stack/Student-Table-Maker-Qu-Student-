@@ -71,43 +71,77 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return;
       }
 
+      // Check if extension context is still valid
+      if (!chrome.runtime || !chrome.runtime.id) {
+        sendResponse({
+          type: 'EXTRACTION_FAILED',
+          error: 'Extension context invalidated. Please reload the extension.',
+        });
+        return;
+      }
+
       // Try to send message to content script
-      chrome.tabs.sendMessage(
-        tabId,
-        { type: 'EXTRACT_COURSES' },
-        (response) => {
-          if (chrome.runtime.lastError) {
-            // Content script might not be loaded, try to inject it
-            chrome.scripting.executeScript({
-              target: { tabId },
-              files: ['src/content/contentScript.js'],
-            }).then(() => {
-              // Retry sending message after injection
-              chrome.tabs.sendMessage(
-                tabId,
-                { type: 'EXTRACT_COURSES' },
-                (retryResponse) => {
-                  if (chrome.runtime.lastError) {
-                    sendResponse({
-                      type: 'EXTRACTION_FAILED',
-                      error: chrome.runtime.lastError.message,
-                    });
-                  } else {
-                    sendResponse(retryResponse);
+      try {
+        chrome.tabs.sendMessage(
+          tabId,
+          { type: 'EXTRACT_COURSES' },
+          (response) => {
+            if (chrome.runtime.lastError) {
+              const errorMsg = chrome.runtime.lastError.message;
+              // If context is invalidated, return a helpful error
+              if (errorMsg.includes('Extension context invalidated') || errorMsg.includes('message port closed')) {
+                sendResponse({
+                  type: 'EXTRACTION_FAILED',
+                  error: 'Extension context invalidated. Please refresh the QU student page and try again.',
+                });
+                return;
+              }
+              
+              // Content script might not be loaded, try to inject it
+              chrome.scripting.executeScript({
+                target: { tabId },
+                files: ['src/content/contentScript.js'],
+              }).then(() => {
+                // Retry sending message after injection
+                chrome.tabs.sendMessage(
+                  tabId,
+                  { type: 'EXTRACT_COURSES' },
+                  (retryResponse) => {
+                    if (chrome.runtime.lastError) {
+                      const retryError = chrome.runtime.lastError.message;
+                      if (retryError.includes('Extension context invalidated') || retryError.includes('message port closed')) {
+                        sendResponse({
+                          type: 'EXTRACTION_FAILED',
+                          error: 'Extension context invalidated. Please refresh the QU student page and try again.',
+                        });
+                      } else {
+                        sendResponse({
+                          type: 'EXTRACTION_FAILED',
+                          error: retryError,
+                        });
+                      }
+                    } else {
+                      sendResponse(retryResponse);
+                    }
                   }
-                }
-              );
-            }).catch((error) => {
-              sendResponse({
-                type: 'EXTRACTION_FAILED',
-                error: error.message || 'Failed to inject content script',
+                );
+              }).catch((error) => {
+                sendResponse({
+                  type: 'EXTRACTION_FAILED',
+                  error: error.message || 'Failed to inject content script',
+                });
               });
-            });
-          } else {
-            sendResponse(response);
+            } else {
+              sendResponse(response);
+            }
           }
-        }
-      );
+        );
+      } catch (error) {
+        sendResponse({
+          type: 'EXTRACTION_FAILED',
+          error: error instanceof Error ? error.message : 'Unknown error occurred',
+        });
+      }
     });
 
     // Return true to indicate we will send a response asynchronously

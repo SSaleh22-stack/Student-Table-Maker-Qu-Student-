@@ -192,20 +192,41 @@ const AppContent: React.FC = () => {
       return;
     }
 
-    // Send message to background script to extract courses
-    chrome.runtime.sendMessage(
-      { type: 'EXTRACT_COURSES_FROM_TAB' },
-      (response) => {
-        setIsExtracting(false);
+    // Check if extension context is still valid
+    if (!chrome.runtime || !chrome.runtime.id) {
+      setIsExtracting(false);
+      setExtractionError(
+        language === 'en'
+          ? 'Extension context invalidated. Please reload the page and try again.'
+          : 'تم إبطال سياق الإضافة. يرجى إعادة تحميل الصفحة والمحاولة مرة أخرى.'
+      );
+      return;
+    }
 
-        if (chrome.runtime.lastError) {
-          setExtractionError(
-            language === 'en'
-              ? 'Failed to communicate with extension. Please reload the page.'
-              : 'فشل التواصل مع الإضافة. يرجى إعادة تحميل الصفحة.'
-          );
-          return;
-        }
+    // Send message to background script to extract courses
+    try {
+      chrome.runtime.sendMessage(
+        { type: 'EXTRACT_COURSES_FROM_TAB' },
+        (response) => {
+          setIsExtracting(false);
+
+          if (chrome.runtime.lastError) {
+            const errorMsg = chrome.runtime.lastError.message;
+            if (errorMsg.includes('Extension context invalidated') || errorMsg.includes('message port closed')) {
+              setExtractionError(
+                language === 'en'
+                  ? 'Extension was reloaded. Please refresh the QU student page and try extracting again.'
+                  : 'تم إعادة تحميل الإضافة. يرجى تحديث صفحة الطالب والمحاولة مرة أخرى.'
+              );
+            } else {
+              setExtractionError(
+                language === 'en'
+                  ? `Failed to communicate with extension: ${errorMsg}. Please reload the page.`
+                  : `فشل التواصل مع الإضافة: ${errorMsg}. يرجى إعادة تحميل الصفحة.`
+              );
+            }
+            return;
+          }
 
         if (response && response.type === 'COURSES_EXTRACTED' && response.success) {
           const extractedCourses = response.payload as Course[];
@@ -227,7 +248,24 @@ const AppContent: React.FC = () => {
           setExtractionError(errorMsg);
         }
       }
-    );
+      );
+    } catch (error) {
+      setIsExtracting(false);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes('Extension context invalidated') || errorMessage.includes('message port closed')) {
+        setExtractionError(
+          language === 'en'
+            ? 'Extension was reloaded. Please refresh the QU student page and try extracting again.'
+            : 'تم إعادة تحميل الإضافة. يرجى تحديث صفحة الطالب والمحاولة مرة أخرى.'
+        );
+      } else {
+        setExtractionError(
+          language === 'en'
+            ? `Error: ${errorMessage}. Please reload the page.`
+            : `خطأ: ${errorMessage}. يرجى إعادة تحميل الصفحة.`
+        );
+      }
+    }
   };
 
   return (
