@@ -213,30 +213,42 @@ function injectExtractButton() {
       }
 
       // Send courses to background script and open dashboard
-      chrome.runtime.sendMessage(
-        {
-          type: 'OPEN_DASHBOARD_WITH_COURSES',
-          payload: courses,
-        },
-        (response) => {
-          button.classList.remove('loading');
-          if (chrome.runtime.lastError) {
-            console.error('Error:', chrome.runtime.lastError);
-            button.classList.add('error');
-            button.innerHTML = getGenericErrorText();
-            button.style.background = 'linear-gradient(135deg, #e53e3e 0%, #c53030 100%)';
-            button.style.backgroundSize = '200% auto';
-            setTimeout(() => {
-              button.classList.remove('error');
-              button.innerHTML = getButtonText();
-              button.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+      try {
+        chrome.runtime.sendMessage(
+          {
+            type: 'OPEN_DASHBOARD_WITH_COURSES',
+            payload: courses,
+          },
+          (response) => {
+            button.classList.remove('loading');
+            if (chrome.runtime.lastError) {
+              const errorMsg = chrome.runtime.lastError.message;
+              console.error('Error:', chrome.runtime.lastError);
+              button.classList.add('error');
+              
+              // Check if it's a context invalidated error
+              if (errorMsg.includes('Extension context invalidated') || errorMsg.includes('message port closed') || !chrome.runtime.id) {
+                const errorText = getCurrentLanguage() === 'ar' 
+                  ? '⚠️ تم إعادة تحميل الإضافة. يرجى تحديث الصفحة والمحاولة مرة أخرى.'
+                  : '⚠️ Extension was reloaded. Please refresh the page and try again.';
+                button.innerHTML = errorText;
+              } else {
+                button.innerHTML = getGenericErrorText();
+              }
+              
+              button.style.background = 'linear-gradient(135deg, #e53e3e 0%, #c53030 100%)';
               button.style.backgroundSize = '200% auto';
-              button.disabled = false;
-              button.style.opacity = '1';
-              button.style.cursor = 'pointer';
-              button.style.animation = 'none';
-            }, 2000);
-          } else {
+              setTimeout(() => {
+                button.classList.remove('error');
+                button.innerHTML = getButtonText();
+                button.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+                button.style.backgroundSize = '200% auto';
+                button.disabled = false;
+                button.style.opacity = '1';
+                button.style.cursor = 'pointer';
+                button.style.animation = 'none';
+              }, 3000);
+            } else {
             button.classList.add('success');
             button.innerHTML = getSuccessText();
             button.style.background = 'linear-gradient(135deg, #48bb78 0%, #38a169 100%)';
@@ -516,6 +528,16 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage)
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.type === 'EXTRACT_COURSES') {
       try {
+        // Check if extension context is still valid
+        if (!chrome.runtime.id) {
+          sendResponse({
+            type: 'COURSES_EXTRACTED',
+            success: false,
+            error: 'Extension context invalidated. Please refresh the page and try again.',
+          });
+          return true;
+        }
+
         const courses = extractCoursesFromDom(document);
         
         sendResponse({
@@ -525,11 +547,22 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage)
         });
       } catch (error) {
         console.error('Error extracting courses:', error);
-        sendResponse({
-          type: 'COURSES_EXTRACTED',
-          success: false,
-          error: error instanceof Error ? error.message : 'Unknown error',
-        });
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        
+        // Check if it's a context invalidated error
+        if (errorMessage.includes('Extension context invalidated') || errorMessage.includes('message port closed')) {
+          sendResponse({
+            type: 'COURSES_EXTRACTED',
+            success: false,
+            error: 'Extension context invalidated. Please refresh the page and try again.',
+          });
+        } else {
+          sendResponse({
+            type: 'COURSES_EXTRACTED',
+            success: false,
+            error: errorMessage,
+          });
+        }
       }
       
       // Return true to indicate we will send a response asynchronously
