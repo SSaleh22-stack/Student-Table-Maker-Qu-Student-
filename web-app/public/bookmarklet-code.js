@@ -157,7 +157,8 @@
                 startTime: '08:00',
                 endTime: '10:00',
                 date: examPeriod
-              } : undefined
+              } : undefined,
+              __originalIndex: index // Preserve DOM order (use row index from DOM)
             };
           } else {
             course = {
@@ -176,7 +177,8 @@
                 startTime: '08:00',
                 endTime: '10:00',
                 date: examPeriod
-              } : undefined
+              } : undefined,
+              __originalIndex: index // Preserve DOM order (use row index from DOM)
             };
           }
           courses.push(course);

@@ -16,7 +16,20 @@ const CourseList: React.FC<CourseListProps> = ({ courses }) => {
   // Display courses in exact DOM order without grouping
   // This preserves the original order from the website
   const coursesInOrder = useMemo(() => {
-    return courses; // Use courses array directly as it's already in DOM order
+    // Check if any course has __originalIndex
+    const hasOriginalIndex = courses.some((course: any) => course.__originalIndex !== undefined);
+    
+    if (hasOriginalIndex) {
+      // Sort by __originalIndex to preserve DOM order
+      return [...courses].sort((a: any, b: any) => {
+        const aIndex = a.__originalIndex ?? Infinity;
+        const bIndex = b.__originalIndex ?? Infinity;
+        return aIndex - bIndex;
+      });
+    }
+    
+    // If no __originalIndex, use courses array as-is (should already be in DOM order)
+    return courses;
   }, [courses]);
 
   const handleAddToTimetable = (course: Course) => {
