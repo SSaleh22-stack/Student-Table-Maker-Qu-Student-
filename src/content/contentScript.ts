@@ -158,52 +158,42 @@ function injectExtractButton() {
     button.style.transform = 'translateY(0) scale(1)';
     button.style.animation = 'buttonPulse 1.5s ease-in-out infinite';
 
+    // Helper function to reset button on error
+    const resetButtonOnError = (errorText: string) => {
+      button.classList.remove('loading');
+      button.classList.add('error');
+      button.innerHTML = errorText;
+      button.style.background = 'linear-gradient(135deg, #e53e3e 0%, #c53030 100%)';
+      button.style.backgroundSize = '200% auto';
+      setTimeout(() => {
+        button.classList.remove('error');
+        button.innerHTML = getButtonText();
+        button.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+        button.style.backgroundSize = '200% auto';
+        button.disabled = false;
+        button.style.opacity = '1';
+        button.style.cursor = 'pointer';
+        button.style.animation = 'none';
+      }, 3000);
+    };
+
     try {
       // Check if chrome.runtime is available
-      if (typeof chrome === 'undefined' || !chrome.runtime || !chrome.runtime.sendMessage) {
-        console.error('Chrome extension APIs not available');
-        button.classList.remove('loading');
-        button.classList.add('error');
-        button.innerHTML = getErrorText();
-        button.style.background = 'linear-gradient(135deg, #e53e3e 0%, #c53030 100%)';
-        button.style.backgroundSize = '200% auto';
-        setTimeout(() => {
-          button.classList.remove('error');
-          button.innerHTML = getButtonText();
-          button.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
-          button.style.backgroundSize = '200% auto';
-          button.disabled = false;
-          button.style.opacity = '1';
-          button.style.cursor = 'pointer';
-          button.style.animation = 'none';
-        }, 2000);
-        return;
+      let runtimeValid = false;
+      try {
+        runtimeValid = typeof chrome !== 'undefined' && 
+                      chrome.runtime !== undefined && 
+                      chrome.runtime.sendMessage !== undefined &&
+                      chrome.runtime.id !== undefined;
+      } catch (e) {
+        runtimeValid = false;
       }
 
-      // Check if extension context is still valid
-      try {
-        if (!chrome.runtime.id) {
-          throw new Error('Extension context invalidated');
-        }
-      } catch (contextError) {
-        button.classList.remove('loading');
-        button.classList.add('error');
+      if (!runtimeValid) {
         const errorText = getCurrentLanguage() === 'ar' 
           ? '⚠️ تم إعادة تحميل الإضافة. يرجى تحديث الصفحة والمحاولة مرة أخرى.'
           : '⚠️ Extension was reloaded. Please refresh the page and try again.';
-        button.innerHTML = errorText;
-        button.style.background = 'linear-gradient(135deg, #e53e3e 0%, #c53030 100%)';
-        button.style.backgroundSize = '200% auto';
-        setTimeout(() => {
-          button.classList.remove('error');
-          button.innerHTML = getButtonText();
-          button.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
-          button.style.backgroundSize = '200% auto';
-          button.disabled = false;
-          button.style.opacity = '1';
-          button.style.cursor = 'pointer';
-          button.style.animation = 'none';
-        }, 3000);
+        resetButtonOnError(errorText);
         return;
       }
 
