@@ -21,11 +21,12 @@ const CourseList: React.FC<CourseListProps> = ({ courses }) => {
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
-  // Group courses by code + name
+  // Group courses by code + name, preserving original order
   const groupedCourses = useMemo(() => {
     const groups = new Map<string, GroupedCourse>();
+    const groupOrder: string[] = []; // Track order of first appearance
     
-    courses.forEach((course) => {
+    courses.forEach((course, originalIndex) => {
       const key = `${course.code}|${course.name}`;
       if (!groups.has(key)) {
         groups.set(key, {
@@ -34,18 +35,28 @@ const CourseList: React.FC<CourseListProps> = ({ courses }) => {
           name: course.name,
           sections: [],
         });
+        groupOrder.push(key); // Track first appearance order
       }
-      groups.get(key)!.sections.push(course);
+      // Store original index to preserve order
+      const courseWithIndex = { ...course, __originalIndex: originalIndex };
+      groups.get(key)!.sections.push(courseWithIndex);
     });
 
-    // Sort sections within each group by section number
+    // Sort sections within each group by original index (preserve original order)
     groups.forEach((group) => {
-      group.sections.sort((a, b) => a.section.localeCompare(b.section));
+      group.sections.sort((a: any, b: any) => {
+        const aIndex = a.__originalIndex ?? 0;
+        const bIndex = b.__originalIndex ?? 0;
+        return aIndex - bIndex;
+      });
+      // Remove the temporary index property
+      group.sections.forEach((course: any) => {
+        delete course.__originalIndex;
+      });
     });
 
-    return Array.from(groups.values()).sort((a, b) => 
-      a.code.localeCompare(b.code)
-    );
+    // Return groups in order of first appearance (preserve original order)
+    return groupOrder.map(key => groups.get(key)!).filter(Boolean);
   }, [courses]);
 
   const toggleGroup = (key: string) => {
