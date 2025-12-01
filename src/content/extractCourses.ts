@@ -405,7 +405,7 @@ export function extractCoursesFromDom(doc: Document): Course[] {
                 status,
                 classType,
                 finalExam: examPeriod ? { day: 'Sun', startTime: '08:00', endTime: '10:00' } : undefined,
-                __originalIndex: courses.length, // Preserve DOM order
+                __originalIndex: index, // Preserve DOM order (use row index from DOM)
               };
               courses.push(course);
             } else {
@@ -446,7 +446,7 @@ export function extractCoursesFromDom(doc: Document): Course[] {
                   endTime: '10:00',
                   date: examPeriod // Store exam period as date for now
                 } : undefined,
-                __originalIndex: courses.length, // Preserve DOM order
+                __originalIndex: index, // Preserve DOM order (use row index from DOM)
               };
               console.log(`Extracted course with ${timeSlots.length} time slot(s):`, course);
               courses.push(course);
