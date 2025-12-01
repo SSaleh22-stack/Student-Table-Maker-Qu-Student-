@@ -72,24 +72,54 @@ function getSuccessText(): string {
 
 // Load language preference
 function loadLanguage() {
-  if (typeof chrome !== 'undefined' && chrome.storage) {
-    chrome.storage.sync.get(['language'], (result) => {
-      if (result.language === 'en' || result.language === 'ar') {
-        (window as any).__QU_COURSE_EXTRACTOR_LANG__ = result.language;
-        updateButtonText();
-      }
-    });
+  try {
+    // Safely check if chrome.storage is available
+    let chromeStorageAvailable = false;
+    try {
+      chromeStorageAvailable = typeof chrome !== 'undefined' && 
+                                chrome.storage !== undefined &&
+                                chrome.storage.sync !== undefined;
+    } catch (e) {
+      chromeStorageAvailable = false;
+      console.warn('Cannot access chrome.storage (extension context may be invalidated):', e);
+      return;
+    }
 
-    // Listen for language changes
-    chrome.storage.onChanged.addListener((changes, areaName) => {
-      if (areaName === 'sync' && changes.language) {
-        const newLang = changes.language.newValue;
-        if (newLang === 'en' || newLang === 'ar') {
-          (window as any).__QU_COURSE_EXTRACTOR_LANG__ = newLang;
+    if (!chromeStorageAvailable) {
+      return;
+    }
+
+    try {
+      chrome.storage.sync.get(['language'], (result) => {
+        if (chrome.runtime.lastError) {
+          console.warn('Error getting language preference:', chrome.runtime.lastError);
+          return;
+        }
+        if (result.language === 'en' || result.language === 'ar') {
+          (window as any).__QU_COURSE_EXTRACTOR_LANG__ = result.language;
           updateButtonText();
         }
-      }
-    });
+      });
+    } catch (getError) {
+      console.warn('Error accessing chrome.storage.sync.get:', getError);
+    }
+
+    // Listen for language changes
+    try {
+      chrome.storage.onChanged.addListener((changes, areaName) => {
+        if (areaName === 'sync' && changes.language) {
+          const newLang = changes.language.newValue;
+          if (newLang === 'en' || newLang === 'ar') {
+            (window as any).__QU_COURSE_EXTRACTOR_LANG__ = newLang;
+            updateButtonText();
+          }
+        }
+      });
+    } catch (listenerError) {
+      console.warn('Error setting up storage change listener:', listenerError);
+    }
+  } catch (error) {
+    console.warn('Error in loadLanguage():', error);
   }
 }
 
@@ -533,11 +563,28 @@ function injectExtractButton() {
   }
 }
 
-// Inject button when page loads
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', injectExtractButton);
-} else {
-  injectExtractButton();
+// Inject button when page loads - wrap in try-catch to handle context invalidated errors
+try {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      try {
+        injectExtractButton();
+      } catch (error) {
+        console.error('Error injecting extract button:', error);
+        // Don't throw - script should continue
+      }
+    });
+  } else {
+    try {
+      injectExtractButton();
+    } catch (error) {
+      console.error('Error injecting extract button:', error);
+      // Don't throw - script should continue
+    }
+  }
+} catch (error) {
+  console.error('Error setting up button injection:', error);
+  // Don't throw - script should continue
 }
 
 // Also listen for messages from background script (for backward compatibility)
