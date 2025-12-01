@@ -21,14 +21,17 @@ const CourseList: React.FC<CourseListProps> = ({ courses }) => {
     
     if (hasOriginalIndex) {
       // Sort by __originalIndex to preserve DOM order
-      return [...courses].sort((a: any, b: any) => {
+      const sorted = [...courses].sort((a: any, b: any) => {
         const aIndex = a.__originalIndex ?? Infinity;
         const bIndex = b.__originalIndex ?? Infinity;
         return aIndex - bIndex;
       });
+      console.log('CourseList: Sorted courses by __originalIndex', sorted.map((c: any) => ({ code: c.code, section: c.section, index: c.__originalIndex })));
+      return sorted;
     }
     
     // If no __originalIndex, use courses array as-is (should already be in DOM order)
+    console.log('CourseList: No __originalIndex found, using courses as-is', courses.map((c: any) => ({ code: c.code, section: c.section })));
     return courses;
   }, [courses]);
 
