@@ -686,8 +686,32 @@ try {
       });
     }
   }
-} catch (error) {
-  // Handle errors during message listener setup
-  console.error('Error setting up message listener:', error);
-  // Don't throw - script should continue to work even if message listener fails
+  } catch (error) {
+    // Handle errors during message listener setup
+    console.error('Error setting up message listener:', error);
+    // Don't throw - script should continue to work even if message listener fails
+  }
+
+// Catch any unhandled errors at the script level
+if (typeof window !== 'undefined') {
+  const originalErrorHandler = window.onerror;
+  window.onerror = (message, source, lineno, colno, error) => {
+    if (message && typeof message === 'string' && message.includes('Extension context invalidated')) {
+      console.warn('Extension context invalidated error caught by global handler:', message);
+      return true; // Prevent default error handling
+    }
+    // Call original error handler if it exists
+    if (originalErrorHandler) {
+      return originalErrorHandler(message, source, lineno, colno, error);
+    }
+    return false;
+  };
+
+  // Also catch unhandled promise rejections
+  window.addEventListener('unhandledrejection', (event) => {
+    if (event.reason && event.reason.message && event.reason.message.includes('Extension context invalidated')) {
+      console.warn('Extension context invalidated promise rejection caught:', event.reason);
+      event.preventDefault(); // Prevent the error from being logged
+    }
+  });
 }
