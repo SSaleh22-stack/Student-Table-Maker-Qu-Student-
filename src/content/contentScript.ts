@@ -541,51 +541,77 @@ if (document.readyState === 'loading') {
 }
 
 // Also listen for messages from background script (for backward compatibility)
-if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage) {
-  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (message.type === 'EXTRACT_COURSES') {
-      try {
-        // Check if extension context is still valid
-        if (!chrome.runtime.id) {
-          sendResponse({
-            type: 'COURSES_EXTRACTED',
-            success: false,
-            error: 'Extension context invalidated. Please refresh the page and try again.',
-          });
+// Set up message listener with error handling
+try {
+  if (typeof chrome !== 'undefined' && chrome.runtime) {
+    // Check if runtime is valid before accessing properties
+    let runtimeValid = false;
+    try {
+      runtimeValid = chrome.runtime.id !== undefined && chrome.runtime.onMessage !== undefined;
+    } catch (e) {
+      // Context invalidated - can't access chrome.runtime.id
+      runtimeValid = false;
+      console.warn('Extension context invalidated during script load. Please refresh the page.');
+    }
+
+    if (runtimeValid && chrome.runtime.onMessage) {
+      chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+        if (message.type === 'EXTRACT_COURSES') {
+          try {
+            // Check if extension context is still valid
+            let contextValid = false;
+            try {
+              contextValid = chrome.runtime.id !== undefined;
+            } catch (e) {
+              contextValid = false;
+            }
+
+            if (!contextValid) {
+              sendResponse({
+                type: 'COURSES_EXTRACTED',
+                success: false,
+                error: 'Extension context invalidated. Please refresh the page and try again.',
+              });
+              return true;
+            }
+
+            const courses = extractCoursesFromDom(document);
+            
+            sendResponse({
+              type: 'COURSES_EXTRACTED',
+              success: true,
+              payload: courses,
+            });
+          } catch (error) {
+            console.error('Error extracting courses:', error);
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            
+            // Check if it's a context invalidated error
+            if (errorMessage.includes('Extension context invalidated') || errorMessage.includes('message port closed')) {
+              sendResponse({
+                type: 'COURSES_EXTRACTED',
+                success: false,
+                error: 'Extension context invalidated. Please refresh the page and try again.',
+              });
+            } else {
+              sendResponse({
+                type: 'COURSES_EXTRACTED',
+                success: false,
+                error: errorMessage,
+              });
+            }
+          }
+          
+          // Return true to indicate we will send a response asynchronously
           return true;
         }
-
-        const courses = extractCoursesFromDom(document);
         
-        sendResponse({
-          type: 'COURSES_EXTRACTED',
-          success: true,
-          payload: courses,
-        });
-      } catch (error) {
-        console.error('Error extracting courses:', error);
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        
-        // Check if it's a context invalidated error
-        if (errorMessage.includes('Extension context invalidated') || errorMessage.includes('message port closed')) {
-          sendResponse({
-            type: 'COURSES_EXTRACTED',
-            success: false,
-            error: 'Extension context invalidated. Please refresh the page and try again.',
-          });
-        } else {
-          sendResponse({
-            type: 'COURSES_EXTRACTED',
-            success: false,
-            error: errorMessage,
-          });
-        }
-      }
-      
-      // Return true to indicate we will send a response asynchronously
-      return true;
+        return false;
+      });
     }
-    
-    return false;
-  });
+  }
+} catch (error) {
+  // Handle errors during message listener setup
+  console.error('Error setting up message listener:', error);
+  // Don't throw - script should continue to work even if message listener fails
 }
