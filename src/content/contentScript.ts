@@ -542,24 +542,39 @@ if (document.readyState === 'loading') {
 
 // Also listen for messages from background script (for backward compatibility)
 // Set up message listener with error handling
+// Wrap everything in try-catch to prevent uncaught errors during script load
 try {
   // Safely check if chrome.runtime is available without throwing
   let chromeRuntimeAvailable = false;
   let onMessageAvailable = false;
   
   try {
-    if (typeof chrome !== 'undefined' && chrome.runtime) {
-      chromeRuntimeAvailable = true;
-      // Try to access onMessage without accessing id (which can throw)
-      if (typeof chrome.runtime.onMessage !== 'undefined') {
-        onMessageAvailable = true;
+    // Check chrome exists first
+    if (typeof chrome === 'undefined') {
+      chromeRuntimeAvailable = false;
+    } else {
+      // Try to access chrome.runtime - this can throw if context is invalidated
+      try {
+        const runtime = chrome.runtime;
+        if (runtime) {
+          chromeRuntimeAvailable = true;
+          // Try to access onMessage without accessing id (which can throw)
+          if (typeof runtime.onMessage !== 'undefined') {
+            onMessageAvailable = true;
+          }
+        }
+      } catch (runtimeError) {
+        // Context invalidated - can't access chrome.runtime
+        chromeRuntimeAvailable = false;
+        onMessageAvailable = false;
+        console.warn('Extension context invalidated during script load. Please refresh the page.');
       }
     }
   } catch (e) {
-    // Context invalidated - can't access chrome.runtime
+    // Any other error accessing chrome
     chromeRuntimeAvailable = false;
     onMessageAvailable = false;
-    console.warn('Extension context invalidated during script load. Please refresh the page.');
+    console.warn('Error checking chrome.runtime availability:', e);
   }
 
   if (chromeRuntimeAvailable && onMessageAvailable) {
