@@ -543,18 +543,26 @@ if (document.readyState === 'loading') {
 // Also listen for messages from background script (for backward compatibility)
 // Set up message listener with error handling
 try {
-  if (typeof chrome !== 'undefined' && chrome.runtime) {
-    // Check if runtime is valid before accessing properties
-    let runtimeValid = false;
-    try {
-      runtimeValid = chrome.runtime.id !== undefined && chrome.runtime.onMessage !== undefined;
-    } catch (e) {
-      // Context invalidated - can't access chrome.runtime.id
-      runtimeValid = false;
-      console.warn('Extension context invalidated during script load. Please refresh the page.');
+  // Safely check if chrome.runtime is available without throwing
+  let chromeRuntimeAvailable = false;
+  let onMessageAvailable = false;
+  
+  try {
+    if (typeof chrome !== 'undefined' && chrome.runtime) {
+      chromeRuntimeAvailable = true;
+      // Try to access onMessage without accessing id (which can throw)
+      if (typeof chrome.runtime.onMessage !== 'undefined') {
+        onMessageAvailable = true;
+      }
     }
+  } catch (e) {
+    // Context invalidated - can't access chrome.runtime
+    chromeRuntimeAvailable = false;
+    onMessageAvailable = false;
+    console.warn('Extension context invalidated during script load. Please refresh the page.');
+  }
 
-    if (runtimeValid && chrome.runtime.onMessage) {
+  if (chromeRuntimeAvailable && onMessageAvailable) {
       chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (message.type === 'EXTRACT_COURSES') {
           try {
