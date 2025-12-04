@@ -16,6 +16,11 @@ const CourseList: React.FC<CourseListProps> = ({ courses }) => {
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('compact');
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+  
+  // Detect if device is a touch device (iPad, iPhone, etc.)
+  const isTouchDevice = React.useMemo(() => {
+    return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  }, []);
 
   // Display courses sorted by website order (__originalIndex)
   // This preserves the original order from the website, NOT by section
@@ -292,8 +297,10 @@ const CourseList: React.FC<CourseListProps> = ({ courses }) => {
                       <div
                         key={`${course.id}-${index}`}
                         className={`compact-course-box ${inTimetable ? 'in-timetable' : ''} ${conflict ? 'has-conflict' : ''} ${isClosed ? 'closed' : ''}`}
-                        onMouseEnter={() => setHoveredCourse(course)}
-                        onMouseLeave={() => setHoveredCourse(null)}
+                        {...(!isTouchDevice && {
+                          onMouseEnter: () => setHoveredCourse(course),
+                          onMouseLeave: () => setHoveredCourse(null)
+                        })}
                         onClick={(e) => {
                           e.stopPropagation();
                           if (!inTimetable) {
