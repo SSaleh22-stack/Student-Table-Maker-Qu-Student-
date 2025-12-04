@@ -10,7 +10,7 @@ export interface ConflictInfo {
 
 interface TimetableContextType {
   timetable: TimetableEntry[];
-  addCourse: (course: Course, skipConfirmation?: boolean) => boolean; // Returns true if added, false if conflict
+  addCourse: (course: Course, skipConfirmation?: boolean, forceAddWithConflict?: boolean) => boolean; // Returns true if added, false if conflict
   removeCourse: (courseId: string) => void;
   removeAllCourses: () => void; // Remove all courses from timetable
   hasConflict: (course: Course) => boolean;
@@ -58,7 +58,7 @@ const checkExamConflict = (exam1: Exam, exam2: Exam): boolean => {
  */
 const checkExamPeriodConflict = (exam1: Exam, exam2: Exam): boolean => {
   // Same exam period (date field contains period number)
-  return exam1.date && exam2.date && exam1.date === exam2.date;
+  return !!(exam1.date && exam2.date && exam1.date === exam2.date);
 };
 
 /**
@@ -195,7 +195,7 @@ export const TimetableProvider: React.FC<{ children: ReactNode }> = ({ children 
     }
   }, [timetable]);
 
-  const addCourse = useCallback((course: Course, skipConfirmation?: boolean): boolean => {
+  const addCourse = useCallback((course: Course, skipConfirmation?: boolean, forceAddWithConflict?: boolean): boolean => {
     // If course has multiple time slots, add each as a separate entry
     if (course.timeSlots && course.timeSlots.length > 1) {
       let allAdded = true;
@@ -219,12 +219,18 @@ export const TimetableProvider: React.FC<{ children: ReactNode }> = ({ children 
         }
 
         // Check for schedule conflicts
-        if (checkScheduleConflict(slotCourse, timetable)) {
+        const hasConflict = checkScheduleConflict(slotCourse, timetable);
+        if (hasConflict && !forceAddWithConflict) {
           allAdded = false;
           return; // Skip this slot due to conflict
         }
 
-        entriesToAdd.push({ courseId: slotId, course: slotCourse });
+        // Add entry, marking as conflict section if forced with conflict
+        entriesToAdd.push({ 
+          courseId: slotId, 
+          course: slotCourse,
+          isConflictSection: hasConflict && forceAddWithConflict
+        });
       });
 
       if (entriesToAdd.length === 0) {
@@ -233,7 +239,7 @@ export const TimetableProvider: React.FC<{ children: ReactNode }> = ({ children 
 
       // Add all valid time slot entries
       setTimetable((prev) => [...prev, ...entriesToAdd]);
-      return allAdded; // Return true only if all slots were added
+      return allAdded || forceAddWithConflict; // Return true if all slots were added or forced
     } else {
       // Single time slot course (normal case)
       // Check if course is already in timetable
@@ -242,12 +248,17 @@ export const TimetableProvider: React.FC<{ children: ReactNode }> = ({ children 
       }
 
       // Check for schedule conflicts
-      if (checkScheduleConflict(course, timetable)) {
+      const hasConflict = checkScheduleConflict(course, timetable);
+      if (hasConflict && !forceAddWithConflict) {
         return false; // Schedule conflict detected
       }
 
-      // Add course to timetable
-      setTimetable((prev) => [...prev, { courseId: course.id, course }]);
+      // Add course to timetable, marking as conflict section if forced with conflict
+      setTimetable((prev) => [...prev, { 
+        courseId: course.id, 
+        course,
+        isConflictSection: hasConflict && forceAddWithConflict
+      }]);
       return true;
     }
   }, [timetable]);

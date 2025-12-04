@@ -20,12 +20,7 @@
   align-items: center;
   gap: 1rem;
   flex-wrap: wrap;
-  position: sticky;
-  top: -1.5rem;
-  background: white;
   padding: 0 0 1rem 0;
-  z-index: 10;
-  border-bottom: 2px solid #e0e0e0;
   margin-bottom: 1.5rem;
   margin-top: 0;
   width: 100%;
@@ -318,6 +313,32 @@
 .add-section-btn:disabled {
   opacity: 0.7;
   cursor: not-allowed;
+}
+
+.section-actions-buttons {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.add-section-btn.conflict-add {
+  background: #e53e3e;
+  border: 2px solid #c53030;
+  animation: conflictFlash 1s infinite;
+}
+
+.add-section-btn.conflict-add:hover {
+  background: #c53030;
+  animation: none;
+}
+
+@keyframes conflictFlash {
+  0%, 100% {
+    box-shadow: 0 2px 6px rgba(229, 62, 62, 0.3);
+  }
+  50% {
+    box-shadow: 0 4px 12px rgba(255, 0, 0, 0.8);
+  }
 }
 
 .section-actions {
@@ -638,7 +659,6 @@
   margin-top: 0;
   margin-bottom: 1rem;
   padding-top: 1rem;
-  border-top: 2px solid #e0e0e0;
   background: white;
 }
 

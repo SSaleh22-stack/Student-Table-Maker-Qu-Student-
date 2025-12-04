@@ -486,10 +486,14 @@ const TimetableGrid: React.FC = () => {
               الجدول الأسبوعي {timetable.length > 0 && (() => {
                 const uniqueCourses = new Set(timetable.map(entry => entry.course.code)).size;
                 const totalSections = timetable.length;
+                const totalConflicts = timetable.filter(entry => entry.isConflictSection).length;
                 return (
                   <>
                     <span className="total-courses-text">إجمالي المقررات {uniqueCourses}</span>
                     <span className="total-sections-text">عدد الشعب {totalSections}</span>
+                    {totalConflicts > 0 && (
+                      <span className="total-conflicts-text">التعارضات {totalConflicts}</span>
+                    )}
                   </>
                 );
               })()}
@@ -501,10 +505,14 @@ const TimetableGrid: React.FC = () => {
               Weekly Schedule {timetable.length > 0 && (() => {
                 const uniqueCourses = new Set(timetable.map(entry => entry.course.code)).size;
                 const totalSections = timetable.length;
+                const totalConflicts = timetable.filter(entry => entry.isConflictSection).length;
                 return (
                   <>
                     <span className="total-courses-text">total courses {uniqueCourses}</span>
                     <span className="total-sections-text">sections {totalSections}</span>
+                    {totalConflicts > 0 && (
+                      <span className="total-conflicts-text">conflicts {totalConflicts}</span>
+                    )}
                   </>
                 );
               })()}
@@ -732,18 +740,22 @@ const TimetableGrid: React.FC = () => {
                       {dayCourses.map((entry) => {
                         const course = entry.course;
                         const conflict = hasConflict(course);
+                        const isConflictSection = entry.isConflictSection;
                         const style = getCourseBlockStyle(course.startTime, course.endTime);
                         const [color1, color2] = getCourseColor(course.code);
+
+                        // Make conflict sections smaller (reduce height by 30%)
+                        const adjustedStyle = isConflictSection 
+                          ? { ...style, height: `calc(${style.height} * 0.7)` }
+                          : style;
 
                         return (
                           <div
                             key={entry.courseId}
-                            className={`course-block ${conflict ? 'conflict' : ''}`}
+                            className={`course-block ${isConflictSection ? 'conflict-section' : ''}`}
                             style={{
-                              ...style,
-                              background: conflict 
-                                ? 'linear-gradient(135deg, #f56565 0%, #c53030 100%)'
-                                : `linear-gradient(135deg, ${color1} 0%, ${color2} 100%)`,
+                              ...adjustedStyle,
+                              background: `linear-gradient(135deg, ${color1} 0%, ${color2} 100%)`,
                             }}
                           >
                             <div className="course-block-header">

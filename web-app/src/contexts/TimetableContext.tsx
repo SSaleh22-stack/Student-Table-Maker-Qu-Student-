@@ -10,7 +10,7 @@ export interface ConflictInfo {
 
 interface TimetableContextType {
   timetable: TimetableEntry[];
-  addCourse: (course: Course, skipConfirmation?: boolean) => boolean; // Returns true if added, false if conflict
+  addCourse: (course: Course, skipConfirmation?: boolean, forceAddWithConflict?: boolean) => boolean; // Returns true if added, false if conflict
   removeCourse: (courseId: string) => void;
   removeAllCourses: () => void; // Remove all courses from timetable
   hasConflict: (course: Course) => boolean;
@@ -58,7 +58,7 @@ const checkExamConflict = (exam1: Exam, exam2: Exam): boolean => {
  */
 const checkExamPeriodConflict = (exam1: Exam, exam2: Exam): boolean => {
   // Same exam period (date field contains period number)
-  return exam1.date && exam2.date && exam1.date === exam2.date;
+  return !!(exam1.date && exam2.date && exam1.date === exam2.date);
 };
 
 /**
@@ -213,19 +213,24 @@ export const TimetableProvider: React.FC<{ children: ReactNode }> = ({ children 
     }
   }, [timetable]);
 
-  const addCourse = useCallback((course: Course, skipConfirmation?: boolean): boolean => {
+  const addCourse = useCallback((course: Course, skipConfirmation?: boolean, forceAddWithConflict?: boolean): boolean => {
     // Check if course is already in timetable
     if (timetable.some((entry) => entry.courseId === course.id)) {
       return false; // Already added
     }
 
     // Check for schedule conflicts
-    if (checkScheduleConflict(course, timetable)) {
+    const hasConflict = checkScheduleConflict(course, timetable);
+    if (hasConflict && !forceAddWithConflict) {
       return false; // Schedule conflict detected
     }
 
-    // Add course to timetable
-    setTimetable((prev) => [...prev, { courseId: course.id, course }]);
+    // Add course to timetable, marking as conflict section if forced with conflict
+    setTimetable((prev) => [...prev, { 
+      courseId: course.id, 
+      course,
+      isConflictSection: hasConflict && forceAddWithConflict
+    }]);
     return true;
   }, [timetable]);
 

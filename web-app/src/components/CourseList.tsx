@@ -123,7 +123,7 @@ const CourseList: React.FC<CourseListProps> = ({ courses }) => {
     return groups;
   }, [coursesInOrder]);
 
-  const handleAddToTimetable = (course: Course) => {
+  const handleAddToTimetable = (course: Course, forceWithConflict: boolean = false) => {
     if (isInTimetable(course.id)) {
       setNotification({
         message: language === 'en' 
@@ -139,15 +139,19 @@ const CourseList: React.FC<CourseListProps> = ({ courses }) => {
     const conflictInfo = getConflictInfo(course);
     
     if (conflictInfo) {
-      // Schedule conflict - don't allow
+      // Schedule conflict - add as conflict section automatically
       if (conflictInfo.type === 'schedule') {
-        setNotification({
-          message: language === 'en'
-            ? `Schedule conflict: ${course.code} overlaps with ${conflictInfo.conflictingCourse.code} on ${conflictInfo.conflictingCourse.days.join(', ')}`
-            : `تعارض في الجدول: ${course.code} يتداخل مع ${conflictInfo.conflictingCourse.code} في ${conflictInfo.conflictingCourse.days.join(', ')}`,
-          type: 'error'
-        });
-        setTimeout(() => setNotification(null), 3000);
+        // Automatically add as conflict section without confirmation
+        const added = addCourse(course, false, true);
+        if (added) {
+          setNotification({
+            message: language === 'en'
+              ? `${course.code} added as conflict section`
+              : `تم إضافة ${course.code} كشعبة متعارضة`,
+            type: 'success'
+          });
+          setTimeout(() => setNotification(null), 3000);
+        }
         return;
       }
       
@@ -292,7 +296,7 @@ const CourseList: React.FC<CourseListProps> = ({ courses }) => {
                         onMouseLeave={() => setHoveredCourse(null)}
                         onClick={(e) => {
                           e.stopPropagation();
-                          if (!inTimetable && !conflict) {
+                          if (!inTimetable) {
                             handleAddToTimetable(course);
                           } else if (inTimetable) {
                             handleRemoveFromTimetable(course);
@@ -458,12 +462,14 @@ const CourseList: React.FC<CourseListProps> = ({ courses }) => {
                       </button>
                     ) : (
                       <button
-                        className={`add-section-btn ${hasConflict(course) && getConflictInfo(course)?.type === 'schedule' ? 'conflict' : ''}`}
+                        className={`add-section-btn ${hasConflict(course) && getConflictInfo(course)?.type === 'schedule' ? 'conflict-add' : ''}`}
                         onClick={() => handleAddToTimetable(course)}
-                        disabled={hasConflict(course) && getConflictInfo(course)?.type === 'schedule'}
+                        title={hasConflict(course) && getConflictInfo(course)?.type === 'schedule' 
+                          ? (language === 'en' ? 'Add as conflict section (smaller, red flashing border)' : 'إضافة كشعبة متعارضة (أصغر، حدود حمراء متوهجة)')
+                          : undefined}
                       >
                         {hasConflict(course) && getConflictInfo(course)?.type === 'schedule'
-                          ? (language === 'en' ? '⚠️ Conflict' : '⚠️ تعارض')
+                          ? (language === 'en' ? '⚠️ Add Conflict' : '⚠️ إضافة تعارض')
                           : `➕ ${t.addToTimetable}`}
                       </button>
                     )}

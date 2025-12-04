@@ -37,5 +37,6 @@ export type Language = 'en' | 'ar';
 export interface TimetableEntry {
   courseId: string;
   course: Course;
+  isConflictSection?: boolean; // Flag to mark sections added despite conflicts
 }
 

@@ -14,7 +14,7 @@
     "https://stu-gate.qu.edu.sa/*"
   ],
   "action": {
-    "default_title": "Open Student Table Maker"
+    "default_title": "Open Qu Student"
   },
   "background": {
     "service_worker": "src/background/index.js",
