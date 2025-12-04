@@ -8,6 +8,10 @@
     return;
   }
   window.__QU_BOOKMARKLET_EXECUTED_V2__ = true;
+  
+  console.log('🔵 Bookmarklet starting execution...');
+  console.log('🔵 Current page URL:', window.location.href);
+  console.log('🔵 Current page title:', document.title);
   console.log('Bookmarklet code executing...');
   console.log('Current page URL:', window.location.href);
   console.log('Page title:', document.title);
@@ -81,9 +85,32 @@
     let skippedRows = 0;
     let errorRows = 0;
     try {
-      console.log('Extracting courses from QU portal:', window.location.href);
+      console.log('🔵 Extracting courses from QU portal:', window.location.href);
       const rows = document.querySelectorAll('tbody tr[class^="ROW"]');
-      console.log(`Found ${rows.length} course rows`);
+      console.log(`🔵 Found ${rows.length} course rows`);
+      
+      if (rows.length === 0) {
+        console.error('❌ NO ROWS FOUND! Trying alternative selectors...');
+        // Try alternative selectors
+        const altSelectors = [
+          'tbody tr',
+          'table tbody tr',
+          'tr[class*="ROW"]',
+          'tr[class*="row"]',
+          '.dataTable tbody tr',
+          'table tr'
+        ];
+        for (const selector of altSelectors) {
+          const altRows = document.querySelectorAll(selector);
+          console.log(`  Trying "${selector}": ${altRows.length} rows`);
+          if (altRows.length > 0) {
+            console.warn(`⚠️ Found ${altRows.length} rows with alternative selector: ${selector}`);
+            // Don't use it, just log it for debugging
+          }
+        }
+        console.error('❌ No course rows found with any selector!');
+        return []; // Return empty array - this will trigger the "no courses" alert
+      }
       rows.forEach((row, index) => {
         try {
           const cells = row.querySelectorAll('td');
@@ -199,10 +226,17 @@
           errorRows++;
         }
       });
-      console.log(`Successfully extracted ${courses.length} courses from ${rows.length} rows (${skippedRows} skipped, ${errorRows} errors)`);
+      console.log(`🔵 Successfully extracted ${courses.length} courses from ${rows.length} rows (${skippedRows} skipped, ${errorRows} errors)`);
+      if (courses.length === 0) {
+        console.error('❌❌❌ EXTRACTION RETURNED 0 COURSES! ❌❌❌');
+        console.error('❌ Rows found:', rows.length);
+        console.error('❌ Skipped rows:', skippedRows);
+        console.error('❌ Error rows:', errorRows);
+      }
       if (courses.length < rows.length * 0.5) {
         console.warn(`⚠️ Warning: Only extracted ${courses.length} courses from ${rows.length} rows. This might indicate a parsing issue.`);
       }
+      console.log('🔵 Returning courses array with length:', courses.length);
       return courses;
     } catch (error) {
       console.error('Error extracting courses:', error);
@@ -257,43 +291,110 @@
       isArabic = navigator.language.startsWith('ar') || document.documentElement.lang === 'ar' || document.documentElement.dir === 'rtl';
     }
     
+    console.log('🔵🔵🔵 CALLING extractCoursesFromPage() 🔵🔵🔵');
     const courses = extractCoursesFromPage();
+    console.log('🔵🔵🔵 EXTRACTION COMPLETE 🔵🔵🔵');
+    console.log('🔵 Extracted courses:', courses);
+    console.log('🔵 Number of courses extracted:', courses ? courses.length : 0);
+    console.log('🔵 Courses is array?', Array.isArray(courses));
+    console.log('🔵 Courses type:', typeof courses);
+    
     if (!courses || courses.length === 0) {
-      const message = isArabic 
-        ? 'لم يتم العثور على مقررات في هذه الصفحة. تأكد من أنك في صفحة المقررات المطروحة في بوابة الطالب وأن المقررات مرئية.'
-        : 'No courses found on this page. Make sure you are on the QU student portal course page and that courses are visible.';
-      alert(message);
+      const rowsFound = document.querySelectorAll('tbody tr[class^="ROW"]').length;
       console.error('No courses extracted. Check the page structure.');
-      return;
+      console.error('Page URL:', window.location.href);
+      console.error('Page title:', document.title);
+      console.error('Rows found with selector "tbody tr[class^=\\"ROW\\"]":', rowsFound);
+      
+      // Try alternative selectors to help debug
+      const altSelectors = [
+        'tbody tr',
+        'table tr',
+        'tr[class*="ROW"]',
+        'tr[class*="row"]'
+      ];
+      console.log('Trying alternative selectors:');
+      altSelectors.forEach(selector => {
+        const count = document.querySelectorAll(selector).length;
+        if (count > 0) {
+          console.log(`  ${selector}: ${count} elements found`);
+        }
+      });
+      
+      const message = isArabic 
+        ? `لم يتم العثور على مقررات في هذه الصفحة.\n\nالصفحة: ${document.title}\nالعنوان: ${window.location.href}\nالصفوف الموجودة: ${rowsFound}\n\nتأكد من أنك في صفحة المقررات المطروحة في بوابة الطالب وأن المقررات مرئية.`
+        : `No courses found on this page.\n\nPage: ${document.title}\nURL: ${window.location.href}\nRows found: ${rowsFound}\n\nMake sure you are on the QU student portal course page (offeredCourses page) and that courses are visible.`;
+      alert(message);
+      console.error('Stopping execution - no courses to extract');
+      return; // IMPORTANT: Don't redirect if no courses found
     }
+    
     const validCourses = courses.filter(c => c && c.code && c.name);
-    if (validCourses.length === 0) {
+    console.log('Valid courses after filtering:', validCourses.length);
+    
+    if (!validCourses || validCourses.length === 0) {
       const message = isArabic
         ? 'خطأ: المقررات المستخرجة غير صالحة. تحقق من وحدة التحكم للتفاصيل.'
         : 'Error: Extracted courses are invalid. Check console for details.';
       alert(message);
       console.error('Invalid courses:', courses);
-      return;
+      console.error('Stopping execution - no valid courses');
+      console.error('❌ NOT REDIRECTING - No valid courses found');
+      return; // IMPORTANT: Don't redirect if no valid courses
     }
+    
+    console.log('✅ Valid courses found:', validCourses.length);
+    console.log('✅ Proceeding with redirect...');
+    
     const coursesJson = JSON.stringify(validCourses);
     const encodedCourses = encodeURIComponent(coursesJson);
     console.log('Courses JSON length:', coursesJson.length);
     console.log('Encoded courses length:', encodedCourses.length);
     console.log('Number of courses:', validCourses.length);
+    console.log('First course sample:', validCourses[0]);
+    
     try {
       localStorage.setItem('qu-student-courses', coursesJson);
       localStorage.setItem('qu-student-courses-timestamp', Date.now().toString());
       console.log('Saved ' + validCourses.length + ' courses to localStorage');
     } catch (storageError) {
       console.warn('Could not save to localStorage (cross-origin):', storageError);
+      // Continue anyway - we'll pass via URL
     }
     // Get current language preference to pass to web app
     var currentLang = isArabic ? 'ar' : 'en';
-    const webAppUrl = 'https://SSaleh22-stack.github.io/Student-Table-Maker-Qu-Student-/';
+    // Detect if we're on localhost or production
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const webAppUrl = isLocalhost 
+      ? window.location.origin + '/'  // Use localhost for testing
+      : 'https://SSaleh22-stack.github.io/Student-Table-Maker-Qu-Student-/';
+    // CRITICAL VALIDATION: Ensure we have valid encoded courses data
+    if (!encodedCourses || encodedCourses === 'null' || encodedCourses === 'undefined' || encodedCourses.length < 10) {
+      const message = isArabic
+        ? 'خطأ: لا توجد بيانات مقررات صالحة للتحويل. تحقق من وحدة التحكم.'
+        : 'Error: No valid course data to redirect with. Check console.';
+      alert(message);
+      console.error('❌ CRITICAL ERROR: Encoded courses is invalid');
+      console.error('❌ encodedCourses:', encodedCourses);
+      console.error('❌ encodedCourses length:', encodedCourses?.length);
+      console.error('❌ validCourses:', validCourses);
+      console.error('❌ NOT REDIRECTING - Invalid course data');
+      return;
+    }
+    
     const urlWithData = webAppUrl + '#courses=' + encodedCourses + '&lang=' + currentLang;
-    console.log('Opening web app with courses data in URL');
-    console.log('URL length:', urlWithData.length);
-    console.log('URL preview (first 200 chars):', urlWithData.substring(0, 200));
+    console.log('✅ Web app URL:', webAppUrl);
+    console.log('✅ Is localhost:', isLocalhost);
+    console.log('✅ Opening web app with courses data in URL');
+    console.log('✅ URL length:', urlWithData.length);
+    console.log('✅ Encoded courses length:', encodedCourses.length);
+    console.log('✅ URL preview (first 200 chars):', urlWithData.substring(0, 200));
+    console.log('✅ About to redirect with', validCourses.length, 'courses');
+    
+    // Double-check: if URL is too long, it might be truncated by browser
+    if (urlWithData.length > 2000000) {
+      console.warn('⚠️ Warning: URL is very long (' + urlWithData.length + ' chars). Some browsers may truncate URLs over 2MB.');
+    }
     
     // Detect Safari browser
     const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent) || 

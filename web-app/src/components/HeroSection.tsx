@@ -34,6 +34,13 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onExtractCourses, isExtractin
               >
                 {t.instructions}
               </button>
+              <a 
+                href="./bookmarklet.html" 
+                className="extract-btn bookmarklet-link"
+                style={{ textDecoration: 'none', display: 'inline-block' }}
+              >
+                📚 {language === 'en' ? 'Setup Bookmarklet (Auto-Extract)' : 'إعداد الإشارة المرجعية (استخراج تلقائي)'}
+              </a>
             </div>
           )}
         </div>
