@@ -212,23 +212,7 @@
     
     // Function to load standalone bookmarklet code and update bookmarklet
     async function updateBookmarkletCode() {
-      try {
-        // Try to load the standalone bookmarklet code
-        const response = await fetch('./bookmarklet-ready.js');
-        if (response.ok) {
-          const standaloneCode = await response.text();
-          console.log('Loaded standalone bookmarklet, length:', standaloneCode.length);
-          // Remove 'javascript:' prefix if present
-          const code = standaloneCode.startsWith('javascript:') ? standaloneCode.substring(11) : standaloneCode;
-          return `javascript:${code}`;
-        } else {
-          console.warn('Failed to load bookmarklet-ready.js, status:', response.status);
-        }
-      } catch (e) {
-        console.warn('Could not load standalone bookmarklet, using loader approach:', e);
-      }
-      
-      // Fallback to loader approach - but make it more reliable
+      // Use loader approach - always load from GitHub Pages
       const languagePref = getLanguagePreference();
       const langCode = languagePref === 'ar' ? 'true' : (languagePref === 'en' ? 'false' : 'null');
       // Always use GitHub Pages URL for bookmarklet-code.js
