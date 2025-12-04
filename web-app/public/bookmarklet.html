@@ -238,7 +238,13 @@
       if (e.key === 'qu-student-language') {
         const bookmarkletButton = document.getElementById('bookmarkletLink');
         if (bookmarkletButton) {
+          const savedLang = e.newValue;
+          const bookmarkTitle = savedLang === 'ar' 
+            ? '📚 Qu Student - استخراج المقررات'
+            : '📚 Qu Student - Extract Courses';
           bookmarkletButton.href = updateBookmarkletCode();
+          bookmarkletButton.title = bookmarkTitle;
+          bookmarkletButton.setAttribute('title', bookmarkTitle);
         }
       }
     });
@@ -250,26 +256,39 @@
         // Update bookmarklet code with current language
         const currentBookmarkletCode = updateBookmarkletCode();
         
-        // Set href to the javascript: URL for direct execution
+        // Get the appropriate title based on language
+        const bookmarkTitle = document.documentElement.lang === 'ar' 
+          ? '📚 Qu Student - استخراج المقررات'
+          : '📚 Qu Student - Extract Courses';
+        
+        // Set href and title to the javascript: URL for direct execution
         bookmarkletButton.href = currentBookmarkletCode;
+        bookmarkletButton.title = bookmarkTitle;
+        bookmarkletButton.setAttribute('title', bookmarkTitle);
         bookmarkletButton.draggable = true;
         bookmarkletButton.style.cursor = 'grab';
         
         bookmarkletButton.addEventListener('dragstart', async function(e) {
           // Update bookmarklet code with current language before dragging
           const freshCode = await updateBookmarkletCode();
+          // Get the appropriate title based on language
+          const bookmarkTitle = document.documentElement.lang === 'ar' 
+            ? '📚 Qu Student - استخراج المقررات'
+            : '📚 Qu Student - Extract Courses';
           // Set the dataTransfer with the javascript: URL for direct execution
           // This allows the bookmarklet to run directly on the QU portal page
           // Use both text/uri-list and text/plain to ensure compatibility
           e.dataTransfer.setData('text/uri-list', freshCode);
           e.dataTransfer.setData('text/plain', freshCode);
-          e.dataTransfer.setData('text/html', '<a href="' + freshCode.replace(/"/g, '&quot;') + '">📚 Qu Student</a>');
+          e.dataTransfer.setData('text/html', '<a href="' + freshCode.replace(/"/g, '&quot;') + '" title="' + bookmarkTitle.replace(/"/g, '&quot;') + '">' + bookmarkTitle + '</a>');
           e.dataTransfer.effectAllowed = 'copy';
           this.style.cursor = 'grabbing';
-          // Also update href immediately before drag to ensure it's correct
+          // Also update href and title immediately before drag to ensure it's correct
           this.href = freshCode;
-          // Force update the href attribute
+          this.title = bookmarkTitle;
+          // Force update the href and title attributes
           this.setAttribute('href', freshCode);
+          this.setAttribute('title', bookmarkTitle);
         });
         
         bookmarkletButton.addEventListener('dragend', function() {
