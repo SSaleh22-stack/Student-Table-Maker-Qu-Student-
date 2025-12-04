@@ -17,6 +17,11 @@ const NavBar: React.FC<NavBarProps> = ({ currentView, onViewChange, onShowReview
   const [showContactUs, setShowContactUs] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
+  const handleOpenReviewPage = () => {
+    // For webapp, open in same window instead of new tab
+    window.open('https://stu-gate.qu.edu.sa/', '_blank');
+  };
+
   const handleCopyToClipboard = async (text: string, field: string) => {
     try {
       await navigator.clipboard.writeText(text);

@@ -46,7 +46,7 @@
 .offered-courses-button-container {
   max-width: 1800px;
   margin: 1rem auto;
-  padding: 0 1rem;
+  padding: 0 3rem;
   display: flex;
   justify-content: center;
   gap: 1rem;
@@ -109,7 +109,7 @@
 .app-content {
   max-width: 1800px;
   margin: 0 auto;
-  padding: 0 1rem 3rem 1rem;
+  padding: 0 3rem 3rem 3rem;
 }
 
 .main-layout {
@@ -130,6 +130,29 @@
   top: calc(60px + 1rem);
   max-height: calc(100vh - 60px - 2rem);
   overflow-y: auto;
+  background: white;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Scrollbar styling for course list */
+.course-list-wrapper::-webkit-scrollbar {
+  width: 8px;
+}
+
+.course-list-wrapper::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.course-list-wrapper::-webkit-scrollbar-thumb {
+  background: #667eea;
+  border-radius: 4px;
+}
+
+.course-list-wrapper::-webkit-scrollbar-thumb:hover {
+  background: #5568d3;
 }
 
 /* Responsive for iPad and mobile */

@@ -3,8 +3,146 @@
  * Injects a floating button to extract courses and listens for messages
  */
 
+// Check if extension context is valid BEFORE importing modules
+// This prevents errors during module initialization
+let extensionContextValid = false;
+try {
+  if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
+    extensionContextValid = true;
+  }
+} catch (e) {
+  // Extension context invalidated - chrome.runtime access throws an error
+  extensionContextValid = false;
+  console.warn('Extension context invalidated. Please refresh the page to use the extension.');
+  
+  // Show error message on page
+  const showContextInvalidatedMessage = () => {
+    try {
+      const lang = ((window as any).__QU_COURSE_EXTRACTOR_LANG__ || 'ar') as 'en' | 'ar';
+      const errorText = lang === 'ar' 
+        ? '⚠️ تم إعادة تحميل الإضافة. يرجى تحديث الصفحة (F5) لاستخدام الإضافة.'
+        : '⚠️ Extension reloaded. Please refresh the page (F5) to use the extension.';
+      
+      // Try to update existing button if it exists
+      const existingButton = document.getElementById('qu-course-extractor-btn');
+      if (existingButton) {
+        existingButton.innerHTML = errorText;
+        existingButton.style.background = 'linear-gradient(135deg, #ed8936 0%, #dd6b20 100%)';
+        existingButton.style.cursor = 'not-allowed';
+        (existingButton as HTMLButtonElement).disabled = true;
+      } else {
+        // Create a notification banner
+        const banner = document.createElement('div');
+        banner.id = 'qu-extension-error-banner';
+        banner.style.cssText = `
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+          color: white;
+          padding: 1rem 1.5rem;
+          border-radius: 8px;
+          box-shadow: 0 4px 12px rgba(237, 137, 54, 0.4);
+          z-index: 999999;
+          font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+          font-size: 14px;
+          font-weight: 600;
+          max-width: 400px;
+          animation: slideIn 0.3s ease-out;
+        `;
+        banner.textContent = errorText;
+        document.body.appendChild(banner);
+        
+        // Auto-remove after 10 seconds
+        setTimeout(() => {
+          if (banner.parentNode) {
+            banner.style.animation = 'slideOut 0.3s ease-out';
+            setTimeout(() => banner.remove(), 300);
+          }
+        }, 10000);
+      }
+    } catch (e) {
+      // Ignore errors when trying to show message
+    }
+  };
+  
+  // Show message when DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', showContextInvalidatedMessage);
+  } else {
+    showContextInvalidatedMessage();
+  }
+  
+  // Exit early - don't continue with script execution
+  // This prevents the error from propagating
+}
+
+// Only import and execute if extension context is valid
+if (!extensionContextValid) {
+  // Exit early - module won't execute
+  // This is a workaround since we can't conditionally import in ES modules
+  // The rest of the code will still try to run, but we've shown the error message
+}
+
 import { extractCoursesFromDom } from './extractCourses';
 import { Course } from '../types';
+
+// Global error handler for extension context invalidated errors
+const handleContextInvalidated = (error: any): boolean => {
+  const errorMsg = error?.message || String(error);
+  if (errorMsg.includes('Extension context invalidated') || 
+      errorMsg.includes('message port closed') ||
+      errorMsg.includes('context invalidated')) {
+    console.warn('Extension context invalidated. Please refresh the page to use the extension.');
+    // Try to show a user-friendly message if button exists
+    try {
+      const button = document.getElementById('qu-course-extractor-btn');
+      if (button) {
+        const lang = ((window as any).__QU_COURSE_EXTRACTOR_LANG__ || 'ar') as 'en' | 'ar';
+        const errorText = lang === 'ar' 
+          ? '⚠️ تم إعادة تحميل الإضافة. يرجى تحديث الصفحة (F5).'
+          : '⚠️ Extension reloaded. Please refresh the page (F5).';
+        button.innerHTML = errorText;
+        button.style.background = 'linear-gradient(135deg, #ed8936 0%, #dd6b20 100%)';
+        button.style.cursor = 'not-allowed';
+        (button as HTMLButtonElement).disabled = true;
+      }
+    } catch (e) {
+      // Ignore errors when trying to update button
+    }
+    return true; // Indicate error was handled
+  }
+  return false; // Error was not handled
+};
+
+// Set up global error handlers immediately to catch errors during script execution
+if (typeof window !== 'undefined') {
+  // Catch synchronous errors
+  const originalErrorHandler = window.onerror;
+  window.onerror = (message, source, lineno, colno, error) => {
+    if (message && typeof message === 'string' && 
+        (message.includes('Extension context invalidated') || 
+         message.includes('message port closed'))) {
+      handleContextInvalidated({ message });
+      return true; // Prevent default error handling
+    }
+    if (originalErrorHandler) {
+      return originalErrorHandler(message, source, lineno, colno, error);
+    }
+    return false;
+  };
+
+  // Catch unhandled promise rejections
+  window.addEventListener('unhandledrejection', (event) => {
+    if (event.reason && (
+        (event.reason.message && event.reason.message.includes('Extension context invalidated')) ||
+        (typeof event.reason === 'string' && event.reason.includes('Extension context invalidated'))
+      )) {
+      handleContextInvalidated(event.reason);
+      event.preventDefault();
+    }
+  }, { once: false });
+}
 
 // Wrap entire script execution in try-catch to handle Extension context invalidated errors
 try {
@@ -19,8 +157,15 @@ try {
     (window as any).__QU_COURSE_EXTRACTOR_LOADED__ = true;
   }
 } catch (initError) {
-  console.error('Error during script initialization:', initError);
-  // Continue execution - don't throw
+  if (handleContextInvalidated(initError)) {
+    // Context invalidated - show message and exit gracefully
+    console.warn('Extension context invalidated. Script will not initialize. Please refresh the page.');
+    // Don't throw - just exit gracefully
+    // The error handlers above will catch any further errors
+  } else {
+    console.error('Error during script initialization:', initError);
+  }
+  // Continue execution - don't throw to avoid breaking the page
 }
 
 // Language preference - use window object to avoid redeclaration
@@ -81,24 +226,42 @@ function loadLanguage() {
   try {
     // Safely check if chrome.storage is available
     let chromeStorageAvailable = false;
+    let storage: typeof chrome.storage | undefined;
     try {
-      chromeStorageAvailable = typeof chrome !== 'undefined' && 
-                                chrome.storage !== undefined &&
-                                chrome.storage.sync !== undefined;
+      if (typeof chrome === 'undefined') {
+        chromeStorageAvailable = false;
+        return;
+      }
+      // Accessing chrome.storage can throw if context is invalidated
+      try {
+        storage = chrome.storage;
+      } catch (e) {
+        chromeStorageAvailable = false;
+        console.warn('Cannot access chrome.storage (extension context may be invalidated):', e);
+        return;
+      }
+      chromeStorageAvailable = storage !== undefined && storage.sync !== undefined;
     } catch (e) {
       chromeStorageAvailable = false;
       console.warn('Cannot access chrome.storage (extension context may be invalidated):', e);
       return;
     }
 
-    if (!chromeStorageAvailable) {
+    if (!chromeStorageAvailable || !storage) {
       return;
     }
 
     try {
-      chrome.storage.sync.get(['language'], (result) => {
-        if (chrome.runtime.lastError) {
-          console.warn('Error getting language preference:', chrome.runtime.lastError);
+      storage.sync.get(['language'], (result) => {
+        try {
+          // Safely check for runtime errors
+          if (chrome.runtime.lastError) {
+            console.warn('Error getting language preference:', chrome.runtime.lastError);
+            return;
+          }
+        } catch (runtimeError) {
+          // Context invalidated - can't access chrome.runtime
+          console.warn('Cannot access chrome.runtime (extension context may be invalidated)');
           return;
         }
         if (result.language === 'en' || result.language === 'ar') {
@@ -112,7 +275,8 @@ function loadLanguage() {
 
     // Listen for language changes
     try {
-      chrome.storage.onChanged.addListener((changes, areaName) => {
+      if (!storage) return;
+      storage.onChanged.addListener((changes, areaName) => {
         if (areaName === 'sync' && changes.language) {
           const newLang = changes.language.newValue;
           if (newLang === 'en' || newLang === 'ar') {
@@ -214,18 +378,30 @@ function injectExtractButton() {
     };
 
     try {
-      // Check if chrome.runtime is available
-      let runtimeValid = false;
-      try {
-        runtimeValid = typeof chrome !== 'undefined' && 
-                      chrome.runtime !== undefined && 
-                      chrome.runtime.sendMessage !== undefined &&
-                      chrome.runtime.id !== undefined;
-      } catch (e) {
-        runtimeValid = false;
-      }
+      // Helper function to safely check if chrome.runtime is available
+      // Must wrap ALL chrome.runtime access in try-catch as it can throw when context is invalidated
+      const isRuntimeValid = (): boolean => {
+        try {
+          if (typeof chrome === 'undefined') return false;
+          // Accessing chrome.runtime itself can throw if context is invalidated
+          let runtime: typeof chrome.runtime;
+          try {
+            runtime = chrome.runtime;
+          } catch (e) {
+            return false;
+          }
+          if (!runtime) return false;
+          // Try to access id - this will throw if context is invalidated
+          const id = runtime.id;
+          return typeof id === 'string' && id.length > 0;
+        } catch (e) {
+          // Context invalidated - any access to chrome.runtime throws
+          return false;
+        }
+      };
 
-      if (!runtimeValid) {
+      // Check if chrome.runtime is available before proceeding
+      if (!isRuntimeValid()) {
         const errorText = getCurrentLanguage() === 'ar' 
           ? '⚠️ تم إعادة تحميل الإضافة. يرجى تحديث الصفحة والمحاولة مرة أخرى.'
           : '⚠️ Extension was reloaded. Please refresh the page and try again.';
@@ -236,6 +412,15 @@ function injectExtractButton() {
       const courses = extractCoursesFromDom(document);
       
       console.log(`Extracted ${courses.length} courses from ${document.querySelectorAll('tbody tr[class^="ROW"]').length} rows`);
+      
+      // Verify __originalIndex is present on all courses
+      const coursesWithoutIndex = courses.filter((c: any) => c.__originalIndex === undefined);
+      if (coursesWithoutIndex.length > 0) {
+        console.warn(`⚠️ Warning: ${coursesWithoutIndex.length} courses are missing __originalIndex:`, 
+          coursesWithoutIndex.map((c: any) => ({ code: c.code, section: c.section })));
+      } else {
+        console.log('✅ All courses have __originalIndex set correctly');
+      }
       
       if (courses.length === 0) {
         button.classList.remove('loading');
@@ -266,59 +451,128 @@ function injectExtractButton() {
       }
 
       // Send courses to background script and open dashboard
+      // Double-check runtime validity right before sending message
+      if (!isRuntimeValid()) {
+        const errorText = getCurrentLanguage() === 'ar' 
+          ? '⚠️ تم إعادة تحميل الإضافة. يرجى تحديث الصفحة والمحاولة مرة أخرى.'
+          : '⚠️ Extension was reloaded. Please refresh the page and try again.';
+        resetButtonOnError(errorText);
+        return;
+      }
+
       try {
-        chrome.runtime.sendMessage(
+        // Wrap sendMessage in try-catch as it can throw synchronously
+        // Also need to safely access chrome.runtime before calling sendMessage
+        let runtime: typeof chrome.runtime;
+        try {
+          runtime = chrome.runtime;
+        } catch (runtimeAccessError) {
+          // Context invalidated - can't access chrome.runtime
+          const errorText = getCurrentLanguage() === 'ar' 
+            ? '⚠️ تم إعادة تحميل الإضافة. يرجى تحديث الصفحة والمحاولة مرة أخرى.'
+            : '⚠️ Extension was reloaded. Please refresh the page and try again.';
+          resetButtonOnError(errorText);
+          return;
+        }
+        
+        runtime.sendMessage(
           {
             type: 'OPEN_DASHBOARD_WITH_COURSES',
             payload: courses,
           },
           (response) => {
-            button.classList.remove('loading');
-            if (chrome.runtime.lastError) {
-              const errorMsg = chrome.runtime.lastError.message;
-              console.error('Error:', chrome.runtime.lastError);
-              button.classList.add('error');
+            try {
+              button.classList.remove('loading');
               
-              // Check if it's a context invalidated error
-              if (errorMsg.includes('Extension context invalidated') || errorMsg.includes('message port closed') || !chrome.runtime.id) {
-                const errorText = getCurrentLanguage() === 'ar' 
-                  ? '⚠️ تم إعادة تحميل الإضافة. يرجى تحديث الصفحة والمحاولة مرة أخرى.'
-                  : '⚠️ Extension was reloaded. Please refresh the page and try again.';
-                button.innerHTML = errorText;
-              } else {
-                button.innerHTML = getGenericErrorText();
+              // Check for runtime errors - wrap in try-catch as accessing chrome.runtime can throw
+              let hasError = false;
+              let errorMsg = '';
+              try {
+                if (chrome.runtime.lastError) {
+                  hasError = true;
+                  errorMsg = chrome.runtime.lastError.message;
+                  console.error('Error:', chrome.runtime.lastError);
+                }
+              } catch (runtimeAccessError) {
+                // Context invalidated - can't access chrome.runtime
+                hasError = true;
+                errorMsg = 'Extension context invalidated';
               }
               
-              button.style.background = 'linear-gradient(135deg, #e53e3e 0%, #c53030 100%)';
-              button.style.backgroundSize = '200% auto';
-              setTimeout(() => {
-                button.classList.remove('error');
-                button.innerHTML = getButtonText();
-                button.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+              if (hasError) {
+                button.classList.add('error');
+                
+                // Check if it's a context invalidated error
+                if (errorMsg.includes('Extension context invalidated') || 
+                    errorMsg.includes('message port closed') ||
+                    errorMsg.includes('context invalidated') ||
+                    !isRuntimeValid()) {
+                  const errorText = getCurrentLanguage() === 'ar' 
+                    ? '⚠️ تم إعادة تحميل الإضافة. يرجى تحديث الصفحة والمحاولة مرة أخرى.'
+                    : '⚠️ Extension was reloaded. Please refresh the page and try again.';
+                  button.innerHTML = errorText;
+                } else {
+                  button.innerHTML = getGenericErrorText();
+                }
+                
+                button.style.background = 'linear-gradient(135deg, #e53e3e 0%, #c53030 100%)';
                 button.style.backgroundSize = '200% auto';
-                button.disabled = false;
-                button.style.opacity = '1';
-                button.style.cursor = 'pointer';
-                button.style.animation = 'none';
-              }, 3000);
-            } else {
-            button.classList.add('success');
-            button.innerHTML = getSuccessText();
-            button.style.background = 'linear-gradient(135deg, #48bb78 0%, #38a169 100%)';
-            button.style.backgroundSize = '200% auto';
-            setTimeout(() => {
-              button.classList.remove('success');
-              button.innerHTML = getButtonText();
-              button.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
-              button.style.backgroundSize = '200% auto';
-              button.disabled = false;
-              button.style.opacity = '1';
-              button.style.cursor = 'pointer';
-              button.style.animation = 'none';
-            }, 2000);
+                setTimeout(() => {
+                  button.classList.remove('error');
+                  button.innerHTML = getButtonText();
+                  button.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+                  button.style.backgroundSize = '200% auto';
+                  button.disabled = false;
+                  button.style.opacity = '1';
+                  button.style.cursor = 'pointer';
+                  button.style.animation = 'none';
+                }, 3000);
+              } else {
+                button.classList.add('success');
+                button.innerHTML = getSuccessText();
+                button.style.background = 'linear-gradient(135deg, #48bb78 0%, #38a169 100%)';
+                button.style.backgroundSize = '200% auto';
+                setTimeout(() => {
+                  button.classList.remove('success');
+                  button.innerHTML = getButtonText();
+                  button.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+                  button.style.backgroundSize = '200% auto';
+                  button.disabled = false;
+                  button.style.opacity = '1';
+                  button.style.cursor = 'pointer';
+                  button.style.animation = 'none';
+                }, 2000);
+              }
+            } catch (callbackError) {
+              // Error in callback - likely context invalidated
+              console.error('Error in sendMessage callback:', callbackError);
+              const errorText = getCurrentLanguage() === 'ar' 
+                ? '⚠️ تم إعادة تحميل الإضافة. يرجى تحديث الصفحة والمحاولة مرة أخرى.'
+                : '⚠️ Extension was reloaded. Please refresh the page and try again.';
+              resetButtonOnError(errorText);
+            }
           }
+        );
+      } catch (sendError) {
+        // sendMessage itself threw an error (context invalidated)
+        console.error('Error calling chrome.runtime.sendMessage:', sendError);
+        const errorMessage = sendError instanceof Error ? sendError.message : String(sendError);
+        
+        // Check if it's a context invalidated error
+        let errorText: string;
+        if (errorMessage.includes('Extension context invalidated') || 
+            errorMessage.includes('message port closed') ||
+            errorMessage.includes('context invalidated') ||
+            !isRuntimeValid()) {
+          errorText = getCurrentLanguage() === 'ar' 
+            ? '⚠️ تم إعادة تحميل الإضافة. يرجى تحديث الصفحة والمحاولة مرة أخرى.'
+            : '⚠️ Extension was reloaded. Please refresh the page and try again.';
+        } else {
+          errorText = getGenericErrorText();
         }
-      );
+        
+        resetButtonOnError(errorText);
+      }
     } catch (error) {
       console.error('Error extracting courses:', error);
       const errorMessage = error instanceof Error ? error.message : String(error);
@@ -505,10 +759,36 @@ function injectExtractButton() {
         }
       }
       
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateX(100%);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+      
+      @keyframes slideOut {
+        from {
+          opacity: 1;
+          transform: translateX(0);
+        }
+        to {
+          opacity: 0;
+          transform: translateX(100%);
+        }
+      }
+      
       #qu-course-extractor-btn {
         animation: fadeIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
         position: relative !important;
         display: inline-block !important;
+      }
+      
+      #qu-extension-error-banner {
+        animation: slideIn 0.3s ease-out;
       }
       
       #qu-course-extractor-btn.loading::before {
@@ -630,62 +910,102 @@ try {
     console.warn('Error checking chrome.runtime availability:', e);
   }
 
-  if (chromeRuntimeAvailable && onMessageAvailable) {
-      chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-        if (message.type === 'EXTRACT_COURSES') {
+  if (chromeRuntimeAvailable && onMessageAvailable && extensionContextValid) {
+      // Helper function to safely check if chrome.runtime is available
+      // Must wrap ALL chrome.runtime access in try-catch as it can throw when context is invalidated
+      const isRuntimeValid = (): boolean => {
+        if (!extensionContextValid) return false;
+        try {
+          if (typeof chrome === 'undefined') return false;
+          // Accessing chrome.runtime itself can throw if context is invalidated
+          let runtime: typeof chrome.runtime;
           try {
-            // Check if extension context is still valid
-            let contextValid = false;
+            runtime = chrome.runtime;
+          } catch (e) {
+            extensionContextValid = false;
+            return false;
+          }
+          if (!runtime) {
+            extensionContextValid = false;
+            return false;
+          }
+          // Try to access id - this will throw if context is invalidated
+          const id = runtime.id;
+          if (typeof id !== 'string' || id.length === 0) {
+            extensionContextValid = false;
+            return false;
+          }
+          return true;
+        } catch (e) {
+          // Context invalidated - any access to chrome.runtime throws
+          extensionContextValid = false;
+          return false;
+        }
+      };
+
+      try {
+        chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+          if (message.type === 'EXTRACT_COURSES') {
             try {
-              contextValid = chrome.runtime.id !== undefined;
-            } catch (e) {
-              contextValid = false;
-            }
+              // Check if extension context is still valid
+              if (!isRuntimeValid()) {
+                sendResponse({
+                  type: 'COURSES_EXTRACTED',
+                  success: false,
+                  error: 'Extension context invalidated. Please refresh the page and try again.',
+                });
+                return true;
+              }
 
-            if (!contextValid) {
+              const courses = extractCoursesFromDom(document);
+              
+              // Double-check before sending response
+              if (!isRuntimeValid()) {
+                sendResponse({
+                  type: 'COURSES_EXTRACTED',
+                  success: false,
+                  error: 'Extension context invalidated. Please refresh the page and try again.',
+                });
+                return true;
+              }
+              
               sendResponse({
                 type: 'COURSES_EXTRACTED',
-                success: false,
-                error: 'Extension context invalidated. Please refresh the page and try again.',
+                success: true,
+                payload: courses,
               });
-              return true;
+            } catch (error) {
+              console.error('Error extracting courses:', error);
+              const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+              
+              // Check if it's a context invalidated error
+              if (errorMessage.includes('Extension context invalidated') || 
+                  errorMessage.includes('message port closed') ||
+                  !isRuntimeValid()) {
+                sendResponse({
+                  type: 'COURSES_EXTRACTED',
+                  success: false,
+                  error: 'Extension context invalidated. Please refresh the page and try again.',
+                });
+              } else {
+                sendResponse({
+                  type: 'COURSES_EXTRACTED',
+                  success: false,
+                  error: errorMessage,
+                });
+              }
             }
-
-            const courses = extractCoursesFromDom(document);
             
-            sendResponse({
-              type: 'COURSES_EXTRACTED',
-              success: true,
-              payload: courses,
-            });
-          } catch (error) {
-            console.error('Error extracting courses:', error);
-            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-            
-            // Check if it's a context invalidated error
-            if (errorMessage.includes('Extension context invalidated') || errorMessage.includes('message port closed')) {
-              sendResponse({
-                type: 'COURSES_EXTRACTED',
-                success: false,
-                error: 'Extension context invalidated. Please refresh the page and try again.',
-              });
-            } else {
-              sendResponse({
-                type: 'COURSES_EXTRACTED',
-                success: false,
-                error: errorMessage,
-              });
-            }
+            // Return true to indicate we will send a response asynchronously
+            return true;
           }
           
-          // Return true to indicate we will send a response asynchronously
-          return true;
-        }
-        
-        return false;
-      });
+          return false;
+        });
+      } catch (listenerError) {
+        console.warn('Error setting up message listener (context may be invalidated):', listenerError);
+      }
     }
-  }
   } catch (error) {
     // Handle errors during message listener setup
     console.error('Error setting up message listener:', error);

@@ -40,9 +40,15 @@ const AppContent: React.FC = () => {
   });
   
   // Redirect to GPA if trying to access timetable on phone
+  // But allow timetable if courses were just extracted (check timestamp)
   React.useEffect(() => {
     if (isPhone && currentView === 'timetable') {
-      setCurrentView('gpa');
+      // Check if courses were just extracted (within last 2 seconds)
+      const timestamp = localStorage.getItem('qu-student-courses-timestamp');
+      const justExtracted = timestamp && (Date.now() - parseInt(timestamp)) < 2000;
+      if (!justExtracted) {
+        setCurrentView('gpa');
+      }
     }
   }, [isPhone, currentView]);
   
@@ -64,14 +70,29 @@ const AppContent: React.FC = () => {
   // Load courses from localStorage on mount and check for updates
   React.useEffect(() => {
     const loadCourses = (showMessage = true) => {
+      // Check if device is a phone (needed for view redirect)
+      const checkIsPhoneDevice = () => window.innerWidth <= 768;
       try {
         // First, check URL hash for course data (from bookmarklet)
         const urlHash = window.location.hash;
+        console.log('Checking URL hash:', urlHash);
         if (urlHash && urlHash.startsWith('#courses=')) {
           try {
-            const encodedData = urlHash.substring(9); // Remove '#courses='
+            // Extract the courses data (may have &lang= parameter after it)
+            let encodedData = urlHash.substring(9); // Remove '#courses='
+            console.log('Encoded data length:', encodedData.length);
+            // Remove &lang= parameter if present
+            const langIndex = encodedData.indexOf('&lang=');
+            if (langIndex !== -1) {
+              console.log('Found lang parameter at index:', langIndex);
+              encodedData = encodedData.substring(0, langIndex);
+            }
+            console.log('Decoding courses data...');
             const decodedData = decodeURIComponent(encodedData);
+            console.log('Decoded data length:', decodedData.length);
+            console.log('Decoded data preview (first 500 chars):', decodedData.substring(0, 500));
             const coursesFromUrl = JSON.parse(decodedData);
+            console.log('Parsed courses:', coursesFromUrl);
             console.log('Loading courses from URL hash:', coursesFromUrl?.length, 'courses');
             if (Array.isArray(coursesFromUrl) && coursesFromUrl.length > 0) {
               // Save to localStorage
@@ -81,6 +102,12 @@ const AppContent: React.FC = () => {
               window.history.replaceState(null, '', window.location.pathname + window.location.search);
               // Set courses
               setCourses(coursesFromUrl);
+              // Redirect to timetable page if not on phone (use setTimeout to ensure it happens after other effects)
+              if (!checkIsPhoneDevice()) {
+                setTimeout(() => {
+                  setCurrentView('timetable');
+                }, 100);
+              }
               setIsLoading(false);
               setIsInitialLoad(false);
               if (showMessage) {
@@ -91,10 +118,16 @@ const AppContent: React.FC = () => {
                 setTimeout(() => setSuccessMessage(null), 5000);
               }
               return;
+            } else {
+              console.warn('Courses array is empty or invalid:', coursesFromUrl);
             }
           } catch (urlError) {
             console.error('Error parsing courses from URL:', urlError);
+            console.error('URL hash:', urlHash);
+            console.error('Error details:', urlError.message, urlError.stack);
           }
+        } else {
+          console.log('No courses in URL hash. Hash:', urlHash);
         }
         
         const saved = localStorage.getItem('qu-student-courses');
@@ -106,9 +139,15 @@ const AppContent: React.FC = () => {
             if (Array.isArray(parsed) && parsed.length > 0) {
               console.log('Setting courses:', parsed.length, 'courses');
               setCourses(parsed);
+              // Redirect to timetable page if not on phone and courses were just extracted
+              const timestamp = localStorage.getItem('qu-student-courses-timestamp');
+              if (timestamp && !checkIsPhoneDevice()) {
+                setTimeout(() => {
+                  setCurrentView('timetable');
+                }, 100);
+              }
               setIsLoading(false);
               setIsInitialLoad(false);
-              const timestamp = localStorage.getItem('qu-student-courses-timestamp');
               if (timestamp && showMessage) {
                 const message = language === 'en'
                   ? `✅ Loaded ${parsed.length} courses from bookmarklet extraction!`
@@ -172,6 +211,13 @@ const AppContent: React.FC = () => {
           console.log('Storage event - parsed courses:', parsed);
           if (Array.isArray(parsed) && parsed.length > 0) {
             setCourses(parsed);
+            // Redirect to timetable page if not on phone
+            const checkIsPhoneDevice = () => window.innerWidth <= 768;
+            if (!checkIsPhoneDevice()) {
+              setTimeout(() => {
+                setCurrentView('timetable');
+              }, 100);
+            }
             const message = language === 'en'
               ? `✅ Updated! ${parsed.length} courses loaded from bookmarklet.`
               : `✅ تم التحديث! تم تحميل ${parsed.length} مقرر من الإشارة المرجعية.`;
@@ -193,6 +239,13 @@ const AppContent: React.FC = () => {
       if (timestamp && timestamp !== lastLoaded) {
         (window as any).__lastCoursesTimestamp = timestamp;
         console.log('Detected new courses from bookmarklet, reloading...');
+        // Redirect to timetable page if not on phone
+        const checkIsPhoneDevice = () => window.innerWidth <= 768;
+        if (!checkIsPhoneDevice()) {
+          setTimeout(() => {
+            setCurrentView('timetable');
+          }, 100);
+        }
         loadCourses(true); // Show message when reloading
       }
     }, 500); // Check every 500ms for faster updates

@@ -206,7 +206,8 @@
                 startTime: '08:00',
                 endTime: '10:00',
                 date: examPeriod
-              } : undefined
+              } : undefined,
+              __originalIndex: index
             };
           } else {
             // Fallback: create course with default time
@@ -226,7 +227,8 @@
                 startTime: '08:00',
                 endTime: '10:00',
                 date: examPeriod
-              } : undefined
+              } : undefined,
+              __originalIndex: index
             };
           }
           

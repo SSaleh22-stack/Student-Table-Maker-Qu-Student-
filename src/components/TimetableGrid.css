@@ -1,7 +1,6 @@
 .timetable-section {
   margin-bottom: 0;
   padding: 0;
-  direction: ltr; /* Keep timetable LTR for consistency */
 }
 
 .timetable-header {
@@ -9,6 +8,10 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1rem;
+}
+
+[dir="rtl"] .timetable-header {
+  flex-direction: row-reverse;
 }
 
 .timetable-actions {
@@ -319,28 +322,164 @@
   }
 }
 
-.timetable-grid {
+.timetable-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #333;
+  text-align: center;
+  margin: 0 0 1.5rem 0;
+  padding: 0;
   display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.course-count {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #667eea;
+  background: rgba(102, 126, 234, 0.1);
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+}
+
+.total-courses-text,
+.total-sections-text {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #667eea;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  padding: 0.4rem 1rem;
+  border-radius: 1.5rem;
+  margin-left: 0.5rem;
+  border: 1px solid rgba(102, 126, 234, 0.2);
+  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.1);
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.total-courses-text:hover,
+.total-sections-text:hover {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
+  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.2);
+  transform: translateY(-1px);
+}
+
+.total-sections-text {
+  color: #48bb78;
+  background: linear-gradient(135deg, rgba(72, 187, 120, 0.1) 0%, rgba(56, 161, 105, 0.1) 100%);
+  border-color: rgba(72, 187, 120, 0.2);
+  box-shadow: 0 2px 4px rgba(72, 187, 120, 0.1);
+}
+
+.total-sections-text:hover {
+  background: linear-gradient(135deg, rgba(72, 187, 120, 0.15) 0%, rgba(56, 161, 105, 0.15) 100%);
+  box-shadow: 0 4px 8px rgba(72, 187, 120, 0.2);
+}
+
+[dir="rtl"] .total-courses-text,
+[dir="rtl"] .total-sections-text {
+  margin-left: 0;
+  margin-right: 0.5rem;
+}
+
+.timetable-grid {
+  display: grid;
+  grid-template-columns: auto 1fr; /* Time column on left, days on right for English */
+  grid-template-rows: auto 1fr;
   min-width: 800px;
+  background: white;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  border: 1px solid #e0e0e0;
+  direction: ltr; /* Default LTR */
+}
+
+[dir="rtl"] .timetable-grid {
+  grid-template-columns: auto 1fr; /* Time column on right, days on left for Arabic */
+  direction: rtl;
+}
+
+.days-header-row {
+  grid-column: 2; /* Days header on right for English */
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  background: white;
+  border-bottom: 1px solid #e0e0e0;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+[dir="rtl"] .days-header-row {
+  grid-column: 2; /* Days header on left for Arabic (RTL) */
+}
+
+.day-header-cell {
+  padding: 1rem;
+  text-align: center;
+  font-weight: 600;
+  font-size: 1rem;
+  color: #333;
+  position: relative;
+  border-right: 1px solid #e0e0e0;
+}
+
+.day-header-cell:last-child {
+  border-right: none;
+}
+
+.day-header-cell::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  height: 3px;
+  background: #667eea;
+  border-radius: 2px;
 }
 
 .time-column {
+  grid-column: 1; /* Time column on left for English */
+  grid-row: 2;
   width: 80px;
   flex-shrink: 0;
-  border-right: 2px solid #e0e0e0;
-  padding-right: 1rem;
+  border-right: 1px solid #e0e0e0;
+  padding: 0.5rem;
+  background: white;
+  display: flex;
+  flex-direction: column;
+  padding-top: 0;
+  margin-top: 0;
+  align-self: start;
+}
+
+[dir="rtl"] .time-column {
+  grid-column: 1; /* Time column on right for Arabic (RTL) */
+  grid-row: 2;
+  border-right: none;
+  border-left: 1px solid #e0e0e0;
+  padding-right: 0;
+  padding-left: 0.5rem;
+  align-self: start;
 }
 
 .time-slot {
   height: 60px;
   display: flex;
-  align-items: flex-start;
-  font-size: 0.85rem;
+  align-items: center;
+  justify-content: flex-end;
+  font-size: 0.9rem;
   color: #666;
-  padding-top: 0.75rem;
-  margin-top: 0;
+  padding-right: 0.75rem;
+  margin: 0;
+  padding-top: 0;
+  padding-bottom: 0;
   transition: color 0.2s ease;
   position: relative;
+  box-sizing: border-box;
 }
 
 .time-slot::after {
@@ -366,15 +505,22 @@
 }
 
 .days-container {
-  display: flex;
-  flex: 1;
-  border-top: 2px solid #e0e0e0;
+  grid-column: 2; /* Days container on right for English */
+  grid-row: 2;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  border-top: 1px solid #e0e0e0;
+  background: white;
+}
+
+[dir="rtl"] .days-container {
+  grid-column: 2; /* Days container on left for Arabic (RTL) */
 }
 
 .day-column {
-  flex: 1;
   border-right: 1px solid #e0e0e0;
   min-width: 120px;
+  position: relative;
 }
 
 .day-column:last-child {
@@ -382,20 +528,15 @@
 }
 
 .day-header {
-  background: #f8f9fa;
-  padding: 0.75rem;
-  text-align: center;
-  font-weight: 600;
-  color: #333;
-  border-bottom: 2px solid #e0e0e0;
-  position: sticky;
-  top: 0;
-  z-index: 10;
+  display: none; /* Hide old header, using days-header-row instead */
 }
 
 .day-content {
   position: relative;
-  min-height: 720px; /* 12 hours * 60px per hour */
+  min-height: 780px; /* 13 hours * 60px per hour (8:00 to 20:00) */
+  background: white;
+  border-top: none;
+  padding-top: 0;
 }
 
 .course-block {
@@ -452,12 +593,27 @@
 .course-block-code {
   font-weight: 700;
   font-size: 0.9rem;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.15rem;
+}
+
+.course-block-section {
+  font-size: 0.75rem;
+  opacity: 0.95;
+  margin-bottom: 0.15rem;
+  font-weight: 500;
+}
+
+.course-block-instructor {
+  font-size: 0.75rem;
+  opacity: 0.9;
+  margin-bottom: 0.15rem;
+  font-weight: 500;
 }
 
 .course-block-time {
   font-size: 0.75rem;
   opacity: 0.9;
+  margin-top: 0.15rem;
 }
 
 .course-block-location {
@@ -525,6 +681,26 @@
   animation: pulse 2s infinite;
 }
 
+.course-block.hover-preview {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.6) 0%, rgba(118, 75, 162, 0.6) 100%);
+  border: 2px dashed rgba(102, 126, 234, 0.8);
+  opacity: 0.7;
+  z-index: 3;
+  pointer-events: none;
+  animation: hoverPreview 1.5s ease-in-out infinite;
+}
+
+@keyframes hoverPreview {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.01);
+  }
+}
+
 @keyframes pulse {
   0%, 100% {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
@@ -532,13 +708,6 @@
   50% {
     box-shadow: 0 2px 8px rgba(229, 62, 62, 0.5);
   }
-}
-
-[dir="rtl"] .time-column {
-  border-right: none;
-  border-left: 2px solid #e0e0e0;
-  padding-right: 0;
-  padding-left: 1rem;
 }
 
 [dir="rtl"] .day-column {

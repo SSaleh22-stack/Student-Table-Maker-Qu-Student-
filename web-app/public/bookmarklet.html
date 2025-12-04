@@ -111,7 +111,7 @@
     <p style="font-size: 0.9rem; color: #666; margin-bottom: 1rem; display: none;" class="lang-ar">
       <strong>أولاً:</strong> اضغط <kbd style="background: #f0f0f0; padding: 0.2rem 0.4rem; border-radius: 3px;">Ctrl+Shift+B</kbd> (أو <kbd style="background: #f0f0f0; padding: 0.2rem 0.4rem; border-radius: 3px;">Cmd+Shift+B</kbd> على Mac) لإظهار شريط الإشارات المرجعية إذا كان مخفياً.
     </p>
-    <a href="#" class="bookmarklet-button" id="bookmarkletLink" draggable="true" title="📚 Qu Student - Extract Courses | استخراج المقررات">📚 Qu Student</a>
+    <a href="javascript:void(0)" class="bookmarklet-button" id="bookmarkletLink" draggable="true" title="📚 Qu Student - Extract Courses | استخراج المقررات">📚 Qu Student</a>
     <p style="font-size: 0.85rem; color: #888; margin-top: 0.5rem; font-style: italic;" class="lang-en">
       💡 Tip: Just click and drag this button to your bookmarks bar (the bar below the address bar)
     </p>
@@ -210,26 +210,29 @@
       }
     });
     
-    // Get language preference from web app's localStorage
-    // This allows the bookmarklet to use the same language as the dashboard
-    const getLanguagePreference = function() {
+    // Function to load standalone bookmarklet code and update bookmarklet
+    async function updateBookmarkletCode() {
       try {
-        // Try to access localStorage from the web app (same origin)
-        const saved = localStorage.getItem('qu-student-language');
-        if (saved === 'en' || saved === 'ar') {
-          return saved;
+        // Try to load the standalone bookmarklet code
+        const response = await fetch('./bookmarklet-ready.js');
+        if (response.ok) {
+          const standaloneCode = await response.text();
+          console.log('Loaded standalone bookmarklet, length:', standaloneCode.length);
+          // Remove 'javascript:' prefix if present
+          const code = standaloneCode.startsWith('javascript:') ? standaloneCode.substring(11) : standaloneCode;
+          return `javascript:${code}`;
+        } else {
+          console.warn('Failed to load bookmarklet-ready.js, status:', response.status);
         }
       } catch (e) {
-        // If localStorage is not accessible (cross-origin), return null
+        console.warn('Could not load standalone bookmarklet, using loader approach:', e);
       }
-      return null;
-    };
-    
-    // Function to update bookmarklet code with current language
-    function updateBookmarkletCode() {
+      
+      // Fallback to loader approach - but make it more reliable
       const languagePref = getLanguagePreference();
       const langCode = languagePref === 'ar' ? 'true' : (languagePref === 'en' ? 'false' : 'null');
-      return `javascript:(function(){if(window.__QU_BOOKMARKLET_LOADED__)return;window.__QU_BOOKMARKLET_LOADED__=true;window.__QU_BOOKMARKLET_LANG__=${langCode};var s=document.createElement('script');s.src='https://SSaleh22-stack.github.io/Student-Table-Maker-Qu-Student-/bookmarklet-code.js?v='+Date.now();s.onerror=function(){s.src='./bookmarklet-code.js?v='+Date.now();document.head.appendChild(s);};document.head.appendChild(s);})();`;
+      // Use a more reliable loader that waits for the script to load
+      return `javascript:(function(){if(window.__QU_BOOKMARKLET_LOADED__){console.log('Bookmarklet already loaded');return;}window.__QU_BOOKMARKLET_LOADED__=true;window.__QU_BOOKMARKLET_LANG__=${langCode};console.log('Loading bookmarklet code...');var s=document.createElement('script');s.async=false;s.src='https://SSaleh22-stack.github.io/Student-Table-Maker-Qu-Student-/bookmarklet-code.js?v='+Date.now();s.onload=function(){console.log('Bookmarklet code loaded successfully');};s.onerror=function(){console.error('Failed to load bookmarklet-code.js from CDN, trying fallback');var s2=document.createElement('script');s2.async=false;s2.src='./bookmarklet-code.js?v='+Date.now();s2.onload=function(){console.log('Bookmarklet code loaded from fallback');};s2.onerror=function(){alert('Failed to load bookmarklet. Please check your internet connection and try again, or visit the bookmarklet setup page.');console.error('Bookmarklet failed to load from all sources');};document.head.appendChild(s2);};document.head.appendChild(s);})();`;
     }
     
     // Create initial bookmarklet code (will be updated dynamically)
@@ -261,25 +264,51 @@
         bookmarkletButton.draggable = true;
         bookmarkletButton.style.cursor = 'grab';
         
-        bookmarkletButton.addEventListener('dragstart', function(e) {
+        bookmarkletButton.addEventListener('dragstart', async function(e) {
           // Update bookmarklet code with current language before dragging
-          const freshCode = updateBookmarkletCode();
+          const freshCode = await updateBookmarkletCode();
           // Set the dataTransfer with the javascript: URL for direct execution
           // This allows the bookmarklet to run directly on the QU portal page
+          // Use both text/uri-list and text/plain to ensure compatibility
           e.dataTransfer.setData('text/uri-list', freshCode);
           e.dataTransfer.setData('text/plain', freshCode);
+          e.dataTransfer.setData('text/html', '<a href="' + freshCode.replace(/"/g, '&quot;') + '">📚 Qu Student</a>');
           e.dataTransfer.effectAllowed = 'copy';
           this.style.cursor = 'grabbing';
+          // Also update href immediately before drag to ensure it's correct
+          this.href = freshCode;
+          // Force update the href attribute
+          this.setAttribute('href', freshCode);
         });
         
         bookmarkletButton.addEventListener('dragend', function() {
           this.style.cursor = 'grab';
         });
         
-        // Prevent clicking - only allow dragging
-        bookmarkletButton.addEventListener('click', function(e) {
+        // Allow clicking to copy the bookmarklet code to clipboard
+        bookmarkletButton.addEventListener('click', async function(e) {
           e.preventDefault();
           e.stopPropagation();
+          // Copy bookmarklet code to clipboard
+          const code = await updateBookmarkletCode();
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(code).then(function() {
+              const message = document.documentElement.lang === 'ar'
+                ? 'تم نسخ كود الإشارة المرجعية إلى الحافظة! الآن يمكنك إنشاء إشارة مرجعية جديدة ولصق هذا الكود كعنوان URL.'
+                : 'Bookmarklet code copied to clipboard! You can now create a new bookmark and paste this code as the URL.';
+              alert(message);
+            }).catch(function() {
+              // Fallback: show the code in a prompt
+              prompt(document.documentElement.lang === 'ar'
+                ? 'انسخ هذا الكود وأنشئ إشارة مرجعية جديدة مع هذا الكود كعنوان URL:'
+                : 'Copy this code and create a new bookmark with this code as the URL:', code);
+            });
+          } else {
+            // Fallback: show the code in a prompt
+            prompt(document.documentElement.lang === 'ar'
+              ? 'انسخ هذا الكود وأنشئ إشارة مرجعية جديدة مع هذا الكود كعنوان URL:'
+              : 'Copy this code and create a new bookmark with this code as the URL:', code);
+          }
           return false;
         }, true); // Use capture phase to catch early
         

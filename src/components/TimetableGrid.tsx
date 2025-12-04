@@ -1,21 +1,57 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useTimetable } from '../contexts/TimetableContext';
+import { Course } from '../types';
 import './TimetableGrid.css';
+
+// Color palette for courses - Darker colors
+const courseColors = [
+  ['#4c63d2', '#5a3d8f'], // Dark purple gradient
+  ['#c41d7a', '#c02d4a'], // Dark pink gradient
+  ['#2d7fc8', '#0085a8'], // Dark blue gradient
+  ['#2db85c', '#1fb8a3'], // Dark green gradient
+  ['#d64a6e', '#d4a01a'], // Dark pink-yellow gradient
+  ['#1fa5a6', '#1f0442'], // Dark cyan-purple gradient
+  ['#6bb3b0', '#c99ba8'], // Dark blue-pink gradient
+  ['#cc5a6e', '#c97ba8'], // Dark coral-pink gradient
+  ['#cc9a6e', '#c97a5f'], // Dark orange gradient
+  ['#cc4a40', '#b84400'], // Dark red-orange gradient
+  ['#4fa870', '#5fa3b4'], // Dark green-blue gradient
+  ['#5a7dbd', '#7ba3cb'], // Dark blue gradient
+  ['#cc9a4b', '#0f2b4b'], // Dark yellow-blue gradient
+  ['#b80559', '#cc4a00'], // Dark pink-orange gradient
+  ['#0d3a5a', '#4fa097'], // Dark blue-teal gradient
+];
+
+// Generate a consistent color for a course based on its code
+const getCourseColor = (courseCode: string): string[] => {
+  // Simple hash function to get consistent color for same course code
+  let hash = 0;
+  for (let i = 0; i < courseCode.length; i++) {
+    hash = courseCode.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash) % courseColors.length;
+  return courseColors[index];
+};
+
+// Convert hex color to RGB for rgba usage
+const hexToRgb = (hex: string): string => {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  if (!result) return '102, 126, 234'; // Default purple
+  return `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}`;
+};
 
 const TimetableGrid: React.FC = () => {
   const { t, language } = useLanguage();
-  const { timetable, removeCourse, removeAllCourses, hasConflict } = useTimetable();
+  const { timetable, removeCourse, removeAllCourses, hasConflict, hoveredCourse } = useTimetable();
   const [showSummary, setShowSummary] = React.useState(false);
   const [showExportMenu, setShowExportMenu] = React.useState(false);
 
-  // Generate time slots (8:00 to 20:00 in 30-minute intervals)
+  // Generate time slots (8:00 to 20:00 in 1-hour intervals)
   const timeSlots: string[] = [];
-  for (let hour = 8; hour < 20; hour++) {
-    for (let minute = 0; minute < 60; minute += 30) {
-      const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-      timeSlots.push(timeStr);
-    }
+  for (let hour = 8; hour <= 20; hour++) {
+    const timeStr = `${hour.toString().padStart(2, '0')}:00`;
+    timeSlots.push(timeStr);
   }
 
   const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu'];
@@ -25,10 +61,15 @@ const TimetableGrid: React.FC = () => {
   const getCourseBlockStyle = (startTime: string, endTime: string) => {
     const startMinutes = timeToMinutes(startTime);
     const endMinutes = timeToMinutes(endTime);
-    const startSlot = Math.floor((startMinutes - 480) / 30); // 8:00 = 480 minutes
-    const duration = (endMinutes - startMinutes) / 30;
-    const topPercent = (startSlot / timeSlots.length) * 100;
-    const heightPercent = (duration / timeSlots.length) * 100;
+    // 8:00 = 480 minutes (8*60)
+    const baseMinutes = 480;
+    // Calculate position relative to 8:00, in minutes
+    const startOffsetMinutes = startMinutes - baseMinutes;
+    const durationMinutes = endMinutes - startMinutes;
+    // Total time span: 8:00 to 20:00 = 12 hours = 720 minutes
+    const totalMinutes = 12 * 60; // 720 minutes
+    const topPercent = (startOffsetMinutes / totalMinutes) * 100;
+    const heightPercent = (durationMinutes / totalMinutes) * 100;
 
     return {
       top: `${topPercent}%`,
@@ -372,10 +413,103 @@ const TimetableGrid: React.FC = () => {
   };
 
   return (
-    <section className="timetable-section">
+    <section className="timetable-section" dir={language === 'ar' ? 'rtl' : 'ltr'}>
       <div className="timetable-header">
-        <h2 className="section-title">{t.timetable}</h2>
-        <div className="timetable-actions">
+        {language === 'ar' ? (
+          <>
+            <div className="timetable-actions">
+              {timetable.length > 0 && (
+                <>
+                      <button
+                        className="summary-btn"
+                        onClick={() => setShowSummary(true)}
+                      >
+                        📊 {t.summary}
+                      </button>
+              <div className="export-menu-container">
+                <button
+                  className="export-btn"
+                  onClick={() => setShowExportMenu(!showExportMenu)}
+                  title={t.export}
+                >
+                  💾 {t.export}
+                </button>
+                {showExportMenu && (
+                  <div className="export-menu">
+                    <button
+                      className="export-menu-item"
+                      onClick={() => {
+                        exportToPDF();
+                        setShowExportMenu(false);
+                      }}
+                    >
+                      {t.exportToPDF}
+                    </button>
+                    <button
+                      className="export-menu-item"
+                      onClick={() => {
+                        exportToExcel();
+                        setShowExportMenu(false);
+                      }}
+                    >
+                      {t.exportToExcel}
+                    </button>
+                    <button
+                      className="export-menu-item"
+                      onClick={() => {
+                        exportToCalendar();
+                        setShowExportMenu(false);
+                      }}
+                    >
+                      {t.exportToCalendar}
+                    </button>
+                  </div>
+                )}
+              </div>
+                      <button
+                        className="remove-all-btn"
+                        onClick={() => {
+                          if (window.confirm(language === 'en' 
+                            ? 'Are you sure you want to remove all courses from the timetable?' 
+                            : 'هل أنت متأكد من إزالة جميع المقررات من الجدول؟')) {
+                            removeAllCourses();
+                          }
+                        }}
+                        title={language === 'en' ? 'Remove all courses' : 'إزالة جميع المقررات'}
+                      >
+                        🗑️ {language === 'en' ? 'Remove All' : 'إزالة الكل'}
+                      </button>
+                </>
+              )}
+            </div>
+            <h2 className="timetable-title">
+              الجدول الأسبوعي {timetable.length > 0 && (() => {
+                const uniqueCourses = new Set(timetable.map(entry => entry.course.code)).size;
+                const totalSections = timetable.length;
+                return (
+                  <>
+                    <span className="total-courses-text">إجمالي المقررات {uniqueCourses}</span>
+                    <span className="total-sections-text">عدد الشعب {totalSections}</span>
+                  </>
+                );
+              })()}
+            </h2>
+          </>
+        ) : (
+          <>
+            <h2 className="timetable-title">
+              Weekly Schedule {timetable.length > 0 && (() => {
+                const uniqueCourses = new Set(timetable.map(entry => entry.course.code)).size;
+                const totalSections = timetable.length;
+                return (
+                  <>
+                    <span className="total-courses-text">total courses {uniqueCourses}</span>
+                    <span className="total-sections-text">sections {totalSections}</span>
+                  </>
+                );
+              })()}
+            </h2>
+            <div className="timetable-actions">
           {timetable.length > 0 && (
             <>
                       <button
@@ -438,9 +572,11 @@ const TimetableGrid: React.FC = () => {
                       >
                         🗑️ {t.removeAll}
                       </button>
-            </>
+            </> 
           )}
         </div>
+          </>
+        )}
       </div>
       {/* Close export menu when clicking outside */}
       {showExportMenu && (
@@ -475,37 +611,59 @@ const TimetableGrid: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {timetable.map((entry) => {
-                    const course = entry.course;
-                    return (
-                      <tr key={entry.courseId}>
-                        <td>{course.code}</td>
-                        <td>{course.name}</td>
-                        <td>{course.section}</td>
-                        <td>{course.days.join(', ')}</td>
-                        <td>{course.startTime} - {course.endTime}</td>
-                        <td>{course.location || '-'}</td>
-                        <td>{course.instructor || '-'}</td>
-                        <td>{course.finalExam?.date ? `Period ${course.finalExam.date}` : '-'}</td>
-                        <td>
-                          {course.status ? (
-                            <span className={`status-badge ${course.status}`}>
-                              {course.status === 'open' ? t.open : t.closed}
-                            </span>
-                          ) : '-'}
-                        </td>
-                        <td>
-                          {course.classType ? (
-                            <span className="class-type-badge">
-                              {course.classType === 'practical' ? t.practical :
-                               course.classType === 'theoretical' ? t.theoretical :
-                               t.exercise}
-                            </span>
-                          ) : '-'}
-                        </td>
-                      </tr>
-                    );
-                  })}
+                  {(() => {
+                    // Group courses by section number
+                    const groupedBySection: Record<string, typeof timetable> = {};
+                    timetable.forEach(entry => {
+                      const section = entry.course.section || 'N/A';
+                      if (!groupedBySection[section]) {
+                        groupedBySection[section] = [];
+                      }
+                      groupedBySection[section].push(entry);
+                    });
+
+                    // Render grouped courses
+                    return Object.entries(groupedBySection).map(([section, entries]) => {
+                      const codes = [...new Set(entries.map(e => e.course.code))].join(', ');
+                      const names = [...new Set(entries.map(e => e.course.name))].join(', ');
+                      const days = [...new Set(entries.flatMap(e => e.course.days))].join(', ');
+                      const times = [...new Set(entries.map(e => `${e.course.startTime} - ${e.course.endTime}`))].join(', ');
+                      const locations = [...new Set(entries.map(e => e.course.location).filter(Boolean))].join(', ');
+                      const instructors = [...new Set(entries.map(e => e.course.instructor).filter(Boolean))].join(', ');
+                      const finalExams = [...new Set(entries.map(e => e.course.finalExam?.date).filter(Boolean))].map(d => `Period ${d}`).join(', ');
+                      const statuses = [...new Set(entries.map(e => e.course.status).filter(Boolean))];
+                      const classTypes = [...new Set(entries.map(e => e.course.classType).filter(Boolean))];
+
+                      return (
+                        <tr key={section}>
+                          <td>{codes}</td>
+                          <td>{names}</td>
+                          <td>{section}</td>
+                          <td>{days}</td>
+                          <td>{times}</td>
+                          <td>{locations || '-'}</td>
+                          <td>{instructors || '-'}</td>
+                          <td>{finalExams || '-'}</td>
+                          <td>
+                            {statuses.length > 0 ? (
+                              <span className={`status-badge ${statuses[0]}`}>
+                                {statuses[0] === 'open' ? t.open : t.closed}
+                              </span>
+                            ) : '-'}
+                          </td>
+                          <td>
+                            {classTypes.length > 0 ? (
+                              <span className="class-type-badge">
+                                {classTypes[0] === 'practical' ? t.practical :
+                                 classTypes[0] === 'theoretical' ? t.theoretical :
+                                 t.exercise}
+                              </span>
+                            ) : '-'}
+                          </td>
+                        </tr>
+                      );
+                    });
+                  })()}
                 </tbody>
               </table>
             </div>
@@ -523,9 +681,18 @@ const TimetableGrid: React.FC = () => {
           </div>
         ) : (
           <div className="timetable-grid">
+            {/* Days header row */}
+            <div className="days-header-row">
+              {days.map((day, dayIndex) => (
+                <div key={day} className="day-header-cell">
+                  {dayLabels[dayIndex]}
+                </div>
+              ))}
+            </div>
+            
             {/* Time column */}
             <div className="time-column">
-              {timeSlots.filter((_, i) => i % 2 === 0).map((time) => (
+              {timeSlots.map((time) => (
                 <div key={time} className="time-slot">
                   {time}
                 </div>
@@ -540,6 +707,24 @@ const TimetableGrid: React.FC = () => {
                   entry.course.days.includes(day)
                 );
 
+                // Check if hovered course should be shown on this day
+                // Handle both single time slot and multiple time slots
+                const showHoveredPreview = hoveredCourse && (() => {
+                  // Check if course has multiple time slots
+                  if (hoveredCourse.timeSlots && hoveredCourse.timeSlots.length > 1) {
+                    // Check if any time slot includes this day and is not already in timetable
+                    return hoveredCourse.timeSlots.some(slot => {
+                      if (!slot.days.includes(day)) return false;
+                      const slotId = `${hoveredCourse.id}-slot-${hoveredCourse.timeSlots.indexOf(slot)}`;
+                      return !dayCourses.some(entry => entry.courseId === slotId);
+                    });
+                  } else {
+                    // Single time slot course
+                    return hoveredCourse.days.includes(day) &&
+                      !dayCourses.some(entry => entry.courseId === hoveredCourse.id);
+                  }
+                })();
+
                 return (
                   <div key={day} className={`day-column ${day === 'Wed' ? 'wednesday-column' : ''}`}>
                     <div className="day-header">{dayLabels[dayIndex]}</div>
@@ -548,16 +733,28 @@ const TimetableGrid: React.FC = () => {
                         const course = entry.course;
                         const conflict = hasConflict(course);
                         const style = getCourseBlockStyle(course.startTime, course.endTime);
+                        const [color1, color2] = getCourseColor(course.code);
 
                         return (
                           <div
                             key={entry.courseId}
                             className={`course-block ${conflict ? 'conflict' : ''}`}
-                            style={style}
+                            style={{
+                              ...style,
+                              background: conflict 
+                                ? 'linear-gradient(135deg, #f56565 0%, #c53030 100%)'
+                                : `linear-gradient(135deg, ${color1} 0%, ${color2} 100%)`,
+                            }}
                           >
                             <div className="course-block-header">
                               <div>
                                 <div className="course-block-code">{course.code}</div>
+                                {course.section && (
+                                  <div className="course-block-section">{language === 'en' ? 'Section' : 'الشعبة'}: {course.section}</div>
+                                )}
+                                {course.instructor && (
+                                  <div className="course-block-instructor">{course.instructor}</div>
+                                )}
                                 <div className="course-block-time">
                                   {course.startTime} - {course.endTime}
                                 </div>
@@ -579,6 +776,70 @@ const TimetableGrid: React.FC = () => {
                           </div>
                         );
                       })}
+                      {/* Show hovered course preview */}
+                      {showHoveredPreview && (() => {
+                        // Handle multiple time slots
+                        if (hoveredCourse.timeSlots && hoveredCourse.timeSlots.length > 1) {
+                          return hoveredCourse.timeSlots
+                            .map((slot, slotIndex) => {
+                              if (!slot.days.includes(day)) return null;
+                              const slotId = `${hoveredCourse.id}-slot-${slotIndex}`;
+                              if (dayCourses.some(entry => entry.courseId === slotId)) return null;
+                              
+                              const style = getCourseBlockStyle(slot.startTime, slot.endTime);
+                              const [color1, color2] = getCourseColor(hoveredCourse.code);
+                              return (
+                                <div
+                                  key={`hovered-${slotId}`}
+                                  className="course-block hover-preview"
+                                  style={{
+                                    ...style,
+                                    background: `linear-gradient(135deg, rgba(${hexToRgb(color1)}, 0.6) 0%, rgba(${hexToRgb(color2)}, 0.6) 100%)`,
+                                  }}
+                                >
+                                  <div className="course-block-header">
+                                    <div>
+                                      <div className="course-block-code">{hoveredCourse.code}</div>
+                                      <div className="course-block-time">
+                                        {slot.startTime} - {slot.endTime}
+                                      </div>
+                                    </div>
+                                  </div>
+                                  {(slot.location || hoveredCourse.location) && (
+                                    <div className="course-block-location">{slot.location || hoveredCourse.location}</div>
+                                  )}
+                                </div>
+                              );
+                            })
+                            .filter(Boolean);
+                        } else {
+                          // Single time slot course
+                          const style = getCourseBlockStyle(hoveredCourse.startTime, hoveredCourse.endTime);
+                          const [color1, color2] = getCourseColor(hoveredCourse.code);
+                          return (
+                            <div
+                              key={`hovered-${hoveredCourse.id}`}
+                              className="course-block hover-preview"
+                              style={{
+                                ...style,
+                                background: `linear-gradient(135deg, rgba(${hexToRgb(color1)}, 0.6) 0%, rgba(${hexToRgb(color2)}, 0.6) 100%)`,
+                              }}
+                            >
+                              <div className="course-block-header">
+                                <div>
+                                  <div className="course-block-code">{hoveredCourse.code}</div>
+                                  <div className="course-block-time">
+                                    {hoveredCourse.startTime} - {hoveredCourse.endTime}
+                                  </div>
+                                </div>
+                              </div>
+                              {hoveredCourse.location && (
+                                <div className="course-block-location">{hoveredCourse.location}</div>
+                              )}
+                            </div>
+                          );
+                        }
+                      })()}
                     </div>
                   </div>
                 );

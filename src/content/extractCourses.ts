@@ -330,17 +330,61 @@ export function extractCoursesFromDom(doc: Document): Course[] {
     let skippedRows = 0;
     let errorRows = 0;
     
-    rows.forEach((row, index) => {
+    // Convert NodeList to Array to get accurate indices
+    const rowsArray = Array.from(rows);
+    
+    rowsArray.forEach((row, arrayIndex) => {
       try {
         const cells = row.querySelectorAll('td');
         if (cells.length < 8) {
-          console.warn(`Row ${index} has insufficient cells (${cells.length}), expected 8`);
+          console.warn(`Row ${arrayIndex} has insufficient cells (${cells.length}), expected 8`);
           skippedRows++;
           return;
         }
 
+        // Extract the actual DOM index from the form name (e.g., "myForm:offeredCoursesTable:0:details" -> 0)
+        // This ensures we preserve the exact website order, not the array index
+        let domIndex: number | null = null;
+        const detailsCell = cells[7];
+        
+        if (detailsCell) {
+          // Strategy 1: Try to find the link by name or id attribute
+          const detailsLink = detailsCell.querySelector<HTMLAnchorElement>('a[name*="details"], a[id*="details"]');
+          if (detailsLink) {
+            const nameAttr = detailsLink.getAttribute('name') || detailsLink.getAttribute('id') || '';
+            const indexMatch = nameAttr.match(/offeredCoursesTable:(\d+):/);
+            if (indexMatch) {
+              domIndex = parseInt(indexMatch[1], 10);
+            }
+          }
+          
+          // Strategy 2: If link didn't work, try all inputs in the details cell
+          if (domIndex === null) {
+            const allInputs = detailsCell.querySelectorAll('input[name*="offeredCoursesTable"]');
+            for (let i = 0; i < allInputs.length; i++) {
+              const input = allInputs[i] as HTMLInputElement;
+              const inputName = input.getAttribute('name') || '';
+              const inputIndexMatch = inputName.match(/offeredCoursesTable:(\d+):/);
+              if (inputIndexMatch) {
+                domIndex = parseInt(inputIndexMatch[1], 10);
+                break;
+              }
+            }
+          }
+        }
+        
+        // Fallback: Use array index if extraction failed
+        if (domIndex === null) {
+          domIndex = arrayIndex;
+          if (arrayIndex < 3) {
+            console.warn(`⚠️ Could not extract DOM index for row ${arrayIndex}, using array index as fallback`);
+          }
+        } else if (arrayIndex < 3) {
+          console.log(`✅ Extracted DOM index ${domIndex} for row ${arrayIndex}`);
+        }
+
         // Column 0: Course code (رمز المقرر)
-        const code = cells[0]?.textContent?.trim() || `COURSE-${index}`;
+        const code = cells[0]?.textContent?.trim() || `COURSE-${domIndex}`;
 
         // Column 1: Course name (اسم المقرر)
         const name = cells[1]?.textContent?.trim() || 'Unknown Course';
@@ -367,8 +411,7 @@ export function extractCoursesFromDom(doc: Document): Course[] {
           ? 'open' as const
           : undefined;
 
-        // Column 7: Details (التفاصيل) - contains hidden inputs
-        const detailsCell = cells[7];
+        // Column 7: Details (التفاصيل) - contains hidden inputs (already have detailsCell from above)
         let instructor = '';
         let examPeriod = '';
 
@@ -394,7 +437,7 @@ export function extractCoursesFromDom(doc: Document): Course[] {
             if (timeSlots.length === 0) {
               // No time slots found, create a default course
               const course: Course & { __originalIndex?: number } = {
-                id: `${code}-${sectionNumber}-${index}`,
+                id: `${code}-${sectionNumber}-${domIndex}`,
                 code,
                 name,
                 section: sectionNumber,
@@ -405,7 +448,7 @@ export function extractCoursesFromDom(doc: Document): Course[] {
                 status,
                 classType,
                 finalExam: examPeriod ? { day: 'Sun', startTime: '08:00', endTime: '10:00' } : undefined,
-                __originalIndex: index, // Preserve DOM order (use row index from DOM)
+                __originalIndex: domIndex, // Preserve DOM order (use index from form name)
               };
               courses.push(course);
             } else {
@@ -428,7 +471,7 @@ export function extractCoursesFromDom(doc: Document): Course[] {
               const firstSlot = timeSlots[0];
               
               const course: Course & { __originalIndex?: number } = {
-                id: `${code}-${sectionNumber}-${index}`,
+                id: `${code}-${sectionNumber}-${domIndex}`,
                 code,
                 name,
                 section: sectionNumber,
@@ -446,7 +489,7 @@ export function extractCoursesFromDom(doc: Document): Course[] {
                   endTime: '10:00',
                   date: examPeriod // Store exam period as date for now
                 } : undefined,
-                __originalIndex: index, // Preserve DOM order (use row index from DOM)
+                __originalIndex: domIndex, // Preserve DOM order (use index from form name)
               };
               console.log(`Extracted course with ${timeSlots.length} time slot(s):`, course);
               courses.push(course);
@@ -454,7 +497,7 @@ export function extractCoursesFromDom(doc: Document): Course[] {
           } else {
             // No section input found, create a default course
             const course: Course & { __originalIndex?: number } = {
-              id: `${code}-${sectionNumber}-${index}`,
+              id: `${code}-${sectionNumber}-${domIndex}`,
               code,
               name,
               section: sectionNumber,
@@ -465,14 +508,14 @@ export function extractCoursesFromDom(doc: Document): Course[] {
               status,
               classType,
               finalExam: examPeriod ? { day: 'Sun', startTime: '08:00', endTime: '10:00' } : undefined,
-              __originalIndex: courses.length, // Preserve DOM order
+              __originalIndex: domIndex, // Preserve DOM order (use index from form name)
             };
             courses.push(course);
           }
         } else {
           // No details cell, create a minimal course
           const course: Course & { __originalIndex?: number } = {
-            id: `${code}-${sectionNumber}-${index}`,
+            id: `${code}-${sectionNumber}-${domIndex}`,
             code,
             name,
             section: sectionNumber,
@@ -481,12 +524,12 @@ export function extractCoursesFromDom(doc: Document): Course[] {
             endTime: '09:30',
             status,
             classType,
-            __originalIndex: courses.length, // Preserve DOM order
+            __originalIndex: domIndex, // Preserve DOM order (use index from form name)
           };
           courses.push(course);
         }
       } catch (error) {
-        console.error(`Error parsing course row ${index}:`, error, row);
+        console.error(`Error parsing course row ${domIndex}:`, error, row);
         errorRows++;
       }
     });
@@ -494,6 +537,18 @@ export function extractCoursesFromDom(doc: Document): Course[] {
     console.log(`Successfully extracted ${courses.length} courses from ${rows.length} rows (${skippedRows} skipped, ${errorRows} errors)`);
     if (courses.length < rows.length * 0.5) {
       console.warn(`⚠️ Warning: Only extracted ${courses.length} courses from ${rows.length} rows. This might indicate a parsing issue.`);
+    }
+    
+    // Log first few courses to verify __originalIndex is set correctly
+    if (courses.length > 0) {
+      console.log('First 5 extracted courses with __originalIndex:', 
+        courses.slice(0, 5).map((c: any) => ({
+          code: c.code,
+          section: c.section,
+          __originalIndex: c.__originalIndex,
+          id: c.id
+        }))
+      );
     }
   } catch (error) {
     console.error('Error extracting courses:', error);

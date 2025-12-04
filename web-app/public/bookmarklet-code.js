@@ -2,11 +2,15 @@
 (function() {
   'use strict';
   
-  // Check if already executed
-  if (window.__QU_BOOKMARKLET_EXECUTED__) {
+  // Check if already executed (use different flag to avoid conflicts)
+  if (window.__QU_BOOKMARKLET_EXECUTED_V2__) {
+    console.log('Bookmarklet already executed, skipping...');
     return;
   }
-  window.__QU_BOOKMARKLET_EXECUTED__ = true;
+  window.__QU_BOOKMARKLET_EXECUTED_V2__ = true;
+  console.log('Bookmarklet code executing...');
+  console.log('Current page URL:', window.location.href);
+  console.log('Page title:', document.title);
   
   var parseSingleTimeSlot, parseTimeSlots, extractCoursesFromPage;
   
@@ -160,6 +164,10 @@
               } : undefined,
               __originalIndex: index // Preserve DOM order (use row index from DOM)
             };
+            // Ensure __originalIndex is set
+            if (course.__originalIndex === undefined) {
+              course.__originalIndex = index;
+            }
           } else {
             course = {
               id: `${code}-${section}-${index}`,
@@ -180,6 +188,10 @@
               } : undefined,
               __originalIndex: index // Preserve DOM order (use row index from DOM)
             };
+            // Ensure __originalIndex is set
+            if (course.__originalIndex === undefined) {
+              course.__originalIndex = index;
+            }
           }
           courses.push(course);
         } catch (error) {
@@ -265,6 +277,9 @@
     }
     const coursesJson = JSON.stringify(validCourses);
     const encodedCourses = encodeURIComponent(coursesJson);
+    console.log('Courses JSON length:', coursesJson.length);
+    console.log('Encoded courses length:', encodedCourses.length);
+    console.log('Number of courses:', validCourses.length);
     try {
       localStorage.setItem('qu-student-courses', coursesJson);
       localStorage.setItem('qu-student-courses-timestamp', Date.now().toString());
@@ -277,6 +292,8 @@
     const webAppUrl = 'https://SSaleh22-stack.github.io/Student-Table-Maker-Qu-Student-/';
     const urlWithData = webAppUrl + '#courses=' + encodedCourses + '&lang=' + currentLang;
     console.log('Opening web app with courses data in URL');
+    console.log('URL length:', urlWithData.length);
+    console.log('URL preview (first 200 chars):', urlWithData.substring(0, 200));
     
     // Detect Safari browser
     const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent) || 

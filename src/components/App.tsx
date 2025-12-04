@@ -166,6 +166,8 @@ const AppContent: React.FC = () => {
     // Check URL parameter
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('extracted') === 'true') {
+      // Set view to timetable
+      setCurrentView('timetable');
       // Load courses from storage
       chrome.storage.local.get(['extractedCourses'], (result) => {
         if (result.extractedCourses && Array.isArray(result.extractedCourses)) {
@@ -232,6 +234,8 @@ const AppContent: React.FC = () => {
           const extractedCourses = response.payload as Course[];
           if (extractedCourses.length > 0) {
             setCourses(extractedCourses);
+            // Ensure we're on the timetable view after extraction
+            setCurrentView('timetable');
             setExtractionError(null);
           } else {
             setExtractionError(
@@ -240,7 +244,15 @@ const AppContent: React.FC = () => {
                 : 'لم يتم العثور على مقررات في هذه الصفحة. يرجى التأكد من أنك في صفحة المقررات المطروحة وأن الصفحة تم تحميلها بالكامل.'
             );
           }
+        } else if (response && response.type === 'EXTRACTION_FAILED') {
+          // Handle extraction failed response
+          const errorMsg = response.error || 
+            (language === 'en'
+              ? 'Failed to extract courses. Please make sure you are logged in and on the offered courses page (offeredCoursesIndex.faces).'
+              : 'فشل استخراج المقررات. يرجى التأكد من تسجيل الدخول وأنك في صفحة المقررات المطروحة.');
+          setExtractionError(errorMsg);
         } else {
+          // No response or unexpected response format
           const errorMsg = response?.error || 
             (language === 'en'
               ? 'Failed to extract courses. Please make sure you are logged in and on the offered courses page (offeredCoursesIndex.faces).'
@@ -313,7 +325,12 @@ const AppContent: React.FC = () => {
             isOpen={showAddCourseModal}
             onClose={() => setShowAddCourseModal(false)}
             onAdd={(course) => {
-              setCourses((prev) => [...prev, course]);
+              // Add __originalIndex to manually added courses so they appear at the end
+              const courseWithIndex = {
+                ...course,
+                __originalIndex: 999999 + (courses.length || 0) // High number to ensure they appear after extracted courses
+              };
+              setCourses((prev) => [...prev, courseWithIndex]);
               setShowAddCourseModal(false);
               const message = language === 'en'
                 ? `✅ Course "${course.code}" has been added successfully! Check the course list on the right pane.`

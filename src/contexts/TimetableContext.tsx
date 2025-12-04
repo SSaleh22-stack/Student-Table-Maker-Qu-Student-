@@ -16,6 +16,8 @@ interface TimetableContextType {
   hasConflict: (course: Course) => boolean;
   getConflictInfo: (course: Course) => ConflictInfo | null; // Returns conflict details
   isInTimetable: (courseId: string) => boolean;
+  hoveredCourse: Course | null; // Course being hovered in compact view
+  setHoveredCourse: (course: Course | null) => void; // Set hovered course for preview
 }
 
 const TimetableContext = createContext<TimetableContextType | undefined>(undefined);
@@ -175,6 +177,7 @@ const getConflictDetails = (course: Course, timetable: TimetableEntry[], exclude
 
 export const TimetableProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [timetable, setTimetable] = useState<TimetableEntry[]>([]);
+  const [hoveredCourse, setHoveredCourse] = useState<Course | null>(null);
 
   // Load timetable from storage on mount
   useEffect(() => {
@@ -360,6 +363,8 @@ export const TimetableProvider: React.FC<{ children: ReactNode }> = ({ children 
     hasConflict,
     getConflictInfo,
     isInTimetable,
+    hoveredCourse,
+    setHoveredCourse,
   };
 
   return (
