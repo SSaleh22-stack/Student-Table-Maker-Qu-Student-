@@ -364,10 +364,36 @@
     // Get current language preference to pass to web app
     var currentLang = isArabic ? 'ar' : 'en';
     // Detect if we're on localhost or production
-    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    const webAppUrl = isLocalhost 
-      ? window.location.origin + '/'  // Use localhost for testing
-      : 'https://SSaleh22-stack.github.io/Student-Table-Maker-Qu-Student-/';
+    // The bookmarklet runs on QU portal, so window.location.hostname will be stu-gate.qu.edu.sa
+    // We need to check where the bookmarklet script was loaded from, not where it's running
+    let webAppUrl;
+    if (typeof window.__QU_BOOKMARKLET_BASE_URL__ !== 'undefined') {
+      // Extract base URL from where bookmarklet was loaded
+      const scriptUrl = window.__QU_BOOKMARKLET_BASE_URL__;
+      console.log('🔵 Bookmarklet script URL:', scriptUrl);
+      // Remove bookmarklet-code.js from the end to get base URL
+      webAppUrl = scriptUrl.replace(/\/bookmarklet-code\.js.*$/, '/');
+      console.log('🔵 Extracted web app URL:', webAppUrl);
+    } else {
+      // Fallback: check if we can detect localhost from script src
+      // Try to find the script tag that loaded this code
+      const scripts = document.querySelectorAll('script[src*="bookmarklet-code"]');
+      if (scripts.length > 0) {
+        const scriptSrc = scripts[scripts.length - 1].src;
+        console.log('🔵 Found script src:', scriptSrc);
+        if (scriptSrc.includes('localhost') || scriptSrc.includes('127.0.0.1')) {
+          webAppUrl = scriptSrc.replace(/\/bookmarklet-code\.js.*$/, '/');
+          console.log('🔵 Detected localhost from script src:', webAppUrl);
+        } else {
+          webAppUrl = 'https://SSaleh22-stack.github.io/Student-Table-Maker-Qu-Student-/';
+        }
+      } else {
+        // Default to production
+        webAppUrl = 'https://SSaleh22-stack.github.io/Student-Table-Maker-Qu-Student-/';
+      }
+    }
+    
+    console.log('✅ Final web app URL:', webAppUrl);
     // CRITICAL VALIDATION: Ensure we have valid encoded courses data
     if (!encodedCourses || encodedCourses === 'null' || encodedCourses === 'undefined' || encodedCourses.length < 10) {
       const message = isArabic

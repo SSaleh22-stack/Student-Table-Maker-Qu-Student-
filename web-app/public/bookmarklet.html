@@ -231,11 +231,16 @@
       // Fallback to loader approach - but make it more reliable
       const languagePref = getLanguagePreference();
       const langCode = languagePref === 'ar' ? 'true' : (languagePref === 'en' ? 'false' : 'null');
-      // Detect if we're on localhost
-      const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-      const baseUrl = isLocalhost ? window.location.origin + '/' : 'https://SSaleh22-stack.github.io/Student-Table-Maker-Qu-Student-/';
+      // Always use the current page's origin for the bookmarklet code
+      // This ensures it works on localhost, GitHub Pages, or any other host
+      // Get the directory where bookmarklet.html is located
+      const currentPath = window.location.pathname;
+      const basePath = currentPath.substring(0, currentPath.lastIndexOf('/') + 1);
+      const baseUrl = window.location.origin + basePath;
+      console.log('Bookmarklet base URL:', baseUrl, 'Current path:', currentPath);
       // Use a more reliable loader that waits for the script to load
-      return `javascript:(function(){if(window.__QU_BOOKMARKLET_LOADED__){console.log('Bookmarklet already loaded');return;}window.__QU_BOOKMARKLET_LOADED__=true;window.__QU_BOOKMARKLET_LANG__=${langCode};console.log('Loading bookmarklet code from: ${baseUrl}bookmarklet-code.js');var s=document.createElement('script');s.async=false;s.src='${baseUrl}bookmarklet-code.js?v='+Date.now();s.onload=function(){console.log('Bookmarklet code loaded successfully');};s.onerror=function(){console.error('Failed to load bookmarklet-code.js from ${baseUrl}, trying fallback');var s2=document.createElement('script');s2.async=false;s2.src='./bookmarklet-code.js?v='+Date.now();s2.onload=function(){console.log('Bookmarklet code loaded from fallback');};s2.onerror=function(){alert('Failed to load bookmarklet. Please check your internet connection and try again, or visit the bookmarklet setup page.');console.error('Bookmarklet failed to load from all sources');};document.head.appendChild(s2);};document.head.appendChild(s);})();`;
+      // Build the bookmarklet code with proper URL handling
+      return `javascript:(function(){if(window.__QU_BOOKMARKLET_LOADED__){console.log('Bookmarklet already loaded');return;}window.__QU_BOOKMARKLET_LOADED__=true;window.__QU_BOOKMARKLET_LANG__=${langCode};var currentPath=window.location.pathname;var basePath=currentPath.substring(0,currentPath.lastIndexOf('/')+1);var baseUrl=window.location.origin+basePath;window.__QU_BOOKMARKLET_BASE_URL__=baseUrl+'bookmarklet-code.js';console.log('Loading bookmarklet code from:',baseUrl+'bookmarklet-code.js');var s=document.createElement('script');s.async=false;s.src=baseUrl+'bookmarklet-code.js?v='+Date.now();s.onload=function(){console.log('Bookmarklet code loaded successfully');};s.onerror=function(){console.error('Failed to load bookmarklet-code.js from',baseUrl,'trying relative path');var s2=document.createElement('script');s2.async=false;var fallbackUrl='bookmarklet-code.js';window.__QU_BOOKMARKLET_BASE_URL__=window.location.origin+window.location.pathname.replace(/\\/[^\\/]*$/,'/')+fallbackUrl;s2.src=fallbackUrl+'?v='+Date.now();s2.onload=function(){console.log('Bookmarklet code loaded from relative path');};s2.onerror=function(){alert('Failed to load bookmarklet. Please check that bookmarklet-code.js is accessible.\\n\\nTried:\\n- '+baseUrl+'bookmarklet-code.js\\n- '+fallbackUrl+'\\n\\nMake sure bookmarklet-code.js is in the same directory as bookmarklet.html');console.error('Bookmarklet failed to load from all sources');};document.head.appendChild(s2);};document.head.appendChild(s);})();`;
     }
     
     // Create initial bookmarklet code (will be updated dynamically)
