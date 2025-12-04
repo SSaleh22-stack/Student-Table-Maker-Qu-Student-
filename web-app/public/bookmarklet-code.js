@@ -394,6 +394,8 @@
     }
     
     console.log('✅ Final web app URL:', webAppUrl);
+    // Detect if we're using localhost
+    const isLocalhost = webAppUrl.includes('localhost') || webAppUrl.includes('127.0.0.1');
     // CRITICAL VALIDATION: Ensure we have valid encoded courses data
     if (!encodedCourses || encodedCourses === 'null' || encodedCourses === 'undefined' || encodedCourses.length < 10) {
       const message = isArabic
