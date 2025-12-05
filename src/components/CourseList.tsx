@@ -18,8 +18,12 @@ const CourseList: React.FC<CourseListProps> = ({ courses }) => {
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   
   // Detect if device is a touch device (iPad, iPhone, etc.)
+  // Only disable hover on primary touch devices, not laptops with touchscreens
   const isTouchDevice = React.useMemo(() => {
-    return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    // Check if it's a mobile/tablet device (not a laptop with touchscreen)
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    // Only disable hover on mobile devices, not laptops
+    return isMobile && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
   }, []);
 
   // Display courses sorted by website order (__originalIndex)
