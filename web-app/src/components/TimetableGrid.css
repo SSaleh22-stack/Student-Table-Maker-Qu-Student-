@@ -23,48 +23,48 @@
 /* Tablet and iPad - smaller sizes but keep desktop layout, show all days without swipe */
 @media (max-width: 1024px) {
   .timetable-header {
-    margin-bottom: 1.15rem;
-    gap: 0.65rem;
+    margin-bottom: 1rem;
+    gap: 0.5rem;
   }
   
   .timetable-title {
-    font-size: 1.4rem;
+    font-size: 1.25rem;
   }
   
   .timetable-actions {
-    gap: 0.45rem;
+    gap: 0.4rem;
   }
   
   .summary-btn,
   .export-btn,
   .remove-all-btn {
-    padding: 0.45rem 0.8rem;
-    font-size: 0.8rem;
+    padding: 0.4rem 0.7rem;
+    font-size: 0.75rem;
   }
   
   .timetable-grid {
-    font-size: 0.75rem;
-    gap: 0.25rem;
+    font-size: 0.7rem;
+    gap: 0.2rem;
     min-width: 0 !important;
     width: 100%;
     max-width: 100%;
   }
   
   .time-column {
-    width: 60px;
-    padding: 0.35rem;
+    width: 50px;
+    padding: 0.25rem;
   }
   
   .time-slot {
-    height: 45px;
-    padding-right: 0.5rem;
-    font-size: 0.7rem;
-    line-height: 1.3;
+    height: 38px;
+    padding-right: 0.4rem;
+    font-size: 0.65rem;
+    line-height: 1.25;
   }
   
   .day-header-cell {
-    padding: 0.6rem 0.4rem;
-    font-size: 0.85rem;
+    padding: 0.5rem 0.3rem;
+    font-size: 0.75rem;
   }
   
   .day-column {
@@ -73,50 +73,55 @@
   }
   
   .day-content {
-    min-height: 585px; /* 13 hours * 45px per hour */
+    min-height: 494px; /* 13 hours * 38px per hour */
   }
   
   .course-block {
-    padding: 0.35rem;
-    left: 2px;
-    right: 2px;
-    border-radius: 0.35rem;
+    padding: 0.3rem;
+    left: 1px;
+    right: 1px;
+    border-radius: 0.3rem;
+    gap: 0.15rem;
   }
   
   .course-block-code {
-    font-size: 0.75rem;
-    margin-bottom: 0.1rem;
+    font-size: 0.7rem;
+    margin-bottom: 0.05rem;
   }
   
   .course-block-section {
-    font-size: 0.65rem;
-    margin-bottom: 0.1rem;
+    font-size: 0.6rem;
+    margin-bottom: 0.05rem;
   }
   
   .course-block-instructor {
-    font-size: 0.65rem;
-  }
-  
-  .course-block-location {
     font-size: 0.6rem;
   }
   
+  .course-block-location {
+    font-size: 0.55rem;
+  }
+  
   .time-slot-code {
-    font-size: 0.7rem;
+    font-size: 0.65rem;
   }
   
   .time-slot-section {
-    font-size: 0.65rem;
+    font-size: 0.6rem;
   }
   
   .time-slot-location {
-    font-size: 0.65rem;
+    font-size: 0.6rem;
   }
   
   .timetable-time-header,
   .timetable-day-header {
-    font-size: 0.75rem;
-    padding: 0.4rem 0.3rem;
+    font-size: 0.7rem;
+    padding: 0.35rem 0.25rem;
+  }
+  
+  .timetable-container {
+    padding: 0.75rem;
   }
 }
 

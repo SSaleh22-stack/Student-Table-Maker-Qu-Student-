@@ -268,17 +268,17 @@ html {
 /* Tablet and iPad - keep desktop layout but smaller sizes */
 @media (max-width: 1024px) {
   .app-content {
-    padding: 0 1.25rem 1.75rem 1.25rem;
+    padding: 0 1rem 1.5rem 1rem;
   }
   
   .main-layout {
-    gap: 0.75rem;
+    gap: 0.5rem;
   }
   
   .course-list-wrapper {
-    width: 350px;
-    padding: 1.25rem;
-    font-size: 0.95rem;
+    width: 280px;
+    padding: 1rem;
+    font-size: 0.9rem;
   }
   
   .extraction-error,
