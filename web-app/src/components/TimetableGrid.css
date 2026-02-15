@@ -580,6 +580,14 @@
   min-height: 400px;
 }
 
+/* iPad: remove horizontal scroll, show all days */
+@media (max-width: 1024px) {
+  .timetable-container {
+    overflow-x: visible;
+    padding: 1rem;
+  }
+}
+
 .timetable-empty {
   text-align: center;
   padding: 4rem 2rem;
