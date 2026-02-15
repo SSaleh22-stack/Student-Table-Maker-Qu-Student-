@@ -283,17 +283,146 @@
   text-align: right;
 }
 
-@media (max-width: 768px) {
+/* Tablet and iPad */
+@media (max-width: 1024px) {
+  .hero-section {
+    min-height: 250px;
+  }
+  
   .hero-title {
-    font-size: 2rem;
+    font-size: 2.25rem;
   }
   
   .hero-subtitle {
-    font-size: 1.2rem;
+    font-size: 1.3rem;
   }
   
   .hero-welcome {
+    font-size: 1.05rem;
+  }
+  
+  .hero-buttons {
+    gap: 0.75rem;
+  }
+  
+  .extract-btn {
+    padding: 0.65rem 1.5rem;
+    font-size: 0.95rem;
+  }
+}
+
+/* Mobile and Phone */
+@media (max-width: 768px) {
+  .hero-section {
+    min-height: 220px;
+    padding: 1.5rem 0;
+  }
+  
+  .hero-content {
+    padding: 1.5rem 1rem;
+  }
+  
+  .hero-title {
+    font-size: 1.75rem;
+    margin-bottom: 0.4rem;
+  }
+  
+  .hero-subtitle {
+    font-size: 1.1rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .hero-welcome {
+    font-size: 0.95rem;
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+  }
+  
+  .hero-buttons {
+    flex-direction: column;
+    gap: 0.75rem;
+    width: 100%;
+  }
+  
+  .extract-btn {
+    padding: 0.6rem 1.25rem;
+    font-size: 0.9rem;
+    width: 100%;
+    max-width: 100%;
+  }
+  
+  .instructions-modal {
+    max-width: 95%;
+    max-height: 90vh;
+  }
+  
+  .instructions-modal-header {
+    padding: 1.25rem 1.5rem;
+  }
+  
+  .instructions-modal-header h2 {
+    font-size: 1.5rem;
+  }
+  
+  .instructions-content {
+    padding: 1.5rem;
+  }
+  
+  .instruction-section {
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .instruction-title {
+    font-size: 1.1rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .instruction-text {
+    font-size: 0.9rem;
+    line-height: 1.7;
+  }
+}
+
+/* Small phones */
+@media (max-width: 480px) {
+  .hero-section {
+    min-height: 200px;
+  }
+  
+  .hero-title {
+    font-size: 1.5rem;
+  }
+  
+  .hero-subtitle {
     font-size: 1rem;
+  }
+  
+  .hero-welcome {
+    font-size: 0.9rem;
+    margin-bottom: 1.25rem;
+  }
+  
+  .extract-btn {
+    padding: 0.55rem 1rem;
+    font-size: 0.85rem;
+  }
+  
+  .instructions-modal {
+    max-width: 98%;
+    max-height: 95vh;
+  }
+  
+  .instructions-modal-header {
+    padding: 1rem 1.25rem;
+  }
+  
+  .instructions-modal-header h2 {
+    font-size: 1.25rem;
+  }
+  
+  .instructions-content {
+    padding: 1rem;
   }
 }
 
