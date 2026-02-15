@@ -79,13 +79,17 @@ const OfferedCoursesModal: React.FC<OfferedCoursesModalProps> = ({ courses, isOp
     const conflictInfo = getConflictInfo(course);
     
     if (conflictInfo) {
-      // Schedule conflict - don't allow
+      // Schedule conflict - add as conflict section automatically
       if (conflictInfo.type === 'schedule') {
-        setNotification({
-          message: `تعارض في الجدول: ${course.code} يتداخل مع ${conflictInfo.conflictingCourse.code} في ${conflictInfo.conflictingCourse.days.join(', ')}`,
-          type: 'error'
-        });
-        setTimeout(() => setNotification(null), 3000);
+        // Automatically add as conflict section without confirmation
+        const added = addCourse(course, false, true);
+        if (added) {
+          setNotification({
+            message: `تم إضافة ${course.code} كشعبة متعارضة`,
+            type: 'success'
+          });
+          setTimeout(() => setNotification(null), 3000);
+        }
         return;
       }
       
@@ -286,7 +290,6 @@ const OfferedCoursesModal: React.FC<OfferedCoursesModalProps> = ({ courses, isOp
                       <button
                         className={`add-course-btn ${hasConflict(course) && getConflictInfo(course)?.type === 'schedule' ? 'conflict' : ''}`}
                         onClick={() => handleAddToTimetable(course)}
-                        disabled={(hasConflict(course) && getConflictInfo(course)?.type === 'schedule')}
                       >
                         {hasConflict(course) && getConflictInfo(course)?.type === 'schedule'
                           ? ('تعارض')
