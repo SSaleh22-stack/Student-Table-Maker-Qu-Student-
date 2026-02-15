@@ -1,4 +1,5 @@
 ﻿import React from 'react';
+import { createPortal } from 'react-dom';
 import { useLanguage } from '../contexts/LanguageContext';
 import './ReviewHelperModal.css';
 
@@ -16,7 +17,7 @@ const ReviewHelperModal: React.FC<ReviewHelperModalProps> = ({ isOpen, onClose }
     window.open('https://stu-gate.qu.edu.sa/', '_blank');
   };
 
-  return (
+  const modalContent = (
     <div className="review-helper-modal-overlay" onClick={onClose}>
       <div className="review-helper-modal" onClick={(e) => e.stopPropagation()}>
         <div className="review-helper-modal-header">
@@ -113,6 +114,8 @@ const ReviewHelperModal: React.FC<ReviewHelperModalProps> = ({ isOpen, onClose }
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 };
 
 export default ReviewHelperModal;
