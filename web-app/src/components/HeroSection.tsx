@@ -20,13 +20,6 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onExtractCourses, isExtractin
           <p className="hero-subtitle">{t.appSubtitle}</p>
           <p className="hero-welcome">{t.welcome}</p>
           <div className="hero-buttons">
-            <button 
-              className="instructions-btn" 
-              onClick={() => setShowInstructions(true)}
-              title="عرض التعليمات"
-            >
-              {t.instructions}
-            </button>
             <a 
               href="./bookmarklet.html" 
               className="extract-btn bookmarklet-link"
@@ -34,6 +27,15 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onExtractCourses, isExtractin
             >
               📚 إعداد الإشارة المرجعية (استخراج تلقائي)
             </a>
+          </div>
+          <div className="hero-buttons" style={{ marginTop: '1rem' }}>
+            <button 
+              className="extract-btn" 
+              onClick={() => setShowInstructions(true)}
+              title="عرض التعليمات"
+            >
+              تعليمات
+            </button>
           </div>
         </div>
       </section>

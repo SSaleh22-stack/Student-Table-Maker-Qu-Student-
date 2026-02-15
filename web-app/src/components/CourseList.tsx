@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Course } from '../types';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useTimetable } from '../contexts/TimetableContext';
@@ -365,9 +365,14 @@ const CourseList: React.FC<CourseListProps> = ({ courses }) => {
         />
       </div>
       <div className="section-header-with-toggle">
-        <h2 className="section-title">
-          {t.courses} ({filteredCourses.length} {'إجمالي'})
-        </h2>
+        <div className="section-title-wrapper">
+          <h2 className="section-title">
+            {t.courses}
+          </h2>
+          <span className="courses-count-badge">
+            {filteredCourses.length} إجمالي
+          </span>
+        </div>
         <div className="view-controls">
           <div className="view-select-container">
             <label htmlFor="view-mode-select" className="view-select-label">
