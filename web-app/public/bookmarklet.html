@@ -198,15 +198,15 @@
         });
         
         bookmarkletButton.addEventListener('dragstart', async function(e) {
-          // Update bookmarklet code with current language before dragging
-          const freshCode = await updateBookmarkletCode();
-          
-          // CRITICAL: Update textContent and innerHTML BEFORE any dataTransfer operations
-          // Browsers read the element's content at the start of drag
+          // CRITICAL: Update textContent and innerHTML FIRST, before any async operations
+          // Browsers read the element's content at the very start of drag
           this.textContent = bookmarkTitle;
           this.innerHTML = bookmarkTitle;
           
-          // Also update href and title immediately
+          // Update bookmarklet code with current language
+          const freshCode = await updateBookmarkletCode();
+          
+          // Also update href and title
           this.href = freshCode;
           this.title = bookmarkTitle;
           this.setAttribute('href', freshCode);
@@ -224,13 +224,6 @@
           const escapedCode = freshCode.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
           const escapedTitle = bookmarkTitle.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
           e.dataTransfer.setData('text/html', '<a href="' + escapedCode + '">' + escapedTitle + '</a>');
-          
-          // Try setting DownloadURL format for better browser support
-          try {
-            e.dataTransfer.setData('DownloadURL', 'application/javascript:' + freshCode);
-          } catch (err) {
-            // Ignore if not supported
-          }
           
           e.dataTransfer.effectAllowed = 'copy';
           this.style.cursor = 'grabbing';
