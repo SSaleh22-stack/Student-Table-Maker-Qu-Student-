@@ -282,7 +282,31 @@ export const TimetableProvider: React.FC<{ children: ReactNode }> = ({ children 
   }, [timetable]);
 
   const removeCourse = useCallback((courseId: string) => {
-    setTimetable((prev) => prev.filter((entry) => entry.courseId !== courseId));
+    setTimetable((prev) => {
+      // If removing a time slot (format: courseId-slot-X), remove all time slots from the same section
+      if (courseId.includes('-slot-')) {
+        // Extract base course ID (everything before '-slot-')
+        const baseCourseId = courseId.split('-slot-')[0];
+        // Remove all entries that match this base course ID or are time slots of it
+        return prev.filter((entry) => {
+          // Remove exact match
+          if (entry.courseId === courseId) return false;
+          // Remove other time slots from the same section
+          if (entry.courseId.startsWith(`${baseCourseId}-slot-`)) return false;
+          // Keep everything else
+          return true;
+        });
+      }
+      // If removing a regular course, also check if there are time slots
+      // Remove the course and all its time slots
+      return prev.filter((entry) => {
+        // Remove exact match
+        if (entry.courseId === courseId) return false;
+        // Remove time slots of this course
+        if (entry.courseId.startsWith(`${courseId}-slot-`)) return false;
+        return true;
+      });
+    });
   }, []);
 
   const removeAllCourses = useCallback(() => {
