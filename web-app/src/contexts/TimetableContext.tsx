@@ -214,24 +214,71 @@ export const TimetableProvider: React.FC<{ children: ReactNode }> = ({ children 
   }, [timetable]);
 
   const addCourse = useCallback((course: Course, skipConfirmation?: boolean, forceAddWithConflict?: boolean): boolean => {
-    // Check if course is already in timetable
-    if (timetable.some((entry) => entry.courseId === course.id)) {
-      return false; // Already added
-    }
+    // If course has multiple time slots, add each time slot as a separate entry
+    if (course.timeSlots && course.timeSlots.length > 1) {
+      let allAdded = true;
+      const entriesToAdd: TimetableEntry[] = [];
 
-    // Check for schedule conflicts
-    const hasConflict = checkScheduleConflict(course, timetable);
-    if (hasConflict && !forceAddWithConflict) {
-      return false; // Schedule conflict detected
-    }
+      course.timeSlots.forEach((slot, slotIndex) => {
+        // Create a course entry for this time slot
+        const slotCourse: Course = {
+          ...course,
+          id: `${course.id}-slot-${slotIndex}`, // Unique ID for each time slot
+          days: slot.days,
+          startTime: slot.startTime,
+          endTime: slot.endTime,
+          location: slot.location || course.location,
+        };
 
-    // Add course to timetable, marking as conflict section if forced with conflict
-    setTimetable((prev) => [...prev, { 
-      courseId: course.id, 
-      course,
-      isConflictSection: hasConflict && forceAddWithConflict
-    }]);
-    return true;
+        // Check if this specific time slot is already in timetable
+        const slotId = slotCourse.id;
+        if (timetable.some((entry) => entry.courseId === slotId)) {
+          return; // Skip this slot, already added
+        }
+
+        // Check for schedule conflicts
+        const hasConflict = checkScheduleConflict(slotCourse, timetable);
+        if (hasConflict && !forceAddWithConflict) {
+          allAdded = false;
+          return; // Skip this slot due to conflict
+        }
+
+        // Add entry, marking as conflict section if forced with conflict
+        entriesToAdd.push({ 
+          courseId: slotId, 
+          course: slotCourse,
+          isConflictSection: hasConflict && forceAddWithConflict
+        });
+      });
+
+      if (entriesToAdd.length === 0) {
+        return false; // No slots could be added
+      }
+
+      // Add all valid time slot entries
+      setTimetable((prev) => [...prev, ...entriesToAdd]);
+      return allAdded || forceAddWithConflict; // Return true if all slots were added or forced
+    } else {
+      // Single time slot course (normal case)
+      // Check if course is already in timetable
+      if (timetable.some((entry) => entry.courseId === course.id)) {
+        return false; // Already added
+      }
+
+      // Check for schedule conflicts
+      const hasConflict = checkScheduleConflict(course, timetable);
+      if (hasConflict && !forceAddWithConflict) {
+        return false; // Schedule conflict detected
+      }
+
+      // Add course to timetable, marking as conflict section if forced with conflict
+      setTimetable((prev) => [...prev, { 
+        courseId: course.id, 
+        course,
+        isConflictSection: hasConflict && forceAddWithConflict
+      }]);
+      return true;
+    }
   }, [timetable]);
 
   const removeCourse = useCallback((courseId: string) => {
@@ -259,7 +306,18 @@ export const TimetableProvider: React.FC<{ children: ReactNode }> = ({ children 
   }, [timetable]);
 
   const isInTimetable = useCallback((courseId: string): boolean => {
-    return timetable.some((entry) => entry.courseId === courseId);
+    // Check if course is in timetable (either as main course or as any time slot)
+    return timetable.some((entry) => {
+      // Direct match
+      if (entry.courseId === courseId) {
+        return true;
+      }
+      // Check if it's a time slot of this course
+      if (entry.courseId.startsWith(`${courseId}-slot-`)) {
+        return true;
+      }
+      return false;
+    });
   }, [timetable]);
 
   const value: TimetableContextType = {
