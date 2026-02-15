@@ -283,12 +283,14 @@ export const TimetableProvider: React.FC<{ children: ReactNode }> = ({ children 
 
   const removeCourse = useCallback((courseId: string) => {
     setTimetable((prev) => {
+      let updated: TimetableEntry[];
+      
       // If removing a time slot (format: courseId-slot-X), remove all time slots from the same section
       if (courseId.includes('-slot-')) {
         // Extract base course ID (everything before '-slot-')
         const baseCourseId = courseId.split('-slot-')[0];
         // Remove all entries that match this base course ID or are time slots of it
-        return prev.filter((entry) => {
+        updated = prev.filter((entry) => {
           // Remove exact match
           if (entry.courseId === courseId) return false;
           // Remove other time slots from the same section
@@ -296,15 +298,34 @@ export const TimetableProvider: React.FC<{ children: ReactNode }> = ({ children 
           // Keep everything else
           return true;
         });
+      } else {
+        // If removing a regular course, also check if there are time slots
+        // Remove the course and all its time slots
+        updated = prev.filter((entry) => {
+          // Remove exact match
+          if (entry.courseId === courseId) return false;
+          // Remove time slots of this course
+          if (entry.courseId.startsWith(`${courseId}-slot-`)) return false;
+          return true;
+        });
       }
-      // If removing a regular course, also check if there are time slots
-      // Remove the course and all its time slots
-      return prev.filter((entry) => {
-        // Remove exact match
-        if (entry.courseId === courseId) return false;
-        // Remove time slots of this course
-        if (entry.courseId.startsWith(`${courseId}-slot-`)) return false;
-        return true;
+
+      // After removal, check all remaining entries for conflicts
+      // If a conflict section no longer has a conflict, remove the conflict flag
+      return updated.map((entry) => {
+        // Only check entries that are marked as conflict sections
+        if (entry.isConflictSection) {
+          // Check if this entry still has a conflict
+          const stillHasConflict = checkScheduleConflict(entry.course, updated, entry.courseId);
+          if (!stillHasConflict) {
+            // Conflict is gone, remove the conflict flag
+            return {
+              ...entry,
+              isConflictSection: false
+            };
+          }
+        }
+        return entry;
       });
     });
   }, []);
