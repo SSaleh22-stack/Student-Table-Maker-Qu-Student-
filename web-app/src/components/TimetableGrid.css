@@ -20,35 +20,55 @@
   justify-content: flex-start;
 }
 
-/* Tablet and iPad */
+/* Tablet and iPad - smaller sizes but keep desktop layout */
 @media (max-width: 1024px) {
   .timetable-header {
-    margin-bottom: 1.25rem;
-    gap: 0.75rem;
+    margin-bottom: 1.15rem;
+    gap: 0.65rem;
   }
   
   .timetable-title {
-    font-size: 1.5rem;
+    font-size: 1.4rem;
   }
   
   .timetable-actions {
-    gap: 0.5rem;
+    gap: 0.45rem;
   }
   
   .summary-btn,
   .export-btn,
   .remove-all-btn {
-    padding: 0.45rem 0.85rem;
-    font-size: 0.85rem;
+    padding: 0.45rem 0.8rem;
+    font-size: 0.8rem;
   }
   
   .timetable-grid {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
+    gap: 0.3rem;
   }
   
   .time-slot {
-    padding: 0.4rem 0.5rem;
+    padding: 0.35rem 0.45rem;
+    font-size: 0.75rem;
+    line-height: 1.35;
+  }
+  
+  .time-slot-code {
+    font-size: 0.75rem;
+  }
+  
+  .time-slot-section {
+    font-size: 0.7rem;
+  }
+  
+  .time-slot-location {
+    font-size: 0.7rem;
+  }
+  
+  .timetable-time-header,
+  .timetable-day-header {
     font-size: 0.8rem;
+    padding: 0.5rem 0.4rem;
   }
 }
 

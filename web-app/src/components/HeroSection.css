@@ -283,31 +283,36 @@
   text-align: right;
 }
 
-/* Tablet and iPad */
+/* Tablet and iPad - smaller sizes but keep desktop layout */
 @media (max-width: 1024px) {
   .hero-section {
-    min-height: 250px;
+    min-height: 220px;
+  }
+  
+  .hero-content {
+    padding: 1.75rem 1rem;
   }
   
   .hero-title {
-    font-size: 2.25rem;
+    font-size: 2rem;
   }
   
   .hero-subtitle {
-    font-size: 1.3rem;
+    font-size: 1.2rem;
   }
   
   .hero-welcome {
-    font-size: 1.05rem;
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
   }
   
   .hero-buttons {
-    gap: 0.75rem;
+    gap: 0.65rem;
   }
   
   .extract-btn {
-    padding: 0.65rem 1.5rem;
-    font-size: 0.95rem;
+    padding: 0.6rem 1.35rem;
+    font-size: 0.9rem;
   }
 }
 

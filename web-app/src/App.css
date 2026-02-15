@@ -250,40 +250,58 @@ html {
   background: #5568d3;
 }
 
-/* Responsive: stack on smaller screens */
+/* Responsive: stack on smaller screens (but keep side-by-side for iPad) */
 @media (max-width: 1200px) {
-  .main-layout {
-    flex-direction: column;
-  }
-  
-  .course-list-wrapper {
-    width: 100%;
-    position: static;
-    max-height: none;
-  }
-}
-
-/* Tablet and iPad */
-@media (max-width: 1024px) {
   .app-content {
     padding: 0 1.5rem 2rem 1.5rem;
   }
   
+  .main-layout {
+    gap: 1rem;
+  }
+  
+  .course-list-wrapper {
+    width: 380px;
+  }
+}
+
+/* Tablet and iPad - keep desktop layout but smaller sizes */
+@media (max-width: 1024px) {
+  .app-content {
+    padding: 0 1.25rem 1.75rem 1.25rem;
+  }
+  
+  .main-layout {
+    gap: 0.75rem;
+  }
+  
+  .course-list-wrapper {
+    width: 350px;
+    padding: 1.25rem;
+    font-size: 0.95rem;
+  }
+  
   .extraction-error,
   .success-message {
-    padding: 0.75rem 1.5rem;
+    padding: 0.7rem 1.25rem;
     margin: 0.75rem 1rem;
+    font-size: 0.9rem;
+  }
+  
+  .error-icon,
+  .success-icon {
+    font-size: 1.3rem;
   }
   
   .offered-courses-button-container {
-    padding: 0 1.5rem;
-    gap: 0.75rem;
+    padding: 0 1.25rem;
+    gap: 0.65rem;
   }
   
   .offered-courses-btn,
   .add-course-manually-btn {
-    padding: 0.65rem 1.25rem;
-    font-size: 0.95rem;
+    padding: 0.6rem 1.15rem;
+    font-size: 0.9rem;
   }
 }
 
