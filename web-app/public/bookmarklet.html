@@ -208,30 +208,32 @@
           void this.offsetHeight;
           
           // Update bookmarklet code with current language
-          // Use the cached promise or create a new one
+          // Always get fresh code to ensure it's up to date
           let freshCode;
           try {
-            // Wait for the promise to resolve
-            freshCode = await currentBookmarkletCodePromise;
-            // If we got void(0), try to get fresh code
-            if (!freshCode || freshCode === 'javascript:void(0)' || freshCode.includes('void(0)')) {
-              freshCode = await updateBookmarkletCode();
-            }
+            freshCode = await updateBookmarkletCode();
+            console.log('Bookmarklet code generated:', freshCode.substring(0, 100) + '...');
           } catch (err) {
-            // Fallback: try to get fresh code
+            console.error('Failed to get bookmarklet code:', err);
+            // Try using cached promise as fallback
             try {
-              freshCode = await updateBookmarkletCode();
+              freshCode = await currentBookmarkletCodePromise;
+              console.log('Using cached bookmarklet code');
             } catch (err2) {
-              // Last resort: log error and use placeholder
-              console.error('Failed to get bookmarklet code:', err2);
-              freshCode = 'javascript:void(0)';
+              console.error('Failed to get cached code:', err2);
+              // Don't use void(0) - cancel the drag
+              e.preventDefault();
+              alert('فشل في تحميل كود الإشارة المرجعية. يرجى تحديث الصفحة والمحاولة مرة أخرى.');
+              return;
             }
           }
           
-          // Ensure we have valid code
-          if (!freshCode || freshCode === 'javascript:void(0)' || freshCode.includes('void(0)')) {
-            console.error('Bookmarklet code is invalid, using fallback');
-            freshCode = await updateBookmarkletCode();
+          // Final validation - ensure we have valid code
+          if (!freshCode || freshCode === 'javascript:void(0)' || freshCode.includes('void(0)') || !freshCode.startsWith('javascript:')) {
+            console.error('Bookmarklet code is invalid:', freshCode);
+            e.preventDefault();
+            alert('كود الإشارة المرجعية غير صالح. يرجى تحديث الصفحة والمحاولة مرة أخرى.');
+            return;
           }
           
           // Also update href and title
