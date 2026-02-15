@@ -297,8 +297,16 @@ export const TimetableProvider: React.FC<{ children: ReactNode }> = ({ children 
       return updated.map((entry) => {
         // Only check entries that are marked as conflict sections
         if (entry.isConflictSection) {
+          // Create a simplified course object for conflict checking
+          // Since each entry represents a single time slot, we only check that specific slot
+          const courseToCheck: Course = {
+            ...entry.course,
+            // Remove timeSlots array since this entry represents only one time slot
+            timeSlots: undefined
+          };
+          
           // Check if this entry still has a conflict
-          const stillHasConflict = checkScheduleConflict(entry.course, updated, entry.courseId);
+          const stillHasConflict = checkScheduleConflict(courseToCheck, updated, entry.courseId);
           if (!stillHasConflict) {
             // Conflict is gone, remove the conflict flag
             return {

@@ -100,7 +100,11 @@ const checkScheduleConflict = (course: Course, timetable: TimetableEntry[], excl
 
     const existingCourse = entry.course;
 
-    // Check main time slot
+    // When checking conflicts, we compare the actual time slots in the timetable
+    // Each entry in the timetable represents a single time slot (either main or from timeSlots array)
+    // So we only need to check the main time slot of the course against the existing course's main time slot
+    
+    // Check main time slot of course against existing course's main time slot
     const commonDays = course.days.filter(day => existingCourse.days.includes(day));
     if (commonDays.length > 0) {
       if (doTimesOverlap(course.startTime, course.endTime, existingCourse.startTime, existingCourse.endTime)) {
@@ -108,7 +112,7 @@ const checkScheduleConflict = (course: Course, timetable: TimetableEntry[], excl
       }
     }
 
-    // Check additional time slots
+    // If the course being checked has additional time slots, check each one
     if (course.timeSlots) {
       for (const slot of course.timeSlots) {
         const slotCommonDays = slot.days.filter(day => existingCourse.days.includes(day));
@@ -120,17 +124,9 @@ const checkScheduleConflict = (course: Course, timetable: TimetableEntry[], excl
       }
     }
 
-    // Check existing course's time slots
-    if (existingCourse.timeSlots) {
-      for (const existingSlot of existingCourse.timeSlots) {
-        const commonDays = course.days.filter(day => existingSlot.days.includes(day));
-        if (commonDays.length > 0) {
-          if (doTimesOverlap(course.startTime, course.endTime, existingSlot.startTime, existingSlot.endTime)) {
-            return true;
-          }
-        }
-      }
-    }
+    // Note: In the timetable, each time slot is a separate entry
+    // So we don't need to check existingCourse.timeSlots because each slot is already a separate entry
+    // We only check the main time slot of existingCourse (which is what this entry represents)
   }
 
   return false;
@@ -315,8 +311,16 @@ export const TimetableProvider: React.FC<{ children: ReactNode }> = ({ children 
       return updated.map((entry) => {
         // Only check entries that are marked as conflict sections
         if (entry.isConflictSection) {
+          // Create a simplified course object for conflict checking
+          // Since each entry represents a single time slot, we only check that specific slot
+          const courseToCheck: Course = {
+            ...entry.course,
+            // Remove timeSlots array since this entry represents only one time slot
+            timeSlots: undefined
+          };
+          
           // Check if this entry still has a conflict
-          const stillHasConflict = checkScheduleConflict(entry.course, updated, entry.courseId);
+          const stillHasConflict = checkScheduleConflict(courseToCheck, updated, entry.courseId);
           if (!stillHasConflict) {
             // Conflict is gone, remove the conflict flag
             return {
