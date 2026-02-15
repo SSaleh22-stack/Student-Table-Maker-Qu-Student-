@@ -179,7 +179,10 @@
         const bookmarkTitle = '📚 التقط المقررات - Qu Student';
         
         // Set href and title to the javascript: URL for direct execution
-        bookmarkletButton.href = currentBookmarkletCode;
+        // Use the promise result when available
+        currentBookmarkletCodePromise.then(code => {
+          bookmarkletButton.href = code;
+        });
         bookmarkletButton.title = bookmarkTitle;
         bookmarkletButton.setAttribute('title', bookmarkTitle);
         bookmarkletButton.draggable = true;
@@ -196,13 +199,28 @@
         });
         
         bookmarkletButton.addEventListener('dragstart', async function(e) {
-          // CRITICAL: Update textContent and innerHTML FIRST, before any async operations
-          // Browsers read the element's content at the very start of drag
+          // CRITICAL: Update textContent and innerHTML FIRST, synchronously
+          // Browsers read the element's content at the very start of drag, before any async operations
           this.textContent = bookmarkTitle;
           this.innerHTML = bookmarkTitle;
           
+          // Force a synchronous reflow to ensure the browser sees the updated text
+          void this.offsetHeight;
+          
           // Update bookmarklet code with current language
-          const freshCode = await updateBookmarkletCode();
+          // Use the cached promise or create a new one
+          let freshCode;
+          try {
+            freshCode = await currentBookmarkletCodePromise;
+          } catch (err) {
+            // Fallback: try to get fresh code
+            try {
+              freshCode = await updateBookmarkletCode();
+            } catch (err2) {
+              // Last resort: use a placeholder
+              freshCode = 'javascript:void(0)';
+            }
+          }
           
           // Also update href and title
           this.href = freshCode;
@@ -225,7 +243,7 @@
           // Try multiple formats for maximum browser compatibility
           e.dataTransfer.setData('text/html', '<a href="' + escapedCode + '">' + escapedTitle + '</a>');
           
-          // Also try setting as URL with title
+          // Also try setting as URL with title (Firefox)
           try {
             e.dataTransfer.setData('text/x-moz-url', freshCode + '\n' + bookmarkTitle);
           } catch (err) {
