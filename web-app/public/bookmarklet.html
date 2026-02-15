@@ -218,10 +218,19 @@
           e.dataTransfer.setData('text/plain', freshCode);
           
           // Set text/html with the title as the link text - this is what browsers use for bookmark title
-          // Escape HTML entities properly
-          const escapedCode = freshCode.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-          const escapedTitle = bookmarkTitle.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+          // Escape HTML entities properly - use proper HTML encoding
+          const escapedCode = freshCode.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          const escapedTitle = bookmarkTitle.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          
+          // Try multiple formats for maximum browser compatibility
           e.dataTransfer.setData('text/html', '<a href="' + escapedCode + '">' + escapedTitle + '</a>');
+          
+          // Also try setting as URL with title
+          try {
+            e.dataTransfer.setData('text/x-moz-url', freshCode + '\n' + bookmarkTitle);
+          } catch (err) {
+            // Firefox-specific, ignore if not supported
+          }
           
           e.dataTransfer.effectAllowed = 'copy';
           this.style.cursor = 'grabbing';
