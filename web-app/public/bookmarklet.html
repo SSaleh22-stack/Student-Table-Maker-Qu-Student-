@@ -211,15 +211,27 @@
           // Use the cached promise or create a new one
           let freshCode;
           try {
+            // Wait for the promise to resolve
             freshCode = await currentBookmarkletCodePromise;
+            // If we got void(0), try to get fresh code
+            if (!freshCode || freshCode === 'javascript:void(0)' || freshCode.includes('void(0)')) {
+              freshCode = await updateBookmarkletCode();
+            }
           } catch (err) {
             // Fallback: try to get fresh code
             try {
               freshCode = await updateBookmarkletCode();
             } catch (err2) {
-              // Last resort: use a placeholder
+              // Last resort: log error and use placeholder
+              console.error('Failed to get bookmarklet code:', err2);
               freshCode = 'javascript:void(0)';
             }
+          }
+          
+          // Ensure we have valid code
+          if (!freshCode || freshCode === 'javascript:void(0)' || freshCode.includes('void(0)')) {
+            console.error('Bookmarklet code is invalid, using fallback');
+            freshCode = await updateBookmarkletCode();
           }
           
           // Also update href and title
