@@ -193,37 +193,47 @@
         bookmarkletButton.addEventListener('mousedown', function() {
           this.textContent = bookmarkTitle;
           this.innerHTML = bookmarkTitle;
+          // Also update the href to ensure it's set
+          this.href = currentBookmarkletCode;
         });
         
         bookmarkletButton.addEventListener('dragstart', async function(e) {
           // Update bookmarklet code with current language before dragging
           const freshCode = await updateBookmarkletCode();
           
-          // Ensure textContent and innerHTML are set to bookmark title
-          // Browsers read the element's content when dragging starts
+          // CRITICAL: Update textContent and innerHTML BEFORE any dataTransfer operations
+          // Browsers read the element's content at the start of drag
           this.textContent = bookmarkTitle;
           this.innerHTML = bookmarkTitle;
+          
+          // Also update href and title immediately
+          this.href = freshCode;
+          this.title = bookmarkTitle;
+          this.setAttribute('href', freshCode);
+          this.setAttribute('title', bookmarkTitle);
           
           // Set the dataTransfer with the javascript: URL for direct execution
           // This allows the bookmarklet to run directly on the QU portal page
           e.dataTransfer.setData('text/uri-list', freshCode);
+          
           // Set text/plain with the code (URL) - some browsers use this
           e.dataTransfer.setData('text/plain', freshCode);
+          
           // Set text/html with the title as the link text - this is what browsers use for bookmark title
           // Escape HTML entities properly
           const escapedCode = freshCode.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
           const escapedTitle = bookmarkTitle.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
           e.dataTransfer.setData('text/html', '<a href="' + escapedCode + '">' + escapedTitle + '</a>');
           
+          // Try setting DownloadURL format for better browser support
+          try {
+            e.dataTransfer.setData('DownloadURL', 'application/javascript:' + freshCode);
+          } catch (err) {
+            // Ignore if not supported
+          }
+          
           e.dataTransfer.effectAllowed = 'copy';
           this.style.cursor = 'grabbing';
-          
-          // Also update href and title immediately before drag to ensure it's correct
-          this.href = freshCode;
-          this.title = bookmarkTitle;
-          // Force update the href and title attributes
-          this.setAttribute('href', freshCode);
-          this.setAttribute('title', bookmarkTitle);
           
           // Restore original text after drag ends
           const restoreTextHandler = function() {
