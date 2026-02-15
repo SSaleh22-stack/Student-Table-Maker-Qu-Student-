@@ -391,6 +391,20 @@ export const TimetableProvider: React.FC<{ children: ReactNode }> = ({ children 
   }, []);
 
   const hasConflict = useCallback((course: Course): boolean => {
+    // If course is already in timetable, it can't conflict with itself
+    const isInTable = timetable.some((entry) => {
+      if (entry.courseId === course.id) {
+        return true;
+      }
+      if (entry.courseId.startsWith(`${course.id}-slot-`)) {
+        return true;
+      }
+      return false;
+    });
+    if (isInTable) {
+      return false;
+    }
+    
     // Check if course has multiple time slots
     if (course.timeSlots && course.timeSlots.length > 1) {
       return course.timeSlots.some((slot, slotIndex) => {
@@ -401,20 +415,11 @@ export const TimetableProvider: React.FC<{ children: ReactNode }> = ({ children 
           startTime: slot.startTime,
           endTime: slot.endTime,
         };
-        const slotId = slotCourse.id;
-        const entry = timetable.find((e) => e.courseId === slotId);
-        if (entry) {
-          return checkScheduleConflict(slotCourse, timetable, slotId);
-        }
         return checkScheduleConflict(slotCourse, timetable);
       });
     }
     
     // Single time slot course
-    const entry = timetable.find((e) => e.courseId === course.id);
-    if (entry) {
-      return checkScheduleConflict(course, timetable, course.id);
-    }
     return checkScheduleConflict(course, timetable);
   }, [timetable]);
 
