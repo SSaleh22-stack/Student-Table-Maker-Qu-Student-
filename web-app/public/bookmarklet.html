@@ -175,14 +175,18 @@
         // Get the appropriate title - use Arabic title for bookmark
         const bookmarkTitle = '📚 التقط المقررات - Qu Student';
         
-        // Update bookmarklet code with current language (cache it)
-        let currentBookmarkletCodePromise = updateBookmarkletCode();
+        // Store the bookmarklet code synchronously when it's ready
+        let cachedBookmarkletCode = null;
         
-        // Set href and title to the javascript: URL for direct execution
-        // Use the promise result when available
-        currentBookmarkletCodePromise.then(code => {
+        // Update bookmarklet code with current language (cache it)
+        updateBookmarkletCode().then(code => {
+          cachedBookmarkletCode = code;
           bookmarkletButton.href = code;
+          console.log('Bookmarklet code cached successfully');
+        }).catch(err => {
+          console.error('Failed to cache bookmarklet code:', err);
         });
+        
         bookmarkletButton.title = bookmarkTitle;
         bookmarkletButton.setAttribute('title', bookmarkTitle);
         bookmarkletButton.draggable = true;
@@ -198,45 +202,29 @@
           this.innerHTML = bookmarkTitle;
         });
         
-        bookmarkletButton.addEventListener('dragstart', async function(e) {
+        bookmarkletButton.addEventListener('dragstart', function(e) {
           // CRITICAL: Update textContent and innerHTML FIRST, synchronously
-          // Browsers read the element's content at the very start of drag, before any async operations
+          // Browsers read the element's content at the very start of drag
           this.textContent = bookmarkTitle;
           this.innerHTML = bookmarkTitle;
           
           // Force a synchronous reflow to ensure the browser sees the updated text
           void this.offsetHeight;
           
-          // Update bookmarklet code with current language
-          // Always get fresh code to ensure it's up to date
-          let freshCode;
-          try {
-            freshCode = await updateBookmarkletCode();
-            console.log('Bookmarklet code generated:', freshCode.substring(0, 100) + '...');
-          } catch (err) {
-            console.error('Failed to get bookmarklet code:', err);
-            // Try using cached promise as fallback
-            try {
-              freshCode = await currentBookmarkletCodePromise;
-              console.log('Using cached bookmarklet code');
-            } catch (err2) {
-              console.error('Failed to get cached code:', err2);
-              // Don't use void(0) - cancel the drag
-              e.preventDefault();
-              alert('فشل في تحميل كود الإشارة المرجعية. يرجى تحديث الصفحة والمحاولة مرة أخرى.');
-              return;
-            }
-          }
+          // Use the cached bookmarklet code (no await needed)
+          let freshCode = cachedBookmarkletCode;
           
-          // Final validation - ensure we have valid code
+          // Validation - ensure we have valid code
           if (!freshCode || freshCode === 'javascript:void(0)' || freshCode.includes('void(0)') || !freshCode.startsWith('javascript:')) {
-            console.error('Bookmarklet code is invalid:', freshCode);
+            console.error('Bookmarklet code is not ready or invalid. Please wait and try again.');
             e.preventDefault();
-            alert('كود الإشارة المرجعية غير صالح. يرجى تحديث الصفحة والمحاولة مرة أخرى.');
+            alert('كود الإشارة المرجعية غير جاهز. يرجى الانتظار قليلاً والمحاولة مرة أخرى.');
             return;
           }
           
-          // Also update href and title
+          console.log('Using bookmarklet code:', freshCode.substring(0, 100) + '...');
+          
+          // Update href and title
           this.href = freshCode;
           this.title = bookmarkTitle;
           this.setAttribute('href', freshCode);
