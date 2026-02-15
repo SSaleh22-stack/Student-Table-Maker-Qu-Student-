@@ -383,7 +383,16 @@ export const TimetableProvider: React.FC<{ children: ReactNode }> = ({ children 
 
   const getConflictInfo = useCallback((course: Course): ConflictInfo | null => {
     // If course is already in timetable, it can't conflict with itself
-    if (isInTimetable(course.id)) {
+    const isInTable = timetable.some((entry) => {
+      if (entry.courseId === course.id) {
+        return true;
+      }
+      if (entry.courseId.startsWith(`${course.id}-slot-`)) {
+        return true;
+      }
+      return false;
+    });
+    if (isInTable) {
       return null;
     }
     
@@ -394,7 +403,7 @@ export const TimetableProvider: React.FC<{ children: ReactNode }> = ({ children 
     
     // Check for conflicts with other courses in timetable
     return getConflictDetails(course, timetable);
-  }, [timetable, isInTimetable]);
+  }, [timetable]);
 
   const isInTimetable = useCallback((courseId: string): boolean => {
     // Check if course is in timetable (either as main course or as any time slot)
