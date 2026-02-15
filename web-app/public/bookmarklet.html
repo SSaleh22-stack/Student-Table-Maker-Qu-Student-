@@ -197,10 +197,14 @@
           // Set the dataTransfer with the javascript: URL for direct execution
           // This allows the bookmarklet to run directly on the QU portal page
           e.dataTransfer.setData('text/uri-list', freshCode);
-          // Set text/plain with just the code (URL)
+          // Set text/plain with the code (URL) - some browsers use this
           e.dataTransfer.setData('text/plain', freshCode);
           // Set text/html with the title as the link text - this is what browsers use for bookmark title
-          e.dataTransfer.setData('text/html', '<a href="' + freshCode.replace(/"/g, '&quot;') + '">' + bookmarkTitle + '</a>');
+          // Escape HTML entities properly
+          const escapedCode = freshCode.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+          const escapedTitle = bookmarkTitle.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+          e.dataTransfer.setData('text/html', '<a href="' + escapedCode + '">' + escapedTitle + '</a>');
+          // Also set download attribute style data for better browser support
           e.dataTransfer.effectAllowed = 'copy';
           this.style.cursor = 'grabbing';
           // Also update href and title immediately before drag to ensure it's correct
@@ -209,9 +213,12 @@
           // Force update the href and title attributes
           this.setAttribute('href', freshCode);
           this.setAttribute('title', bookmarkTitle);
+          // Set the innerHTML to the title so browsers can read it
+          this.innerHTML = bookmarkTitle;
           // Restore original text after drag ends
           const restoreTextHandler = function() {
             this.textContent = originalText;
+            this.innerHTML = originalText;
             this.style.cursor = 'grab';
             this.removeEventListener('dragend', restoreTextHandler);
           };
