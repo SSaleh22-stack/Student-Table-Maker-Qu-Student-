@@ -147,3 +147,153 @@
     margin-bottom: 0.6rem;
   }
 }
+
+/* Tablet and iPad - make all content smaller */
+@media (max-width: 1024px) {
+  .search-bar-container {
+    margin-bottom: 0.75rem;
+  }
+  
+  .course-search-input {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+  }
+  
+  .section-header-with-toggle {
+    padding: 0.75rem 0.9rem;
+    margin-bottom: 0.5rem;
+    gap: 1rem;
+  }
+  
+  .section-title {
+    font-size: 1.3rem;
+  }
+  
+  .courses-count-badge {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.75rem;
+  }
+  
+  .view-controls {
+    padding: 0.5rem 0.7rem;
+    margin-bottom: 1rem;
+    gap: 0.5rem;
+  }
+  
+  .view-select-label {
+    font-size: 0.8rem;
+  }
+  
+  .view-mode-select {
+    padding: 0.45rem 0.7rem;
+    font-size: 0.8rem;
+    min-width: 120px;
+  }
+  
+  .expand-collapse-btn {
+    padding: 0.45rem 0.85rem;
+    font-size: 0.8rem;
+  }
+  
+  .course-group-header {
+    padding: 0.55rem 0.75rem;
+  }
+  
+  .course-code {
+    font-size: 1rem;
+  }
+  
+  .course-name {
+    font-size: 0.85rem;
+  }
+  
+  .section-count {
+    font-size: 0.7rem;
+    padding: 0.25rem 0.55rem;
+  }
+  
+  .course-section-item {
+    padding: 0.5rem 0.65rem;
+  }
+  
+  .add-section-btn {
+    padding: 0.5rem 0.95rem;
+    font-size: 0.85rem;
+  }
+  
+  .remove-section-btn {
+    padding: 0.35rem 0.7rem;
+    font-size: 0.75rem;
+  }
+  
+  .section-details {
+    font-size: 0.8rem;
+    gap: 0.4rem 0.6rem;
+  }
+  
+  .detail-label {
+    font-size: 0.75rem;
+  }
+  
+  .detail-value {
+    font-size: 0.75rem;
+  }
+  
+  .time-slot-item {
+    padding: 0.35rem;
+    font-size: 0.75rem;
+  }
+  
+  .time-slot-days {
+    font-size: 0.7rem;
+  }
+  
+  .time-slot-time {
+    font-size: 0.7rem;
+  }
+  
+  .time-slot-location {
+    font-size: 0.7rem;
+  }
+  
+  .compact-course-grid {
+    gap: 0.4rem;
+    padding: 0.4rem;
+    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  }
+  
+  .compact-course-box {
+    min-height: 70px;
+    padding: 0.3rem;
+  }
+  
+  .compact-course-code {
+    font-size: 0.8rem;
+  }
+  
+  .compact-course-section-number {
+    font-size: 1rem;
+  }
+  
+  .compact-course-instructor {
+    font-size: 0.65rem;
+    padding: 0.2rem 0.3rem;
+  }
+  
+  .compact-course-type {
+    font-size: 0.6rem;
+    padding: 0.1rem 0.25rem;
+  }
+  
+  .compact-group-header {
+    padding: 0.6rem 0.75rem;
+  }
+  
+  .course-groups {
+    gap: 0.6rem;
+  }
+  
+  .course-group {
+    margin-bottom: 0.6rem;
+  }
+}
