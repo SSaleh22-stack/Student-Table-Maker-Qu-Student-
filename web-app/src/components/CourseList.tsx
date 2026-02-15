@@ -41,86 +41,26 @@ const CourseList: React.FC<CourseListProps> = ({ courses }) => {
       return courses;
     }
     
-    // Log incoming courses order BEFORE sorting
-    console.log('CourseList: Received courses (BEFORE sorting):', 
-      courses.slice(0, 10).map((c: any, idx) => ({ 
-        position: idx,
-        code: c.code, 
-        section: c.section, 
-        index: c.__originalIndex,
-        id: c.id 
-      }))
-    );
-    
-    // Check if all courses have __originalIndex
-    const coursesWithoutIndex = courses.filter((c: any) => c.__originalIndex === undefined);
-    if (coursesWithoutIndex.length > 0) {
-      console.warn(`⚠️ ${coursesWithoutIndex.length} courses are missing __originalIndex:`, 
-        coursesWithoutIndex.map((c: any) => ({ code: c.code, section: c.section })));
-      // Still try to sort the ones that have it
-    }
+    // Ensure all courses have __originalIndex - use array index as fallback
+    const coursesWithIndex = courses.map((c: any, idx) => {
+      if (c.__originalIndex === undefined || c.__originalIndex === null) {
+        return {
+          ...c,
+          __originalIndex: idx
+        };
+      }
+      return c;
+    });
     
     // Create a copy and sort ONLY by __originalIndex
     // Do NOT sort by section, course code, or anything else
-    const sorted = [...courses].sort((a: any, b: any) => {
+    const sorted = [...coursesWithIndex].sort((a: any, b: any) => {
       const aIndex = a.__originalIndex ?? Infinity;
       const bIndex = b.__originalIndex ?? Infinity;
       
       // Simple numeric comparison - this preserves website order
-      const result = aIndex - bIndex;
-      
-      // Log if we're comparing courses with same index but different sections
-      if (aIndex === bIndex && aIndex !== Infinity && a.section !== b.section) {
-        console.warn(`⚠️ Two courses have same __originalIndex ${aIndex}:`, {
-          a: { code: a.code, section: a.section },
-          b: { code: b.code, section: b.section }
-        });
-      }
-      
-      return result;
+      return aIndex - bIndex;
     });
-    
-    // Debug: Log the order AFTER sorting to verify it matches website order
-    console.log('CourseList: Sorted courses (AFTER sorting by __originalIndex):', 
-      sorted.slice(0, 10).map((c: any) => ({ 
-        code: c.code, 
-        section: c.section, 
-        index: c.__originalIndex,
-        id: c.id 
-      })));
-    
-    // Check if courses are accidentally sorted by section
-    // Only warn if courses with same __originalIndex are sorted by section
-    const firstFew = sorted.slice(0, 10);
-    if (firstFew.length > 3) {
-      const sameCode = firstFew.every((c: any) => c.code === firstFew[0].code);
-      if (sameCode) {
-        // Check if they have the same __originalIndex
-        const sameIndex = firstFew.every((c: any) => (c as any).__originalIndex === (firstFew[0] as any).__originalIndex);
-        if (sameIndex) {
-          // Only warn if sections are sorted AND they have the same index
-          // This means they were sorted by section instead of preserving order
-          const sections = firstFew.map((c: any) => parseInt(c.section) || 0);
-          const sectionsSorted = sections.every((val, i, arr) => i === 0 || arr[i - 1] <= val);
-          if (sectionsSorted && firstFew.length > 1) {
-            // This is actually fine - courses with same index can be in any order
-            // But if they're sorted by section, it suggests the original order was lost
-            const indices = firstFew.map((c: any) => (c as any).__originalIndex);
-            const allSameIndex = indices.every(idx => idx === indices[0]);
-            if (allSameIndex && sectionsSorted) {
-              // Only log as warning, not error - this might be expected
-              console.warn('⚠️ Courses with same __originalIndex appear sorted by section:', 
-                firstFew.map((c: any) => ({ 
-                  code: c.code, 
-                  section: c.section, 
-                  index: (c as any).__originalIndex 
-                }))
-              );
-            }
-          }
-        }
-      }
-    }
     
     return sorted;
   }, [courses]);
