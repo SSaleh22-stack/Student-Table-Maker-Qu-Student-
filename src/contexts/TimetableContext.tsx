@@ -113,6 +113,39 @@ const checkScheduleConflictForSingleSlot = (course: Course, timetable: Timetable
 };
 
 /**
+ * Check if a single time slot course has a schedule conflict with existing courses
+ * This version doesn't check timeSlots array since it's for a single slot entry
+ */
+const checkScheduleConflictForSingleSlot = (course: Course, timetable: TimetableEntry[], excludeCourseId?: string): boolean => {
+  for (const entry of timetable) {
+    // Skip the course being checked if it's already in the timetable
+    if (excludeCourseId && entry.courseId === excludeCourseId) {
+      continue;
+    }
+
+    // Skip other time slots from the same section if excluding a time slot
+    if (excludeCourseId && excludeCourseId.includes('-slot-')) {
+      const baseId = excludeCourseId.split('-slot-')[0];
+      if (entry.courseId.startsWith(`${baseId}-slot-`)) {
+        continue;
+      }
+    }
+
+    const existingCourse = entry.course;
+
+    // Check main time slot only (no timeSlots array check for single slot entries)
+    const commonDays = course.days.filter(day => existingCourse.days.includes(day));
+    if (commonDays.length > 0) {
+      if (doTimesOverlap(course.startTime, course.endTime, existingCourse.startTime, existingCourse.endTime)) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+};
+
+/**
  * Check if a course has a schedule conflict with existing courses
  * A conflict occurs when two courses have overlapping times on the same day(s)
  */
