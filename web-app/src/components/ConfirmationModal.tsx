@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import './ConfirmationModal.css';
 
 interface ConfirmationModalProps {
@@ -11,7 +12,7 @@ interface ConfirmationModalProps {
 const ConfirmationModal: React.FC<ConfirmationModalProps> = ({ isOpen, message, onConfirm, onCancel }) => {
   if (!isOpen) return null;
 
-  return (
+  const modalContent = (
     <div className="confirmation-modal-overlay" onClick={onCancel}>
       <div className="confirmation-modal" onClick={(e) => e.stopPropagation()}>
         <div className="confirmation-modal-header">
@@ -39,6 +40,8 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({ isOpen, message, 
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 };
 
 export default ConfirmationModal;
