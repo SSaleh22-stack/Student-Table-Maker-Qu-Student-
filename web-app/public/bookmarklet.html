@@ -185,16 +185,22 @@
         bookmarkletButton.draggable = true;
         bookmarkletButton.style.cursor = 'grab';
         
+        // Store original content
+        const originalText = bookmarkletButton.textContent;
+        const originalHTML = bookmarkletButton.innerHTML;
+        const bookmarkTitle = '🎓 التقط المقررات - Qu Student';
+        
+        // Update content on mousedown to ensure browsers read the correct name
+        bookmarkletButton.addEventListener('mousedown', function() {
+          this.textContent = bookmarkTitle;
+          this.innerHTML = bookmarkTitle;
+        });
+        
         bookmarkletButton.addEventListener('dragstart', async function(e) {
           // Update bookmarklet code with current language before dragging
           const freshCode = await updateBookmarkletCode();
-          // Get the appropriate title - use Arabic title for bookmark
-          const bookmarkTitle = '🎓 التقط المقررات - Qu Student';
-          // Store original text content to restore later
-          const originalText = this.textContent;
-          const originalHTML = this.innerHTML;
           
-          // Update the element's text content and innerHTML BEFORE setting dataTransfer
+          // Ensure textContent and innerHTML are set to bookmark title
           // Browsers read the element's content when dragging starts
           this.textContent = bookmarkTitle;
           this.innerHTML = bookmarkTitle;
