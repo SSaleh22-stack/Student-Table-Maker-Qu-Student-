@@ -1,4 +1,4 @@
-﻿/* Tablet and iPad - make all content smaller */
+/* Tablet and iPad - make all content smaller */
 @media (max-width: 1024px) {
   .search-bar-container {
     margin-bottom: 0.75rem;
