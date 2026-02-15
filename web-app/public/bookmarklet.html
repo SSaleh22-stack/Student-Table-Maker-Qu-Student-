@@ -172,11 +172,11 @@
     window.addEventListener('DOMContentLoaded', function() {
       const bookmarkletButton = document.getElementById('bookmarkletLink');
       if (bookmarkletButton) {
-        // Update bookmarklet code with current language
-        const currentBookmarkletCode = updateBookmarkletCode();
-        
         // Get the appropriate title - use Arabic title for bookmark
         const bookmarkTitle = '📚 التقط المقررات - Qu Student';
+        
+        // Update bookmarklet code with current language (cache it)
+        let currentBookmarkletCodePromise = updateBookmarkletCode();
         
         // Set href and title to the javascript: URL for direct execution
         // Use the promise result when available
