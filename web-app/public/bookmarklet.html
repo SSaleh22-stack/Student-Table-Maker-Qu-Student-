@@ -196,9 +196,6 @@
         // DON'T change it during drag - Chrome reads it before dragstart executes
         
         bookmarkletButton.addEventListener('dragstart', function(e) {
-          // DON'T update textContent here - Chrome has already read it before this executes
-          // The text is set in HTML and should remain unchanged
-          
           // Use the cached bookmarklet code (no await needed)
           let freshCode = cachedBookmarkletCode;
           
@@ -210,35 +207,18 @@
             return;
           }
           
+          console.log('Dragging bookmarklet with name:', bookmarkTitle);
           console.log('Using bookmarklet code:', freshCode.substring(0, 100) + '...');
           
-          // Update href and title
+          // CRITICAL: Update href BEFORE setting dataTransfer
+          // Chrome reads the href attribute to determine the bookmark URL
           this.href = freshCode;
-          this.title = bookmarkTitle;
           this.setAttribute('href', freshCode);
-          this.setAttribute('title', bookmarkTitle);
           
-          // Set the dataTransfer with the javascript: URL for direct execution
-          // This allows the bookmarklet to run directly on the QU portal page
-          e.dataTransfer.setData('text/uri-list', freshCode);
-          
-          // Set text/plain with the code (URL) - some browsers use this
-          e.dataTransfer.setData('text/plain', freshCode);
-          
-          // Set text/html with the title as the link text - this is what browsers use for bookmark title
-          // Escape HTML entities properly - use proper HTML encoding
-          const escapedCode = freshCode.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-          const escapedTitle = bookmarkTitle.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-          
-          // Try multiple formats for maximum browser compatibility
-          e.dataTransfer.setData('text/html', '<a href="' + escapedCode + '">' + escapedTitle + '</a>');
-          
-          // Also try setting as URL with title (Firefox)
-          try {
-            e.dataTransfer.setData('text/x-moz-url', freshCode + '\n' + bookmarkTitle);
-          } catch (err) {
-            // Firefox-specific, ignore if not supported
-          }
+          // DON'T call setData at all - let Chrome read the element naturally
+          // Chrome will automatically read:
+          // - textContent/innerHTML for the bookmark name
+          // - href attribute for the bookmark URL
           
           e.dataTransfer.effectAllowed = 'copy';
           this.style.cursor = 'grabbing';
