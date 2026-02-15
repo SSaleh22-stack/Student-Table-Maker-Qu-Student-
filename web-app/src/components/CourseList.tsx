@@ -373,35 +373,35 @@ const CourseList: React.FC<CourseListProps> = ({ courses }) => {
             {filteredCourses.length} إجمالي
           </span>
         </div>
-        <div className="view-controls">
-          <div className="view-select-container">
-            <label htmlFor="view-mode-select" className="view-select-label">
-              العرض:
-            </label>
-            <select
-              id="view-mode-select"
-              className="view-mode-select"
-              value={viewMode}
-              onChange={(e) => setViewMode(e.target.value as ViewMode)}
-            >
-              <option value="detailed">📋 مفصل</option>
-              <option value="compact">🔲 مضغوط</option>
-            </select>
-          </div>
-          {Object.keys(groupedCourses).length > 0 && (() => {
-            const allKeys = Object.keys(groupedCourses);
-            const allExpanded = allKeys.length > 0 && allKeys.every(key => expandedGroups.has(key));
-            return (
-              <button
-                className={`expand-collapse-btn ${allExpanded ? 'collapse-all-btn' : 'expand-all-btn'}`}
-                onClick={toggleExpandAll}
-                title={allExpanded ? 'طي الكل' : 'توسيع الكل'}
-              >
-                {allExpanded ? '▼ طي الكل' : '▶ توسيع الكل'}
-              </button>
-            );
-          })()}
+      </div>
+      <div className="view-controls">
+        <div className="view-select-container">
+          <label htmlFor="view-mode-select" className="view-select-label">
+            العرض:
+          </label>
+          <select
+            id="view-mode-select"
+            className="view-mode-select"
+            value={viewMode}
+            onChange={(e) => setViewMode(e.target.value as ViewMode)}
+          >
+            <option value="detailed">📋 مفصل</option>
+            <option value="compact">🔲 مضغوط</option>
+          </select>
         </div>
+        {Object.keys(groupedCourses).length > 0 && (() => {
+          const allKeys = Object.keys(groupedCourses);
+          const allExpanded = allKeys.length > 0 && allKeys.every(key => expandedGroups.has(key));
+          return (
+            <button
+              className={`expand-collapse-btn ${allExpanded ? 'collapse-all-btn' : 'expand-all-btn'}`}
+              onClick={toggleExpandAll}
+              title={allExpanded ? 'طي الكل' : 'توسيع الكل'}
+            >
+              {allExpanded ? '▼ طي الكل' : '▶ توسيع الكل'}
+            </button>
+          );
+        })()}
       </div>
       {viewMode === 'compact' ? renderCompactView() : (
       <div className="course-groups">
