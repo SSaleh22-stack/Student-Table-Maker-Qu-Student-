@@ -45,6 +45,10 @@ export interface Translations {
   exportToPDF: string;
   exportToExcel: string;
   exportToCalendar: string;
+  exportToJPG: string;
+  exportJPGTimetable: string;
+  exportJPGSummary: string;
+  exportJPGBoth: string;
   examConflict: string;
   offeredCourses: string;
   search: string;
@@ -163,6 +167,10 @@ export const translations: Record<Language, Translations> = {
     exportToPDF: 'Export to PDF',
     exportToExcel: 'Export to Excel',
     exportToCalendar: 'Export to Calendar',
+    exportToJPG: 'Export to JPG',
+    exportJPGTimetable: 'Timetable Only',
+    exportJPGSummary: 'Summary Only',
+    exportJPGBoth: 'Both',
     examConflict: 'Final exam conflict',
     offeredCourses: 'Offered Courses According to Plan',
     search: 'Search',
@@ -271,7 +279,7 @@ export const translations: Record<Language, Translations> = {
     closed: 'مغلق',
     practical: 'عملي',
     theoretical: 'نظري',
-    exercise: 'تمرين',
+    exercise: 'تدريب',
     removeAll: 'إزالة الكل',
     summary: 'ملخص',
     close: 'إغلاق',
@@ -279,6 +287,10 @@ export const translations: Record<Language, Translations> = {
     exportToPDF: 'تصدير كـ PDF',
     exportToExcel: 'تصدير كـ Excel',
     exportToCalendar: 'تصدير إلى التقويم',
+    exportToJPG: 'تصدير كـ JPG',
+    exportJPGTimetable: 'الجدول فقط',
+    exportJPGSummary: 'الملخص فقط',
+    exportJPGBoth: 'كلاهما',
     examConflict: 'تعارض في الامتحان النهائي',
     offeredCourses: 'المقررات المطروحة وفق الخطة',
     search: 'بحث',
@@ -291,7 +303,7 @@ export const translations: Record<Language, Translations> = {
     all: 'الكل',
     instructions: 'تعليمات',
     instructionsTitle: 'كيفية استخدام صانع الجدول الدراسي',
-    instructionsContent: '1. انتقل إلى بوابة الطالب في جامعة القصيم وقم بتسجيل الدخول\n2. اذهب إلى صفحة "المقررات المطروحة"\n3. انقر على زر "المقررات المطروحة" لعرض جميع المقررات المتاحة\n4. استخدم خيارات البحث والتصفية للعثور على المقررات\n5. انقر على "إضافة إلى الجدول" لإضافة المقررات إلى جدولك\n6. قم بإدارة جدولك وعرض التعارضات\n7. قم بتصدير أو طباعة جدولك عند الانتهاء',
+    instructionsContent: 'الدخول للبوابة\n\nادخل إلى بوابة الطالب بجامعة القصيم وسجّل الدخول بحسابك الجامعي.\n\n\n\nفتح صفحة المقررات حسب الخطة\n\nمن القوائم انتقل إلى: المقررات المطروحة وفق الخطة.\n\n\n\nاستخراج المقررات للفصل\n\nاختر الفصل الدراسي المطلوب، ثم اضغط على الأيقونة الموجودة بجانب اختيار الفصل:\n\n"استخراج المقررات المطروحة وفق الخطة".\n\n\n\nالبحث والتصفية\n\nاستخدم خيارات البحث/التصفية للوصول بسرعة للمقرر (مثل: رمز المقرر، اسم المقرر، المستوى، الشعبة…).\n\n\n\nإضافة المقررات إلى الجدول\n\nعند ظهور المقررات، اضغط "إضافة إلى الجدول" أو استخدم الأيقونات المخصصة للإضافة لكل مقرر/شعبة.\n\n\n\nإدارة الجدول والتعارضات\n\nراجع جدولك بعد الإضافة، وتحقق من وجود تعارضات (تداخل أوقات/أيام).\n\nعند وجود تعارض: غيّر الشعبة أو احذف المقرر المتعارض ثم أعد المحاولة.\n\n\n\nالتصدير أو الطباعة\n\nبعد الانتهاء، قم بـ تصدير الجدول (إن توفر خيار PDF/تصدير) أو طباعة الجدول مباشرة.\n\n\n\nملاحظة سريعة: إذا لم تظهر أيقونة "استخراج…" أو خيارات الطباعة/التصدير، جرّب تحديث الصفحة، أو استخدام متصفح Chrome/Edge، والتأكد من السماح بالنوافذ المنبثقة (Pop-ups).',
     courseReviewHelper: 'مساعد تقييم المقررات',
     openQUReviewPage: 'فتح صفحة تقييم جامعة القصيم',
     reviewInstructions: 'تعليمات',

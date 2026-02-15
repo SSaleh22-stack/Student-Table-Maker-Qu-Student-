@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Course } from '../types';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useTimetable } from '../contexts/TimetableContext';
+import ConfirmationModal from './ConfirmationModal';
 import './OfferedCoursesModal.css';
 
 interface OfferedCoursesModalProps {
@@ -24,6 +25,11 @@ const OfferedCoursesModal: React.FC<OfferedCoursesModalProps> = ({ courses, isOp
     return Array.from(codes).sort();
   }, [courses]);
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [confirmationModal, setConfirmationModal] = useState<{ isOpen: boolean; message: string; course: Course | null }>({
+    isOpen: false,
+    message: '',
+    course: null
+  });
 
   // Filter courses based on search query and filters
   const filteredCourses = useMemo(() => {
@@ -93,18 +99,11 @@ const OfferedCoursesModal: React.FC<OfferedCoursesModalProps> = ({ courses, isOp
           ? `${course.code} has the same exam period (${course.finalExam?.date}) as ${conflictInfo.conflictingCourse.code}. Are you sure you want to add it?`
           : `${course.code} له نفس فترة الامتحان (${course.finalExam?.date}) مثل ${conflictInfo.conflictingCourse.code}. هل أنت متأكد من إضافته؟`;
         
-        if (window.confirm(confirmMessage)) {
-          const added = addCourse(course, true);
-          if (added) {
-            setNotification({
-              message: language === 'en'
-                ? `${course.code} added to timetable`
-                : `تم إضافة ${course.code} إلى الجدول`,
-              type: 'success'
-            });
-            setTimeout(() => setNotification(null), 3000);
-          }
-        }
+        setConfirmationModal({
+          isOpen: true,
+          message: confirmMessage,
+          course: course
+        });
         return;
       }
     }
@@ -315,6 +314,29 @@ const OfferedCoursesModal: React.FC<OfferedCoursesModalProps> = ({ courses, isOp
           )}
         </div>
       </div>
+      
+      <ConfirmationModal
+        isOpen={confirmationModal.isOpen}
+        message={confirmationModal.message}
+        onConfirm={() => {
+          if (confirmationModal.course) {
+            const added = addCourse(confirmationModal.course, true);
+            if (added) {
+              setNotification({
+                message: language === 'en'
+                  ? `${confirmationModal.course.code} added to timetable`
+                  : `تم إضافة ${confirmationModal.course.code} إلى الجدول`,
+                type: 'success'
+              });
+              setTimeout(() => setNotification(null), 3000);
+            }
+          }
+          setConfirmationModal({ isOpen: false, message: '', course: null });
+        }}
+        onCancel={() => {
+          setConfirmationModal({ isOpen: false, message: '', course: null });
+        }}
+      />
     </div>
   );
 };

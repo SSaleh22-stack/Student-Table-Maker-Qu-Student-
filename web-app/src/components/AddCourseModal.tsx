@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { Course } from '../types';
 import './AddCourseModal.css';
@@ -10,7 +10,7 @@ interface AddCourseModalProps {
 }
 
 const AddCourseModal: React.FC<AddCourseModalProps> = ({ isOpen, onClose, onAdd }) => {
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
   const [formData, setFormData] = useState({
     code: '',
     name: '',
@@ -60,36 +60,36 @@ const AddCourseModal: React.FC<AddCourseModalProps> = ({ isOpen, onClose, onAdd 
     const newErrors: Record<string, string> = {};
 
     if (!formData.code.trim()) {
-      newErrors.code = language === 'en' ? 'Course code is required' : 'رمز المقرر مطلوب';
+      newErrors.code = 'رمز المقرر مطلوب';
     }
 
     if (!formData.name.trim()) {
-      newErrors.name = language === 'en' ? 'Course name is required' : 'اسم المقرر مطلوب';
+      newErrors.name = 'اسم المقرر مطلوب';
     }
 
     if (!formData.section.trim()) {
-      newErrors.section = language === 'en' ? 'Section is required' : 'الشعبة مطلوبة';
+      newErrors.section = 'الشعبة مطلوبة';
     }
 
     if (formData.days.length === 0) {
-      newErrors.days = language === 'en' ? 'At least one day is required' : 'يجب اختيار يوم واحد على الأقل';
+      newErrors.days = 'يجب اختيار يوم واحد على الأقل';
     }
 
     if (!formData.startTime) {
-      newErrors.startTime = language === 'en' ? 'Start time is required' : 'وقت البداية مطلوب';
+      newErrors.startTime = 'وقت البداية مطلوب';
     }
 
     if (!formData.endTime) {
-      newErrors.endTime = language === 'en' ? 'End time is required' : 'وقت النهاية مطلوب';
+      newErrors.endTime = 'وقت النهاية مطلوب';
     }
 
     // Validate time format (HH:MM)
     const timeRegex = /^([0-1][0-9]|2[0-3]):[0-5][0-9]$/;
     if (formData.startTime && !timeRegex.test(formData.startTime)) {
-      newErrors.startTime = language === 'en' ? 'Invalid time format (use HH:MM)' : 'تنسيق الوقت غير صحيح (استخدم HH:MM)';
+      newErrors.startTime = 'تنسيق الوقت غير صحيح (استخدم HH:MM)';
     }
     if (formData.endTime && !timeRegex.test(formData.endTime)) {
-      newErrors.endTime = language === 'en' ? 'Invalid time format (use HH:MM)' : 'تنسيق الوقت غير صحيح (استخدم HH:MM)';
+      newErrors.endTime = 'تنسيق الوقت غير صحيح (استخدم HH:MM)';
     }
 
     // Validate end time is after start time
@@ -99,7 +99,7 @@ const AddCourseModal: React.FC<AddCourseModalProps> = ({ isOpen, onClose, onAdd 
       const startMinutes = startH * 60 + startM;
       const endMinutes = endH * 60 + endM;
       if (endMinutes <= startMinutes) {
-        newErrors.endTime = language === 'en' ? 'End time must be after start time' : 'وقت النهاية يجب أن يكون بعد وقت البداية';
+        newErrors.endTime = 'وقت النهاية يجب أن يكون بعد وقت البداية';
       }
     }
 
@@ -165,7 +165,7 @@ const AddCourseModal: React.FC<AddCourseModalProps> = ({ isOpen, onClose, onAdd 
     <div className="add-course-modal-overlay" onClick={handleClose}>
       <div className="add-course-modal" onClick={(e) => e.stopPropagation()}>
         <div className="add-course-modal-header">
-          <h2>{language === 'en' ? '➕ Add Course Manually' : '➕ إضافة مقرر يدوياً'}</h2>
+          <h2>{'➕ إضافة مقرر يدوياً'}</h2>
           <button className="close-modal-btn" onClick={handleClose}>
             {t.close}
           </button>
@@ -183,7 +183,7 @@ const AddCourseModal: React.FC<AddCourseModalProps> = ({ isOpen, onClose, onAdd 
                 value={formData.code}
                 onChange={(e) => handleChange('code', e.target.value)}
                 className={errors.code ? 'error' : ''}
-                placeholder={language === 'en' ? 'e.g., CS101' : 'مثال: CS101'}
+                placeholder={'مثال: CS101'}
               />
               {errors.code && <span className="error-message">{errors.code}</span>}
             </div>
@@ -198,7 +198,7 @@ const AddCourseModal: React.FC<AddCourseModalProps> = ({ isOpen, onClose, onAdd 
                 value={formData.name}
                 onChange={(e) => handleChange('name', e.target.value)}
                 className={errors.name ? 'error' : ''}
-                placeholder={language === 'en' ? 'Course name' : 'اسم المقرر'}
+                placeholder={'اسم المقرر'}
               />
               {errors.name && <span className="error-message">{errors.name}</span>}
             </div>
@@ -215,7 +215,7 @@ const AddCourseModal: React.FC<AddCourseModalProps> = ({ isOpen, onClose, onAdd 
                 value={formData.section}
                 onChange={(e) => handleChange('section', e.target.value)}
                 className={errors.section ? 'error' : ''}
-                placeholder={language === 'en' ? 'e.g., 01' : 'مثال: 01'}
+                placeholder={'مثال: 01'}
               />
               {errors.section && <span className="error-message">{errors.section}</span>}
             </div>
@@ -243,7 +243,7 @@ const AddCourseModal: React.FC<AddCourseModalProps> = ({ isOpen, onClose, onAdd 
           <div className="form-row">
             <div className="form-group">
               <label htmlFor="startTime">
-                {language === 'en' ? 'Start Time' : 'وقت البداية'} <span className="required">*</span>
+                {'وقت البداية'} <span className="required">*</span>
               </label>
               <input
                 type="time"
@@ -257,7 +257,7 @@ const AddCourseModal: React.FC<AddCourseModalProps> = ({ isOpen, onClose, onAdd 
 
             <div className="form-group">
               <label htmlFor="endTime">
-                {language === 'en' ? 'End Time' : 'وقت النهاية'} <span className="required">*</span>
+                {'وقت النهاية'} <span className="required">*</span>
               </label>
               <input
                 type="time"
@@ -278,7 +278,7 @@ const AddCourseModal: React.FC<AddCourseModalProps> = ({ isOpen, onClose, onAdd 
                 id="location"
                 value={formData.location}
                 onChange={(e) => handleChange('location', e.target.value)}
-                placeholder={language === 'en' ? 'e.g., Building 5, Room 201' : 'مثال: مبنى 5، قاعة 201'}
+                placeholder={'مثال: مبنى 5، قاعة 201'}
               />
             </div>
 
@@ -289,7 +289,7 @@ const AddCourseModal: React.FC<AddCourseModalProps> = ({ isOpen, onClose, onAdd 
                 id="instructor"
                 value={formData.instructor}
                 onChange={(e) => handleChange('instructor', e.target.value)}
-                placeholder={language === 'en' ? 'Instructor name' : 'اسم المحاضر'}
+                placeholder={'اسم المحاضر'}
               />
             </div>
           </div>
@@ -297,14 +297,14 @@ const AddCourseModal: React.FC<AddCourseModalProps> = ({ isOpen, onClose, onAdd 
           <div className="form-row">
             <div className="form-group">
               <label htmlFor="examPeriod">
-                {language === 'en' ? 'Exam Period' : 'فترة الامتحان'}
+                {'فترة الامتحان'}
               </label>
               <input
                 type="text"
                 id="examPeriod"
                 value={formData.examPeriod}
                 onChange={(e) => handleChange('examPeriod', e.target.value)}
-                placeholder={language === 'en' ? 'e.g., 1, 2, 3...' : 'مثال: 1، 2، 3...'}
+                placeholder={'مثال: 1، 2، 3...'}
               />
             </div>
 
@@ -339,7 +339,7 @@ const AddCourseModal: React.FC<AddCourseModalProps> = ({ isOpen, onClose, onAdd 
               {t.close}
             </button>
             <button type="submit" className="submit-btn">
-              {language === 'en' ? '➕ Add Course' : '➕ إضافة المقرر'}
+              {'➕ إضافة المقرر'}
             </button>
           </div>
         </form>

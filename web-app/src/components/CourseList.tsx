@@ -1,7 +1,8 @@
-import React, { useState, useMemo } from 'react';
+﻿import React, { useState, useMemo } from 'react';
 import { Course } from '../types';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useTimetable } from '../contexts/TimetableContext';
+import ConfirmationModal from './ConfirmationModal';
 import './CourseList.css';
 
 interface CourseListProps {
@@ -11,11 +12,17 @@ interface CourseListProps {
 type ViewMode = 'detailed' | 'compact';
 
 const CourseList: React.FC<CourseListProps> = ({ courses }) => {
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
   const { addCourse, removeCourse, isInTimetable, hasConflict, getConflictInfo, setHoveredCourse } = useTimetable();
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('compact');
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [confirmationModal, setConfirmationModal] = useState<{ isOpen: boolean; message: string; course: Course | null }>({
+    isOpen: false,
+    message: '',
+    course: null
+  });
   
   // Detect if device is a touch device (iPad, iPhone, etc.)
   // Only disable hover on primary touch devices, not laptops with touchscreens
@@ -118,11 +125,26 @@ const CourseList: React.FC<CourseListProps> = ({ courses }) => {
     return sorted;
   }, [courses]);
 
+  // Filter courses based on search query
+  const filteredCourses = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return coursesInOrder;
+    }
+    const query = searchQuery.toLowerCase().trim();
+    return coursesInOrder.filter(course => {
+      const codeMatch = course.code.toLowerCase().includes(query);
+      const nameMatch = course.name.toLowerCase().includes(query);
+      const sectionMatch = course.section.toLowerCase().includes(query);
+      const instructorMatch = course.instructor?.toLowerCase().includes(query);
+      return codeMatch || nameMatch || sectionMatch || instructorMatch;
+    });
+  }, [coursesInOrder, searchQuery]);
+
   // Group courses by course code and name (for compact view)
   // This must be at component level, not inside renderCompactView
   const groupedCourses = useMemo(() => {
     const groups: Record<string, Course[]> = {};
-    coursesInOrder.forEach(course => {
+    filteredCourses.forEach(course => {
       const key = `${course.code}-${course.name}`;
       if (!groups[key]) {
         groups[key] = [];
@@ -130,14 +152,12 @@ const CourseList: React.FC<CourseListProps> = ({ courses }) => {
       groups[key].push(course);
     });
     return groups;
-  }, [coursesInOrder]);
+  }, [filteredCourses]);
 
   const handleAddToTimetable = (course: Course, forceWithConflict: boolean = false) => {
     if (isInTimetable(course.id)) {
       setNotification({
-        message: language === 'en' 
-          ? `${course.code} is already in your timetable` 
-          : `${course.code} موجود بالفعل في الجدول`,
+        message: `${course.code} موجود بالفعل في الجدول`,
         type: 'error'
       });
       setTimeout(() => setNotification(null), 3000);
@@ -154,9 +174,7 @@ const CourseList: React.FC<CourseListProps> = ({ courses }) => {
         const added = addCourse(course, false, true);
         if (added) {
           setNotification({
-            message: language === 'en'
-              ? `${course.code} added as conflict section`
-              : `تم إضافة ${course.code} كشعبة متعارضة`,
+            message: `تم إضافة ${course.code} كشعبة متعارضة`,
             type: 'success'
           });
           setTimeout(() => setNotification(null), 3000);
@@ -166,22 +184,13 @@ const CourseList: React.FC<CourseListProps> = ({ courses }) => {
       
       // Exam period conflict - show warning and ask for confirmation
       if (conflictInfo.type === 'exam-period' && conflictInfo.canProceed === true) {
-        const confirmMessage = language === 'en'
-          ? `${course.code} has the same exam period (${course.finalExam?.date}) as ${conflictInfo.conflictingCourse.code}. Are you sure you want to add it?`
-          : `${course.code} له نفس فترة الامتحان (${course.finalExam?.date}) مثل ${conflictInfo.conflictingCourse.code}. هل أنت متأكد من إضافته؟`;
+        const confirmMessage = `${course.code} له نفس فترة الامتحان (${course.finalExam?.date}) مثل ${conflictInfo.conflictingCourse.code}. هل أنت متأكد من إضافته؟`;
         
-        if (window.confirm(confirmMessage)) {
-          const added = addCourse(course, true);
-          if (added) {
-            setNotification({
-              message: language === 'en'
-                ? `${course.code} added to timetable`
-                : `تم إضافة ${course.code} إلى الجدول`,
-              type: 'success'
-            });
-            setTimeout(() => setNotification(null), 3000);
-          }
-        }
+        setConfirmationModal({
+          isOpen: true,
+          message: confirmMessage,
+          course: course
+        });
         return;
       }
     }
@@ -190,17 +199,13 @@ const CourseList: React.FC<CourseListProps> = ({ courses }) => {
     const added = addCourse(course);
     if (added) {
       setNotification({
-        message: language === 'en'
-          ? `${course.code} added to timetable`
-          : `تم إضافة ${course.code} إلى الجدول`,
+        message: `تم إضافة ${course.code} إلى الجدول`,
         type: 'success'
       });
       setTimeout(() => setNotification(null), 3000);
     } else {
       setNotification({
-        message: language === 'en'
-          ? `Failed to add ${course.code} - schedule conflict`
-          : `فشل إضافة ${course.code} - تعارض في الجدول`,
+        message: `فشل إضافة ${course.code} - تعارض في الجدول`,
         type: 'error'
       });
       setTimeout(() => setNotification(null), 3000);
@@ -218,9 +223,7 @@ const CourseList: React.FC<CourseListProps> = ({ courses }) => {
       removeCourse(course.id);
     }
     setNotification({
-      message: language === 'en'
-        ? `${course.code} removed from timetable`
-        : `تم إزالة ${course.code} من الجدول`,
+      message: `تم إزالة ${course.code} من الجدول`,
       type: 'success'
     });
     setTimeout(() => setNotification(null), 3000);
@@ -230,12 +233,10 @@ const CourseList: React.FC<CourseListProps> = ({ courses }) => {
     return (
       <div className="course-list-empty">
         <div className="empty-state-icon">📚</div>
-        <h3>{language === 'en' ? 'No Courses Yet' : 'لا توجد مقررات بعد'}</h3>
+        <h3>{'لا توجد مقررات بعد'}</h3>
         <p>{t.noCourses}</p>
         <p className="empty-state-hint">
-          {language === 'en' 
-            ? 'Click the "المقررات المطروحة وفق الخطة" button above to view available courses.'
-            : 'انقر على زر "المقررات المطروحة وفق الخطة" أعلاه لعرض المقررات المتاحة.'}
+          انقر على زر "المقررات المطروحة وفق الخطة" أعلاه لعرض المقررات المتاحة.
         </p>
       </div>
     );
@@ -284,7 +285,7 @@ const CourseList: React.FC<CourseListProps> = ({ courses }) => {
                   <p className="course-name">{firstCourse.name}</p>
                 </div>
                 <div className="compact-group-info">
-                  <span className="section-count">{courseGroup.length} {language === 'en' ? 'sections' : 'شعب'}</span>
+                  <span className="section-count">{courseGroup.length} {'شعب'}</span>
                   <span className={`expand-icon ${isExpanded ? 'expanded' : ''}`}>
                     {isExpanded ? '▼' : '▶'}
                   </span>
@@ -314,14 +315,10 @@ const CourseList: React.FC<CourseListProps> = ({ courses }) => {
                           }
                         }}
                         title={inTimetable 
-                          ? (language === 'en' 
-                              ? `✓ In timetable\n${course.days.join(', ')} ${course.startTime}-${course.endTime}\n${course.location || ''}` 
-                              : `✓ في الجدول\n${course.days.join(', ')} ${course.startTime}-${course.endTime}\n${course.location || ''}`)
+                          ? `✓ في الجدول\n${course.days.join(', ')} ${course.startTime}-${course.endTime}\n${course.location || ''}`
                           : conflict
-                          ? (language === 'en' ? 'Schedule conflict' : 'تعارض في الجدول')
-                          : (language === 'en' 
-                              ? `Click to add\n${course.days.join(', ')} ${course.startTime}-${course.endTime}\n${course.location || ''}` 
-                              : `انقر للإضافة\n${course.days.join(', ')} ${course.startTime}-${course.endTime}\n${course.location || ''}`)
+                          ? 'تعارض في الجدول'
+                          : `انقر للإضافة\n${course.days.join(', ')} ${course.startTime}-${course.endTime}\n${course.location || ''}`
                         }
                       >
                         <div className="compact-course-header">
@@ -360,54 +357,26 @@ const CourseList: React.FC<CourseListProps> = ({ courses }) => {
           {notification.message}
         </div>
       )}
+      <div className="search-bar-container">
+        <input
+          type="text"
+          className="course-search-input"
+          placeholder={'🔍 البحث عن المقررات...'}
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
       <div className="section-header-with-toggle">
         <h2 className="section-title">
-          {t.courses} ({courses.length} {language === 'en' ? 'total' : 'إجمالي'})
+          {t.courses} ({filteredCourses.length} {'إجمالي'})
         </h2>
-        {language === 'en' && (
-          <div className="view-controls">
-            <div className="view-select-container">
-              <label htmlFor="view-mode-select" className="view-select-label">
-                {language === 'en' ? 'View:' : 'العرض:'}
-              </label>
-              <select
-                id="view-mode-select"
-                className="view-mode-select"
-                value={viewMode}
-                onChange={(e) => setViewMode(e.target.value as ViewMode)}
-              >
-                <option value="detailed">{language === 'en' ? '📋 Detailed' : '📋 مفصل'}</option>
-                <option value="compact">{language === 'en' ? '🔲 Compact' : '🔲 مضغوط'}</option>
-              </select>
-            </div>
-            {Object.keys(groupedCourses).length > 0 && (() => {
-              const allKeys = Object.keys(groupedCourses);
-              const allExpanded = allKeys.length > 0 && allKeys.every(key => expandedGroups.has(key));
-              return (
-                <button
-                  className={`expand-collapse-btn ${allExpanded ? 'collapse-all-btn' : 'expand-all-btn'}`}
-                  onClick={toggleExpandAll}
-                  title={allExpanded 
-                    ? (language === 'en' ? 'Collapse all' : 'طي الكل')
-                    : (language === 'en' ? 'Expand all' : 'توسيع الكل')}
-                >
-                  {allExpanded 
-                    ? (language === 'en' ? '▼ Collapse All' : '▼ طي الكل')
-                    : (language === 'en' ? '▶ Expand All' : '▶ توسيع الكل')}
-                </button>
-              );
-            })()}
-          </div>
-        )}
-      </div>
-      {language === 'ar' && (
-        <div className="view-controls-arabic">
+        <div className="view-controls">
           <div className="view-select-container">
-            <label htmlFor="view-mode-select-ar" className="view-select-label">
+            <label htmlFor="view-mode-select" className="view-select-label">
               العرض:
             </label>
             <select
-              id="view-mode-select-ar"
+              id="view-mode-select"
               className="view-mode-select"
               value={viewMode}
               onChange={(e) => setViewMode(e.target.value as ViewMode)}
@@ -430,7 +399,7 @@ const CourseList: React.FC<CourseListProps> = ({ courses }) => {
             );
           })()}
         </div>
-      )}
+      </div>
       {viewMode === 'compact' ? renderCompactView() : (
       <div className="course-groups">
         {Object.entries(groupedCourses).map(([key, courseGroup]) => {
@@ -448,7 +417,7 @@ const CourseList: React.FC<CourseListProps> = ({ courses }) => {
                   <p className="course-name">{firstCourse.name}</p>
                 </div>
                 <div className="course-group-info">
-                  <span className="section-count">{courseGroup.length} {language === 'en' ? 'sections' : 'شعب'}</span>
+                  <span className="section-count">{courseGroup.length} {'شعب'}</span>
                   <span className={`expand-icon ${isExpanded ? 'expanded' : ''}`}>
                     {isExpanded ? '▼' : '▶'}
                   </span>
@@ -460,27 +429,27 @@ const CourseList: React.FC<CourseListProps> = ({ courses }) => {
                 <div key={`${course.id}-${index}`} className="course-section-item">
                 <div className="section-header">
                   <div className="section-info">
-                    <span className="section-badge">{language === 'en' ? 'Section' : 'الشعبة'}: {course.section}</span>
+                    <span className="section-badge">{'الشعبة'}: {course.section}</span>
                   </div>
                   <div className="section-actions">
                     {isInTimetable(course.id) ? (
                       <button
                         className="remove-section-btn"
                         onClick={() => handleRemoveFromTimetable(course)}
-                        title={language === 'en' ? 'Remove from timetable' : 'إزالة من الجدول'}
+                        title={'إزالة من الجدول'}
                       >
-                        {language === 'en' ? '🗑️ Remove' : '🗑️ إزالة'}
+                        {'🗑️ إزالة'}
                       </button>
                     ) : (
                       <button
                         className={`add-section-btn ${hasConflict(course) && getConflictInfo(course)?.type === 'schedule' ? 'conflict-add' : ''}`}
                         onClick={() => handleAddToTimetable(course)}
                         title={hasConflict(course) && getConflictInfo(course)?.type === 'schedule' 
-                          ? (language === 'en' ? 'Add as conflict section (smaller, red flashing border)' : 'إضافة كشعبة متعارضة (أصغر، حدود حمراء متوهجة)')
+                          ? ('إضافة كشعبة متعارضة (أصغر، حدود حمراء متوهجة)')
                           : undefined}
                       >
                         {hasConflict(course) && getConflictInfo(course)?.type === 'schedule'
-                          ? (language === 'en' ? '⚠️ Add Conflict' : '⚠️ إضافة تعارض')
+                          ? ('⚠️ إضافة تعارض')
                           : `➕ ${t.addToTimetable}`}
                       </button>
                     )}
@@ -559,6 +528,27 @@ const CourseList: React.FC<CourseListProps> = ({ courses }) => {
         })}
       </div>
       )}
+      
+      <ConfirmationModal
+        isOpen={confirmationModal.isOpen}
+        message={confirmationModal.message}
+        onConfirm={() => {
+          if (confirmationModal.course) {
+            const added = addCourse(confirmationModal.course, true);
+            if (added) {
+              setNotification({
+                message: `تم إضافة ${confirmationModal.course.code} إلى الجدول`,
+                type: 'success'
+              });
+              setTimeout(() => setNotification(null), 3000);
+            }
+          }
+          setConfirmationModal({ isOpen: false, message: '', course: null });
+        }}
+        onCancel={() => {
+          setConfirmationModal({ isOpen: false, message: '', course: null });
+        }}
+      />
     </section>
   );
 };

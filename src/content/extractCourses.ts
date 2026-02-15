@@ -337,7 +337,18 @@ export function extractCoursesFromDom(doc: Document): Course[] {
       try {
         const cells = row.querySelectorAll('td');
         if (cells.length < 8) {
-          console.warn(`Row ${arrayIndex} has insufficient cells (${cells.length}), expected 8`);
+          // Silently skip rows with insufficient cells (likely header/empty rows)
+          skippedRows++;
+          return;
+        }
+
+        // Additional validation: Check if first cell contains a course code pattern
+        // Course codes are typically like "CS101", "MATH201", etc. (letters + numbers)
+        const firstCellText = cells[0]?.textContent?.trim() || '';
+        const hasCourseCodePattern = /^[A-Za-z]+\d+/.test(firstCellText) || /^[أ-ي]+\d+/.test(firstCellText);
+        
+        // If no course code pattern and cell count is exactly 2, likely a header/separator row
+        if (!hasCourseCodePattern && cells.length <= 2) {
           skippedRows++;
           return;
         }
@@ -389,6 +400,9 @@ export function extractCoursesFromDom(doc: Document): Course[] {
         // Column 1: Course name (اسم المقرر)
         const name = cells[1]?.textContent?.trim() || 'Unknown Course';
 
+        // Column 2: Campus (المقر)
+        const campus = cells[2]?.textContent?.trim() || '';
+
         // Column 3: Section number (الشعبة)
         const sectionNumber = cells[3]?.textContent?.trim() || '01';
 
@@ -399,9 +413,12 @@ export function extractCoursesFromDom(doc: Document): Course[] {
           classType = 'theoretical';
         } else if (activityType.includes('عملي') || activityType.toLowerCase().includes('practical')) {
           classType = 'practical';
-        } else if (activityType.includes('تمرين') || activityType.toLowerCase().includes('exercise')) {
+        } else if (activityType.includes('تدريب') || activityType.includes('تمرين') || activityType.toLowerCase().includes('exercise')) {
           classType = 'exercise';
         }
+
+        // Column 5: Hours (الساعات)
+        const hours = cells[5]?.textContent?.trim() || '';
 
         // Column 6: Status (الحالة) - مفتوحة or مغلقة
         const statusText = cells[6]?.textContent?.trim() || '';
@@ -441,6 +458,8 @@ export function extractCoursesFromDom(doc: Document): Course[] {
                 code,
                 name,
                 section: sectionNumber,
+                campus,
+                hours,
                 days: ['Sun'],
                 startTime: '08:00',
                 endTime: '09:30',
@@ -475,6 +494,8 @@ export function extractCoursesFromDom(doc: Document): Course[] {
                 code,
                 name,
                 section: sectionNumber,
+                campus,
+                hours,
                 days: Array.from(allDays), // Combined unique days from all time slots
                 startTime: firstSlot.startTime,
                 endTime: firstSlot.endTime,
@@ -519,6 +540,8 @@ export function extractCoursesFromDom(doc: Document): Course[] {
             code,
             name,
             section: sectionNumber,
+            campus,
+            hours,
             days: ['Sun'],
             startTime: '08:00',
             endTime: '09:30',

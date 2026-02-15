@@ -1,14 +1,79 @@
-/* Import shared styles from extension - simplified for web app */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: #f5f7fa;
+  scroll-behavior: smooth;
+}
+
+/* Smooth scroll for better UX */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Better focus visibility for accessibility */
+*:focus-visible {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
 .app {
   min-height: 100vh;
   background: #f5f7fa;
   position: relative;
 }
 
+.extraction-error {
+  max-width: 1800px;
+  margin: 1rem auto;
+  padding: 1rem 3rem;
+  background: #fed7d7;
+  color: #742a2a;
+  border: 1px solid #fc8181;
+  border-radius: 0.5rem;
+  text-align: center;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  animation: slideDown 0.3s ease-out;
+  box-shadow: 0 2px 8px rgba(252, 129, 129, 0.2);
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.error-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.error-message {
+  flex: 1;
+}
+
 .success-message {
   max-width: 1800px;
   margin: 1rem auto;
-  padding: 1rem 2rem;
+  padding: 1rem 3rem;
   background: #c6f6d5;
   color: #22543d;
   border: 1px solid #9ae6b4;
@@ -21,17 +86,6 @@
   gap: 0.75rem;
   animation: slideDown 0.3s ease-out;
   box-shadow: 0 2px 8px rgba(34, 84, 61, 0.2);
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 .success-icon {
@@ -53,8 +107,7 @@
   flex-wrap: wrap;
 }
 
-.offered-courses-btn,
-.add-course-manually-btn {
+.offered-courses-btn {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
@@ -65,21 +118,44 @@
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  position: relative;
+  overflow: hidden;
 }
 
-.offered-courses-btn:hover,
-.add-course-manually-btn:hover {
+.offered-courses-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  transform: translate(-50%, -50%);
+  transition: width 0.5s, height 0.5s;
+}
+
+.offered-courses-btn:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+.offered-courses-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
-.add-course-manually-btn {
-  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+.offered-courses-btn:focus {
+  outline: 3px solid rgba(102, 126, 234, 0.5);
+  outline-offset: 2px;
 }
 
-.refresh-courses-btn,
-.clear-courses-btn {
-  background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+.offered-courses-btn:active {
+  transform: translateY(0);
+}
+
+.add-course-manually-btn {
+  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
   color: white;
   border: none;
   padding: 0.75rem 1.5rem;
@@ -88,22 +164,41 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(237, 137, 54, 0.3);
+  box-shadow: 0 2px 8px rgba(72, 187, 120, 0.3);
+  position: relative;
+  overflow: hidden;
 }
 
-.refresh-courses-btn:hover,
-.clear-courses-btn:hover {
+.add-course-manually-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  transform: translate(-50%, -50%);
+  transition: width 0.5s, height 0.5s;
+}
+
+.add-course-manually-btn:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+.add-course-manually-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(237, 137, 54, 0.4);
+  box-shadow: 0 4px 12px rgba(72, 187, 120, 0.4);
 }
 
-.clear-courses-btn {
-  background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
-  box-shadow: 0 2px 8px rgba(245, 101, 101, 0.3);
+.add-course-manually-btn:focus {
+  outline: 3px solid rgba(72, 187, 120, 0.5);
+  outline-offset: 2px;
 }
 
-.clear-courses-btn:hover {
-  box-shadow: 0 4px 12px rgba(245, 101, 101, 0.4);
+.add-course-manually-btn:active {
+  transform: translateY(0);
 }
 
 .app-content {
@@ -155,35 +250,16 @@
   background: #5568d3;
 }
 
-/* Responsive for iPad and mobile */
-@media (max-width: 768px) {
-  /* Hide timetable on phones - only show GPA and Absence calculators */
-  .timetable-wrapper,
-  .course-list-wrapper,
-  .offered-courses-button-container {
-    display: none !important;
-  }
-  
-  .app-content {
-    padding: 0 0.5rem 2rem 0.5rem;
-  }
-}
-
-/* iPad specific adjustments (768px - 1024px) */
-@media (min-width: 769px) and (max-width: 1024px) {
+/* Responsive: stack on smaller screens */
+@media (max-width: 1200px) {
   .main-layout {
-    flex-direction: row;
-    gap: 1rem;
+    flex-direction: column;
   }
   
   .course-list-wrapper {
-    width: 350px;
-    flex-shrink: 0;
-  }
-  
-  .timetable-wrapper {
-    flex: 1;
-    min-width: 0;
+    width: 100%;
+    position: static;
+    max-height: none;
   }
 }
 
@@ -195,21 +271,7 @@
   flex-direction: row-reverse;
 }
 
-/* iPad specific: Arabic layout */
-@media (min-width: 769px) and (max-width: 1024px) {
-  [dir="rtl"] .main-layout {
-    flex-direction: row-reverse;
-    gap: 1rem;
-  }
-  
-  [dir="rtl"] .course-list-wrapper {
-    width: 350px;
-    flex-shrink: 0;
-  }
-  
-  [dir="rtl"] .timetable-wrapper {
-    flex: 1;
-    min-width: 0;
-  }
+[dir="rtl"] .extraction-error {
+  text-align: center;
 }
 

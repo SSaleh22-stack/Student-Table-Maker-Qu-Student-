@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import './ReviewHelperModal.css';
 
@@ -8,7 +8,7 @@ interface ReviewHelperModalProps {
 }
 
 const ReviewHelperModal: React.FC<ReviewHelperModalProps> = ({ isOpen, onClose }) => {
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
 
   if (!isOpen) return null;
 
@@ -32,10 +32,7 @@ const ReviewHelperModal: React.FC<ReviewHelperModalProps> = ({ isOpen, onClose }
           <div className="review-helper-section-content">
             <div className="review-helper-intro">
               <p className="review-helper-intro-text">
-                {language === 'en' 
-                  ? 'This tool helps you quickly fill out course evaluation forms on the QU student portal. Select your preferred response option and apply it to all questions at once.'
-                  : 'تساعدك هذه الأداة على ملء نماذج تقييم المقررات بسرعة في بوابة الطالب بجامعة القصيم. اختر خيار الاستجابة المفضل لديك وطبقه على جميع الأسئلة دفعة واحدة.'
-                }
+                تساعدك هذه الأداة على ملء نماذج تقييم المقررات بسرعة في بوابة الطالب بجامعة القصيم. اختر خيار الاستجابة المفضل لديك وطبقه على جميع الأسئلة دفعة واحدة.
               </p>
             </div>
 
@@ -45,95 +42,59 @@ const ReviewHelperModal: React.FC<ReviewHelperModalProps> = ({ isOpen, onClose }
               </h3>
               <ol className="review-helper-steps">
                 <li>
-                  {language === 'en' 
-                    ? 'Click "Open QU Review Page" below to navigate to the course evaluation page'
-                    : 'انقر على "فتح صفحة تقييم جامعة القصيم" أدناه للانتقال إلى صفحة التقييم'
-                  }
+                  انقر على "فتح صفحة تقييم جامعة القصيم" أدناه للانتقال إلى صفحة التقييم
                 </li>
                 <li>
-                  {language === 'en'
-                    ? 'Once on the evaluation page, a floating widget will appear in the bottom-right corner'
-                    : 'بمجرد الوصول إلى صفحة التقييم، ستظهر لوحة عائمة في الزاوية اليمنى السفلى'
-                  }
+                  بمجرد الوصول إلى صفحة التقييم، ستظهر لوحة عائمة في الزاوية اليمنى السفلى
                 </li>
                 <li>
-                  {language === 'en'
-                    ? 'Select your preferred choice from the dropdown menu:'
-                    : 'اختر خيارك المفضل من القائمة المنسدلة:'
-                  }
+                  اختر خيارك المفضل من القائمة المنسدلة:
                   <ul className="review-helper-options">
                     <li>
-                      {language === 'en' ? 'Strongly Agree' : 'موافق بشدة'} / {language === 'en' ? 'Agree' : 'موافق'}
+                      موافق بشدة / موافق
                     </li>
                     <li>
-                      {language === 'en' ? 'Unsure' : 'غير متأكد'}
+                      غير متأكد
                     </li>
                     <li>
-                      {language === 'en' ? 'Disagree' : 'غير موافق'} / {language === 'en' ? 'Strongly Disagree' : 'غير موافق بشدة'}
+                      غير موافق / غير موافق بشدة
                     </li>
                   </ul>
                 </li>
                 <li>
-                  {language === 'en'
-                    ? 'Click "Fill All" to automatically fill all questions with your selected choice'
-                    : 'انقر على "ملء الكل" لملء جميع الأسئلة تلقائياً بالخيار المحدد'
-                  }
+                  انقر على "ملء الكل" لملء جميع الأسئلة تلقائياً بالخيار المحدد
                 </li>
                 <li>
-                  {language === 'en'
-                    ? 'Review your selections and click "Undo" if you need to restore previous answers'
-                    : 'راجع اختياراتك وانقر على "تراجع" إذا كنت بحاجة إلى استعادة الإجابات السابقة'
-                  }
+                  راجع اختياراتك وانقر على "تراجع" إذا كنت بحاجة إلى استعادة الإجابات السابقة
                 </li>
                 <li>
-                  {language === 'en'
-                    ? 'The tool only fills radio button questions and leaves text fields untouched'
-                    : 'الأداة تملأ فقط أسئلة الأزرار الراديوية وتترك حقول النص كما هي'
-                  }
+                  الأداة تملأ فقط أسئلة الأزرار الراديوية وتترك حقول النص كما هي
                 </li>
               </ol>
             </div>
 
             <div className="review-helper-features">
               <h3 className="review-helper-features-title">
-                {language === 'en' ? 'Features' : 'المميزات'}
+                {'المميزات'}
               </h3>
               <ul className="review-helper-features-list">
                 <li>
-                  {language === 'en'
-                    ? '✅ Automatic detection of Likert scale questions'
-                    : '✅ الكشف التلقائي عن أسئلة مقياس ليكرت'
-                  }
+                  ✅ الكشف التلقائي عن أسئلة مقياس ليكرت
                 </li>
                 <li>
-                  {language === 'en'
-                    ? '✅ Support for all 5 response options (Strongly Agree to Strongly Disagree)'
-                    : '✅ دعم جميع خيارات الاستجابة الخمسة (من موافق بشدة إلى غير موافق بشدة)'
-                  }
+                  ✅ دعم جميع خيارات الاستجابة الخمسة (من موافق بشدة إلى غير موافق بشدة)
                 </li>
                 <li>
-                  {language === 'en'
-                    ? '✅ Undo functionality to restore previous selections'
-                    : '✅ وظيفة التراجع لاستعادة الاختيارات السابقة'
-                  }
+                  ✅ وظيفة التراجع لاستعادة الاختيارات السابقة
                 </li>
                 <li>
-                  {language === 'en'
-                    ? '✅ Confirmation dialog before applying changes'
-                    : '✅ حوار تأكيد قبل تطبيق التغييرات'
-                  }
+                  ✅ حوار تأكيد قبل تطبيق التغييرات
                 </li>
                 <li>
-                  {language === 'en'
-                    ? '✅ Works with dynamically loaded content (SPA support)'
-                    : '✅ يعمل مع المحتوى المحمل ديناميكياً (دعم SPA)'
-                  }
+                  ✅ يعمل مع المحتوى المحمل ديناميكياً (دعم SPA)
                 </li>
                 <li>
-                  {language === 'en'
-                    ? '✅ Bilingual interface (English/Arabic)'
-                    : '✅ واجهة ثنائية اللغة (الإنجليزية/العربية)'
-                  }
+                  ✅ واجهة عربية
                 </li>
               </ul>
             </div>

@@ -125,9 +125,9 @@ export function calcNewCumulativeGpa(
 /**
  * Get grade letter description (for display)
  */
-export function getGradeDescription(grade: GradeLetter, language: 'en' | 'ar'): string {
+export function getGradeDescription(grade: GradeLetter, language: 'en' | 'ar' = 'ar'): string {
   if (grade === "") {
-    return language === 'ar' ? 'غير محدد' : 'Not Specified';
+    return 'غير محدد';
   }
   return grade;
 }

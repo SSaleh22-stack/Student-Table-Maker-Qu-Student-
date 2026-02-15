@@ -149,6 +149,32 @@ type ViewMode = 'timetable' | 'gpa' | 'absence';
 const AppContent: React.FC = () => {
   const { language, t } = useLanguage();
   const [currentView, setCurrentView] = useState<ViewMode>('timetable');
+  
+  // Check for GPA data on mount and navigate to GPA page if present
+  React.useEffect(() => {
+    const checkForGpaData = async () => {
+      if (typeof chrome !== 'undefined' && chrome.storage) {
+        chrome.storage.local.get(['gpaData'], (result) => {
+          if (result.gpaData) {
+            // Navigate to GPA page
+            setCurrentView('gpa');
+            // Clear the stored data after using it
+            chrome.storage.local.remove(['gpaData']);
+          }
+        });
+      }
+      
+      // Also check URL parameter
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('gpa') === 'true') {
+        setCurrentView('gpa');
+        // Remove the parameter from URL
+        window.history.replaceState({}, '', window.location.pathname);
+      }
+    };
+    
+    checkForGpaData();
+  }, []);
   const [courses, setCourses] = useState<Course[]>([]);
   const [isExtracting, setIsExtracting] = useState(false);
   const [extractionError, setExtractionError] = useState<string | null>(null);

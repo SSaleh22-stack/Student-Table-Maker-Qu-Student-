@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import './LanguageToggle.css';
 
@@ -8,7 +8,7 @@ const LanguageToggle: React.FC = () => {
   return (
     <div className="language-toggle">
       <button
-        className={`lang-btn ${language === 'en' ? 'active' : ''}`}
+        className={`lang-btn ${''}`}
         onClick={() => setLanguage('en')}
       >
         EN

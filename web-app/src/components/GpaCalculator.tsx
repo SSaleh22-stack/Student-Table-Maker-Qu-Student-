@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+﻿import React, { useState, useEffect, useMemo } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import {
   CourseGrade,
@@ -16,7 +16,7 @@ import {
 import './GpaCalculator.css';
 
 const GpaCalculator: React.FC = () => {
-  const { language, t } = useLanguage();
+  const { t } = useLanguage();
   const [scale, setScale] = useState<GPAScale>(5);
   const [prevGpa, setPrevGpa] = useState<number>(0);
   const [prevHours, setPrevHours] = useState<number>(0);
@@ -166,7 +166,7 @@ const GpaCalculator: React.FC = () => {
   };
 
   return (
-    <div className="gpa-calculator" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+    <div className="gpa-calculator" dir="rtl">
       <div className="gpa-header">
         <h1 className="gpa-title">{t.gpaCalculator || 'GPA Calculator'}</h1>
         <button
@@ -280,7 +280,7 @@ const GpaCalculator: React.FC = () => {
                       >
                         {gradeOptions.map((grade) => (
                           <option key={grade} value={grade}>
-                            {grade || (language === 'ar' ? 'غير محدد' : 'Not Specified')}
+                            {grade || 'غير محدد'}
                           </option>
                         ))}
                       </select>

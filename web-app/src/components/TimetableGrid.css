@@ -7,11 +7,17 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
+  gap: 1rem;
+  flex-wrap: wrap;
 }
 
 [dir="rtl"] .timetable-header {
   flex-direction: row-reverse;
+}
+
+[dir="rtl"] .timetable-title {
+  justify-content: flex-start;
 }
 
 .timetable-actions {
@@ -80,7 +86,7 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   z-index: 100;
   min-width: 180px;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .export-menu-item {
@@ -101,9 +107,6 @@
   background: #f5f5f5;
 }
 
-.export-menu-item:not(:last-child) {
-  border-bottom: 1px solid #e0e0e0;
-}
 
 .remove-all-btn {
   background: #718096;
@@ -127,6 +130,34 @@
 
 [dir="rtl"] .export-menu-item {
   text-align: right;
+}
+
+.export-submenu {
+  position: absolute;
+  left: 100%;
+  top: 0;
+  margin-left: 0.25rem;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 102;
+  min-width: 180px;
+  overflow: visible;
+  white-space: nowrap;
+}
+
+[dir="rtl"] .export-submenu {
+  left: auto;
+  right: 100%;
+  margin-left: 0;
+  margin-right: 0.25rem;
+}
+
+.export-jpg-container {
+  position: relative;
+  display: inline-block;
+  width: 100%;
 }
 
 .export-menu-overlay {
@@ -173,6 +204,58 @@
   padding: 1.5rem;
   border-bottom: 2px solid #e0e0e0;
   background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+}
+
+.summary-totals {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #e0e0e0;
+  background: #f8f9fa;
+}
+
+.summary-totals-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+}
+
+.summary-total-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: white;
+  border-radius: 0.5rem;
+  border: 1px solid #e0e0e0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.summary-total-label {
+  font-weight: 600;
+  color: #667eea;
+  font-size: 0.9rem;
+}
+
+.summary-total-value {
+  font-weight: 700;
+  color: #333;
+  font-size: 1rem;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.25rem;
+}
+
+.summary-total-conflict .summary-total-label {
+  color: #e53e3e;
+}
+
+.summary-total-conflict .summary-total-value {
+  background: linear-gradient(135deg, rgba(229, 62, 62, 0.1) 0%, rgba(197, 48, 48, 0.1) 100%);
+  color: #e53e3e;
+}
+
+[dir="rtl"] .summary-totals-container {
+  flex-direction: row-reverse;
 }
 
 .summary-modal-header h3 {
@@ -239,9 +322,6 @@
 
 .summary-table thead {
   background: #f8f9fa;
-  position: sticky;
-  top: 0;
-  z-index: 10;
 }
 
 .summary-table th {
@@ -265,6 +345,29 @@
 
 .summary-table tbody tr:last-child td {
   border-bottom: none;
+}
+
+.summary-remove-btn {
+  background: #e53e3e;
+  color: white;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: 0.4rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(229, 62, 62, 0.2);
+}
+
+.summary-remove-btn:hover {
+  background: #c53030;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(229, 62, 62, 0.4);
+}
+
+.summary-remove-btn:active {
+  transform: translateY(0);
 }
 
 .timetable-container {
@@ -326,13 +429,15 @@
   font-size: 1.5rem;
   font-weight: 600;
   color: #333;
-  text-align: center;
-  margin: 0 0 1.5rem 0;
+  margin: 0;
   padding: 0;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-end;
   gap: 0.5rem;
+  flex: 1;
+  flex-wrap: wrap;
+  text-align: right;
 }
 
 .course-count {
@@ -346,7 +451,8 @@
 
 .total-courses-text,
 .total-sections-text,
-.total-conflicts-text {
+.total-conflicts-text,
+.total-hours-text {
   font-size: 0.95rem;
   font-weight: 600;
   color: #667eea;
@@ -362,8 +468,21 @@
 
 .total-courses-text:hover,
 .total-sections-text:hover,
-.total-conflicts-text:hover {
+.total-conflicts-text:hover,
+.total-hours-text:hover {
   transform: translateY(-1px);
+}
+
+.total-hours-text {
+  color: #ed8936;
+  background: linear-gradient(135deg, rgba(237, 137, 54, 0.1) 0%, rgba(221, 107, 32, 0.1) 100%);
+  border-color: rgba(237, 137, 54, 0.2);
+  box-shadow: 0 2px 4px rgba(237, 137, 54, 0.1);
+}
+
+.total-hours-text:hover {
+  background: linear-gradient(135deg, rgba(237, 137, 54, 0.15) 0%, rgba(221, 107, 32, 0.15) 100%);
+  box-shadow: 0 4px 8px rgba(237, 137, 54, 0.2);
 }
 
 .total-sections-text {
@@ -392,7 +511,8 @@
 
 [dir="rtl"] .total-courses-text,
 [dir="rtl"] .total-sections-text,
-[dir="rtl"] .total-conflicts-text {
+[dir="rtl"] .total-conflicts-text,
+[dir="rtl"] .total-hours-text {
   margin-left: 0;
   margin-right: 0.5rem;
 }
@@ -793,5 +913,70 @@
 [dir="rtl"] .course-block-code,
 [dir="rtl"] .course-block-time,
 [dir="rtl"] .course-block-location {
+  text-align: right;
+}
+
+.course-details-modal {
+  max-width: 600px;
+}
+
+.course-details-content {
+  padding: 1.5rem;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.course-details-row {
+  display: flex;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.course-details-row:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.course-details-label {
+  font-weight: 600;
+  color: #667eea;
+  min-width: 120px;
+  flex-shrink: 0;
+  font-size: 0.95rem;
+}
+
+.course-details-value {
+  flex: 1;
+  color: #333;
+  font-size: 0.95rem;
+  word-wrap: break-word;
+}
+
+.time-slot-detail {
+  margin-bottom: 0.5rem;
+  padding: 0.5rem;
+  background: #f8f9fa;
+  border-radius: 0.25rem;
+}
+
+.time-slot-detail:last-child {
+  margin-bottom: 0;
+}
+
+.time-slot-detail strong {
+  color: #667eea;
+}
+
+[dir="rtl"] .course-details-row {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .course-details-label {
+  text-align: right;
+}
+
+[dir="rtl"] .course-details-value {
   text-align: right;
 }

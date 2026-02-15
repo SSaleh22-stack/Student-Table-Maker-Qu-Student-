@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
-import LanguageToggle from './LanguageToggle';
 import './NavBar.css';
 
 type ViewMode = 'timetable' | 'gpa' | 'absence';
@@ -8,17 +7,15 @@ type ViewMode = 'timetable' | 'gpa' | 'absence';
 interface NavBarProps {
   currentView: ViewMode;
   onViewChange: (view: ViewMode) => void;
-  onShowReviewHelper: () => void;
-  isPhone?: boolean;
 }
 
-const NavBar: React.FC<NavBarProps> = ({ currentView, onViewChange, onShowReviewHelper, isPhone = false }) => {
-  const { t, language } = useLanguage();
+const NavBar: React.FC<NavBarProps> = ({ currentView, onViewChange }) => {
+  const { t } = useLanguage();
+  const [showReviewHelper, setShowReviewHelper] = useState(false);
   const [showContactUs, setShowContactUs] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
   const handleOpenReviewPage = () => {
-    // For webapp, open in same window instead of new tab
     window.open('https://stu-gate.qu.edu.sa/', '_blank');
   };
 
@@ -55,15 +52,13 @@ const NavBar: React.FC<NavBarProps> = ({ currentView, onViewChange, onShowReview
             <span className="navbar-title">{t.appTitle}</span>
           </div>
           <div className="navbar-menu">
-            {!isPhone && (
-              <button 
-                className={`navbar-item ${currentView === 'timetable' ? 'active' : ''}`}
-                onClick={() => onViewChange('timetable')}
-              >
-                <span className="navbar-icon">📅</span>
-                <span className="navbar-text">{t.timetable}</span>
-              </button>
-            )}
+            <button 
+              className={`navbar-item ${currentView === 'timetable' ? 'active' : ''}`}
+              onClick={() => onViewChange('timetable')}
+            >
+              <span className="navbar-icon">📅</span>
+              <span className="navbar-text">{t.timetable}</span>
+            </button>
             <button 
               className={`navbar-item ${currentView === 'gpa' ? 'active' : ''}`}
               onClick={() => onViewChange('gpa')}
@@ -80,7 +75,7 @@ const NavBar: React.FC<NavBarProps> = ({ currentView, onViewChange, onShowReview
             </button>
             <button 
               className="navbar-item review-helper-nav-btn"
-              onClick={onShowReviewHelper}
+              onClick={() => setShowReviewHelper(true)}
             >
               <span className="navbar-icon">📝</span>
               <span className="navbar-text">{t.courseReviewHelper}</span>
@@ -92,10 +87,107 @@ const NavBar: React.FC<NavBarProps> = ({ currentView, onViewChange, onShowReview
               <span className="navbar-icon">📧</span>
               <span className="navbar-text">{t.contactUs}</span>
             </button>
-            <LanguageToggle />
           </div>
         </div>
       </nav>
+
+      {showReviewHelper && (
+        <div className="review-helper-modal-overlay" onClick={() => setShowReviewHelper(false)}>
+          <div className="review-helper-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="review-helper-modal-header">
+              <h2 className="review-helper-modal-title">{t.courseReviewHelper}</h2>
+              <button 
+                className="review-helper-modal-close" 
+                onClick={() => setShowReviewHelper(false)}
+              >
+                {t.close}
+              </button>
+            </div>
+            <div className="review-helper-modal-body">
+              <div className="review-helper-section-content">
+                <div className="review-helper-intro">
+                  <p className="review-helper-intro-text">
+                    تساعدك هذه الأداة على ملء نماذج تقييم المقررات بسرعة في بوابة الطالب بجامعة القصيم. اختر خيار الاستجابة المفضل لديك وطبقه على جميع الأسئلة دفعة واحدة.
+                  </p>
+                </div>
+
+                <div className="review-helper-instructions">
+                  <h3 className="review-helper-instructions-title">
+                    {t.reviewInstructions}
+                  </h3>
+                  <ol className="review-helper-steps">
+                    <li>
+                      انقر على "فتح صفحة تقييم جامعة القصيم" أدناه للانتقال إلى صفحة التقييم
+                    </li>
+                    <li>
+                      بمجرد الوصول إلى صفحة التقييم، ستظهر لوحة عائمة في الزاوية اليمنى السفلى
+                    </li>
+                    <li>
+                      اختر خيارك المفضل من القائمة المنسدلة:
+                      <ul className="review-helper-options">
+                        <li>
+                          موافق بشدة / موافق
+                        </li>
+                        <li>
+                          غير متأكد
+                        </li>
+                        <li>
+                          غير موافق / غير موافق بشدة
+                        </li>
+                      </ul>
+                    </li>
+                    <li>
+                      انقر على "ملء الكل" لملء جميع الأسئلة تلقائياً بالخيار المحدد
+                    </li>
+                    <li>
+                      راجع اختياراتك وانقر على "تراجع" إذا كنت بحاجة إلى استعادة الإجابات السابقة
+                    </li>
+                    <li>
+                      الأداة تملأ فقط أسئلة الأزرار الراديوية وتترك حقول النص كما هي
+                    </li>
+                  </ol>
+                </div>
+
+                <div className="review-helper-features">
+                  <h3 className="review-helper-features-title">
+                    {'المميزات'}
+                  </h3>
+                  <ul className="review-helper-features-list">
+                    <li>
+                      ✅ الكشف التلقائي عن أسئلة مقياس ليكرت
+                    </li>
+                    <li>
+                      ✅ دعم جميع خيارات الاستجابة الخمسة (من موافق بشدة إلى غير موافق بشدة)
+                    </li>
+                    <li>
+                      ✅ وظيفة التراجع لاستعادة الاختيارات السابقة
+                    </li>
+                    <li>
+                      ✅ حوار تأكيد قبل تطبيق التغييرات
+                    </li>
+                    <li>
+                      ✅ يعمل مع المحتوى المحمل ديناميكياً (دعم SPA)
+                    </li>
+                    <li>
+                      ✅ واجهة عربية
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="review-helper-action">
+                  <button 
+                    className="review-helper-action-btn"
+                    onClick={handleOpenReviewPage}
+                  >
+                    <span className="review-helper-action-icon">🔗</span>
+                    <span className="review-helper-action-text">{t.openQUReviewPage}</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showContactUs && (
         <div className="contact-us-modal-overlay" onClick={() => setShowContactUs(false)}>
@@ -112,10 +204,7 @@ const NavBar: React.FC<NavBarProps> = ({ currentView, onViewChange, onShowReview
             <div className="contact-us-modal-body">
               <div className="contact-us-intro">
                 <p className="contact-us-intro-text">
-                  {language === 'en' 
-                    ? 'Get in touch with us! We\'d love to hear from you. Use the contact information below to reach out.'
-                    : 'تواصل معنا! نحن نحب أن نسمع منك. استخدم معلومات الاتصال أدناه للتواصل.'
-                  }
+                  تواصل معنا! نحن نحب أن نسمع منك. استخدم معلومات الاتصال أدناه للتواصل.
                 </p>
               </div>
 

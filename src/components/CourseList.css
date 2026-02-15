@@ -5,6 +5,37 @@
   flex-direction: column;
 }
 
+.search-bar-container {
+  margin-bottom: 1rem;
+  width: 100%;
+}
+
+.course-search-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 0.95rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 0.5rem;
+  background: white;
+  color: #333;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+}
+
+.course-search-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.course-search-input::placeholder {
+  color: #999;
+}
+
+[dir="rtl"] .course-search-input {
+  text-align: right;
+}
+
 .section-title {
   font-size: 1.5rem;
   font-weight: 600;

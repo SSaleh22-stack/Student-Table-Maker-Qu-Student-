@@ -33,23 +33,39 @@ const GpaCalculator: React.FC = () => {
     const loadSavedData = async () => {
       try {
         if (typeof chrome !== 'undefined' && chrome.storage) {
-          // Extension: Load from chrome.storage.sync
-          chrome.storage.sync.get(
-            [
-              'gpaScale',
-              'gpaPrevGpa',
-              'gpaPrevHours',
-              'gpaCourses',
-              'gpaGradePointMap',
-            ],
-            (result) => {
-              if (result.gpaScale) setScale(result.gpaScale);
-              if (result.gpaPrevGpa !== undefined) setPrevGpa(result.gpaPrevGpa);
-              if (result.gpaPrevHours !== undefined) setPrevHours(result.gpaPrevHours);
-              if (result.gpaCourses) setCourses(result.gpaCourses);
-              if (result.gpaGradePointMap) setGradePointMap(result.gpaGradePointMap);
+          // First, check for GPA data from content script (chrome.storage.local)
+          chrome.storage.local.get(['gpaData'], (localResult) => {
+            if (localResult.gpaData) {
+              // Load data from content script
+              const gpaData = localResult.gpaData;
+              if (gpaData.cumulativeGPA !== undefined) setPrevGpa(gpaData.cumulativeGPA);
+              if (gpaData.earnedHours !== undefined) setPrevHours(gpaData.earnedHours);
+              if (gpaData.scale) setScale(gpaData.scale);
+              if (gpaData.courses && Array.isArray(gpaData.courses)) setCourses(gpaData.courses);
+              if (gpaData.gradePointMap) setGradePointMap(gpaData.gradePointMap);
+              
+              // Clear the data after loading
+              chrome.storage.local.remove(['gpaData']);
+            } else {
+              // No data from content script, load from chrome.storage.sync (saved preferences)
+              chrome.storage.sync.get(
+                [
+                  'gpaScale',
+                  'gpaPrevGpa',
+                  'gpaPrevHours',
+                  'gpaCourses',
+                  'gpaGradePointMap',
+                ],
+                (result) => {
+                  if (result.gpaScale) setScale(result.gpaScale);
+                  if (result.gpaPrevGpa !== undefined) setPrevGpa(result.gpaPrevGpa);
+                  if (result.gpaPrevHours !== undefined) setPrevHours(result.gpaPrevHours);
+                  if (result.gpaCourses) setCourses(result.gpaCourses);
+                  if (result.gpaGradePointMap) setGradePointMap(result.gpaGradePointMap);
+                }
+              );
             }
-          );
+          });
         } else {
           // Webapp: Load from localStorage
           const savedScale = localStorage.getItem('gpaScale');

@@ -25,6 +25,8 @@ export interface Course {
   code: string;
   name: string;
   section: string;
+  campus?: string; // المقر - campus location
+  hours?: string; // الساعات - credit hours
   days: string[]; // e.g. ["Sun", "Tue"] - combined days from all time slots (for backwards compatibility)
   startTime: string; // "08:00" - first time slot start time (for backwards compatibility)
   endTime: string; // "09:50" - first time slot end time (for backwards compatibility)

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Qu Student",
-  "version": "3.0.0",
+  "version": "3.0.4",
   "description": "Help Qassim University students extract courses and build visual timetables and autofill course reviews",
   "permissions": [
     "activeTab",
@@ -24,6 +24,11 @@
     {
       "matches": ["https://stu-gate.qu.edu.sa/*"],
       "js": ["src/content/reviewAutofill.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://stu-gate.qu.edu.sa/*"],
+      "js": ["src/content/gpaCalculator.js"],
       "run_at": "document_idle"
     }
   ],

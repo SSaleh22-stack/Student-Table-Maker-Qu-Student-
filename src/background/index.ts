@@ -30,6 +30,28 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 
 // Handle messages from dashboard and content scripts
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  // Handle message to open dashboard
+  if (message.type === 'OPEN_DASHBOARD') {
+    chrome.tabs.create({
+      url: chrome.runtime.getURL('dashboard.html')
+    });
+    sendResponse({ success: true });
+    return true;
+  }
+
+  // Handle message to open dashboard with GPA data
+  if (message.type === 'OPEN_DASHBOARD_WITH_GPA') {
+    // Store GPA data in chrome.storage
+    chrome.storage.local.set({ gpaData: message.payload }, () => {
+      // Open dashboard with GPA flag
+      chrome.tabs.create({
+        url: chrome.runtime.getURL('dashboard.html?gpa=true')
+      });
+      sendResponse({ success: true });
+    });
+    return true;
+  }
+
   // Handle message from content script button to open dashboard with courses
   if (message.type === 'OPEN_DASHBOARD_WITH_COURSES') {
     // Store courses in chrome.storage

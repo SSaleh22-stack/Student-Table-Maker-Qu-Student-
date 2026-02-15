@@ -85,6 +85,7 @@ if (!extensionContextValid) {
 }
 
 import { extractCoursesFromDom } from './extractCourses';
+import { extractGPAFromDom } from './extractGPA';
 import { Course } from '../types';
 
 // Global error handler for extension context invalidated errors

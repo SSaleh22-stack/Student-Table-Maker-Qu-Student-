@@ -340,6 +340,15 @@ export const translations: Record<Language, Translations> = {
     absenceCanStillAttend: 'يمكنك الحضور',
     absenceCannotAttend: 'لا يمكنك الحضور (تم تجاوز الحد)',
     absenceResults: 'النتائج',
+    // Contact Us
+    contactUs: 'تواصل معنا',
+    contactEmail: 'البريد الإلكتروني',
+    contactTelegram: 'تيليجرام',
+    contactEmailLabel: 'عنوان البريد الإلكتروني',
+    contactTelegramLabel: 'اسم المستخدم في تيليجرام',
+    contactCopyEmail: 'نسخ البريد الإلكتروني',
+    contactCopyTelegram: 'نسخ تيليجرام',
+    contactCopied: 'تم النسخ!',
   },
 };
 

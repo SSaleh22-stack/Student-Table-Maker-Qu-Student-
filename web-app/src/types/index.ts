@@ -21,6 +21,8 @@ export interface Course {
   code: string;
   name: string;
   section: string;
+  campus?: string; // المقر - campus location
+  hours?: string; // الساعات - credit hours
   days: string[];
   startTime: string;
   endTime: string;

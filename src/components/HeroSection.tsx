@@ -42,7 +42,21 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onExtractCourses, isExtractin
               </button>
             </div>
             <div className="instructions-content">
-              <pre>{t.instructionsContent}</pre>
+              <div className="instructions-text">
+                {t.instructionsContent.split('\n\n\n').map((section, index) => {
+                  if (!section.trim()) return null;
+                  const lines = section.split('\n').filter(line => line.trim());
+                  if (lines.length === 0) return null;
+                  const title = lines[0];
+                  const content = lines.slice(1).join('\n');
+                  return (
+                    <div key={index} className="instruction-section">
+                      <h3 className="instruction-title">{title}</h3>
+                      <div className="instruction-text">{content}</div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>

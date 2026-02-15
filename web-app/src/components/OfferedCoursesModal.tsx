@@ -1,7 +1,8 @@
-import React, { useState, useMemo } from 'react';
+﻿import React, { useState, useMemo } from 'react';
 import { Course } from '../types';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useTimetable } from '../contexts/TimetableContext';
+import ConfirmationModal from './ConfirmationModal';
 import './OfferedCoursesModal.css';
 
 interface OfferedCoursesModalProps {
@@ -11,13 +12,18 @@ interface OfferedCoursesModalProps {
 }
 
 const OfferedCoursesModal: React.FC<OfferedCoursesModalProps> = ({ courses, isOpen, onClose }) => {
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
   const { addCourse, isInTimetable, hasConflict, getConflictInfo } = useTimetable();
   const [searchQuery, setSearchQuery] = useState('');
   const [codeFilter, setCodeFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | 'open' | 'closed'>('all');
   const [typeFilter, setTypeFilter] = useState<'all' | 'theoretical' | 'practical' | 'exercise'>('all');
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [confirmationModal, setConfirmationModal] = useState<{ isOpen: boolean; message: string; course: Course | null }>({
+    isOpen: false,
+    message: '',
+    course: null
+  });
 
   // Get unique course codes for dropdown
   const uniqueCourseCodes = useMemo(() => {
@@ -62,9 +68,7 @@ const OfferedCoursesModal: React.FC<OfferedCoursesModalProps> = ({ courses, isOp
   const handleAddToTimetable = (course: Course) => {
     if (isInTimetable(course.id)) {
       setNotification({
-        message: language === 'en' 
-          ? `${course.code} is already in your timetable` 
-          : `${course.code} موجود بالفعل في الجدول`,
+        message: `${course.code} موجود بالفعل في الجدول`,
         type: 'error'
       });
       setTimeout(() => setNotification(null), 3000);
@@ -78,9 +82,7 @@ const OfferedCoursesModal: React.FC<OfferedCoursesModalProps> = ({ courses, isOp
       // Schedule conflict - don't allow
       if (conflictInfo.type === 'schedule') {
         setNotification({
-          message: language === 'en'
-            ? `Schedule conflict: ${course.code} overlaps with ${conflictInfo.conflictingCourse.code} on ${conflictInfo.conflictingCourse.days.join(', ')}`
-            : `تعارض في الجدول: ${course.code} يتداخل مع ${conflictInfo.conflictingCourse.code} في ${conflictInfo.conflictingCourse.days.join(', ')}`,
+          message: `تعارض في الجدول: ${course.code} يتداخل مع ${conflictInfo.conflictingCourse.code} في ${conflictInfo.conflictingCourse.days.join(', ')}`,
           type: 'error'
         });
         setTimeout(() => setNotification(null), 3000);
@@ -89,22 +91,13 @@ const OfferedCoursesModal: React.FC<OfferedCoursesModalProps> = ({ courses, isOp
       
       // Exam period conflict - show warning and ask for confirmation
       if (conflictInfo.type === 'exam-period' && conflictInfo.canProceed === true) {
-        const confirmMessage = language === 'en'
-          ? `${course.code} has the same exam period (${course.finalExam?.date}) as ${conflictInfo.conflictingCourse.code}. Are you sure you want to add it?`
-          : `${course.code} له نفس فترة الامتحان (${course.finalExam?.date}) مثل ${conflictInfo.conflictingCourse.code}. هل أنت متأكد من إضافته؟`;
+        const confirmMessage = `${course.code} له نفس فترة الامتحان (${course.finalExam?.date}) مثل ${conflictInfo.conflictingCourse.code}. هل أنت متأكد من إضافته؟`;
         
-        if (window.confirm(confirmMessage)) {
-          const added = addCourse(course, true);
-          if (added) {
-            setNotification({
-              message: language === 'en'
-                ? `${course.code} added to timetable`
-                : `تم إضافة ${course.code} إلى الجدول`,
-              type: 'success'
-            });
-            setTimeout(() => setNotification(null), 3000);
-          }
-        }
+        setConfirmationModal({
+          isOpen: true,
+          message: confirmMessage,
+          course: course
+        });
         return;
       }
     }
@@ -113,17 +106,13 @@ const OfferedCoursesModal: React.FC<OfferedCoursesModalProps> = ({ courses, isOp
     const added = addCourse(course);
     if (added) {
       setNotification({
-        message: language === 'en'
-          ? `${course.code} added to timetable`
-          : `تم إضافة ${course.code} إلى الجدول`,
+        message: `تم إضافة ${course.code} إلى الجدول`,
         type: 'success'
       });
       setTimeout(() => setNotification(null), 3000);
     } else {
       setNotification({
-        message: language === 'en'
-          ? `Failed to add ${course.code} - schedule conflict`
-          : `فشل إضافة ${course.code} - تعارض في الجدول`,
+        message: `فشل إضافة ${course.code} - تعارض في الجدول`,
         type: 'error'
       });
       setTimeout(() => setNotification(null), 3000);
@@ -236,14 +225,12 @@ const OfferedCoursesModal: React.FC<OfferedCoursesModalProps> = ({ courses, isOp
 
         <div className="offered-courses-content">
           <div className="offered-courses-count">
-            {language === 'en' 
-              ? `Showing ${filteredCourses.length} of ${courses.length} courses`
-              : `عرض ${filteredCourses.length} من ${courses.length} مقرر`}
+            {`عرض ${filteredCourses.length} من ${courses.length} مقرر`}
           </div>
           
           {filteredCourses.length === 0 ? (
             <div className="no-courses-found">
-              {language === 'en' ? 'No courses found' : 'لم يتم العثور على مقررات'}
+              {'لم يتم العثور على مقررات'}
             </div>
           ) : (
             <div className="offered-courses-list">
@@ -293,7 +280,7 @@ const OfferedCoursesModal: React.FC<OfferedCoursesModalProps> = ({ courses, isOp
                   <div className="offered-course-actions">
                     {isInTimetable(course.id) ? (
                       <button className="in-timetable-badge" disabled>
-                        {language === 'en' ? 'In Timetable' : 'في الجدول'}
+                        {'في الجدول'}
                       </button>
                     ) : (
                       <button
@@ -302,7 +289,7 @@ const OfferedCoursesModal: React.FC<OfferedCoursesModalProps> = ({ courses, isOp
                         disabled={(hasConflict(course) && getConflictInfo(course)?.type === 'schedule')}
                       >
                         {hasConflict(course) && getConflictInfo(course)?.type === 'schedule'
-                          ? (language === 'en' ? 'Conflict' : 'تعارض')
+                          ? ('تعارض')
                           : t.addToTimetable}
                       </button>
                     )}
@@ -313,6 +300,27 @@ const OfferedCoursesModal: React.FC<OfferedCoursesModalProps> = ({ courses, isOp
           )}
         </div>
       </div>
+      
+      <ConfirmationModal
+        isOpen={confirmationModal.isOpen}
+        message={confirmationModal.message}
+        onConfirm={() => {
+          if (confirmationModal.course) {
+            const added = addCourse(confirmationModal.course, true);
+            if (added) {
+              setNotification({
+                message: `تم إضافة ${confirmationModal.course.code} إلى الجدول`,
+                type: 'success'
+              });
+              setTimeout(() => setNotification(null), 3000);
+            }
+          }
+          setConfirmationModal({ isOpen: false, message: '', course: null });
+        }}
+        onCancel={() => {
+          setConfirmationModal({ isOpen: false, message: '', course: null });
+        }}
+      />
     </div>
   );
 };

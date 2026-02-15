@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+﻿import React, { useState, useEffect, useMemo } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import {
   AbsenceInput,
@@ -8,7 +8,7 @@ import {
 import './AbsenceCalculator.css';
 
 const AbsenceCalculator: React.FC = () => {
-  const { language, t } = useLanguage();
+  const { t } = useLanguage();
   const [studyWeeks, setStudyWeeks] = useState<number>(15);
   const [hoursPerWeek, setHoursPerWeek] = useState<number>(3);
   const [hoursAbsent, setHoursAbsent] = useState<number>(0);
@@ -128,14 +128,14 @@ const AbsenceCalculator: React.FC = () => {
   };
 
   return (
-    <div className="absence-calculator" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+    <div className="absence-calculator" dir="rtl">
       <div className="absence-header">
         <h1 className="absence-title">{t.absenceCalculator || 'Absence Calculator'}</h1>
       </div>
 
       {/* Input Card */}
       <div className="absence-card">
-        <h2 className="absence-card-title">{language === 'en' ? 'Course Information' : 'معلومات المقرر'}</h2>
+        <h2 className="absence-card-title">{'معلومات المقرر'}</h2>
         <div className="absence-input-grid">
           <div className="absence-input-item">
             <label>{t.absenceStudyWeeks || 'Study Weeks'}</label>
@@ -268,20 +268,14 @@ const AbsenceCalculator: React.FC = () => {
               <div>
                 <strong>✅ {t.absenceCanStillAttend || 'You can still attend'}</strong>
                 <p>
-                  {language === 'en' 
-                    ? `You have ${result.hoursRemaining.toFixed(1)} hours remaining before reaching the ${maxAbsencePercent}% limit.`
-                    : `لديك ${result.hoursRemaining.toFixed(1)} ساعة متبقية قبل الوصول إلى حد ${maxAbsencePercent}%.`
-                  }
+                  {`لديك ${result.hoursRemaining.toFixed(1)} ساعة متبقية قبل الوصول إلى حد ${maxAbsencePercent}%.`}
                 </p>
               </div>
             ) : (
               <div>
                 <strong>❌ {t.absenceCannotAttend || 'You cannot attend (exceeded limit)'}</strong>
                 <p>
-                  {language === 'en'
-                    ? `You have exceeded the ${maxAbsencePercent}% absence limit by ${Math.abs(result.hoursRemaining).toFixed(1)} hours.`
-                    : `لقد تجاوزت حد الغياب ${maxAbsencePercent}% بمقدار ${Math.abs(result.hoursRemaining).toFixed(1)} ساعة.`
-                  }
+                  {`لقد تجاوزت حد الغياب ${maxAbsencePercent}% بمقدار ${Math.abs(result.hoursRemaining).toFixed(1)} ساعة.`}
                 </p>
               </div>
             )}

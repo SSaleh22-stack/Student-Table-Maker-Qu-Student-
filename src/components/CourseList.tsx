@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Course } from '../types';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useTimetable } from '../contexts/TimetableContext';
+import ConfirmationModal from './ConfirmationModal';
 import './CourseList.css';
 
 interface CourseListProps {
@@ -16,6 +17,12 @@ const CourseList: React.FC<CourseListProps> = ({ courses }) => {
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('compact');
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [confirmationModal, setConfirmationModal] = useState<{ isOpen: boolean; message: string; course: Course | null }>({
+    isOpen: false,
+    message: '',
+    course: null
+  });
   
   // Detect if device is a touch device (iPad, iPhone, etc.)
   // Only disable hover on primary touch devices, not laptops with touchscreens
@@ -118,11 +125,26 @@ const CourseList: React.FC<CourseListProps> = ({ courses }) => {
     return sorted;
   }, [courses]);
 
+  // Filter courses based on search query
+  const filteredCourses = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return coursesInOrder;
+    }
+    const query = searchQuery.toLowerCase().trim();
+    return coursesInOrder.filter(course => {
+      const codeMatch = course.code.toLowerCase().includes(query);
+      const nameMatch = course.name.toLowerCase().includes(query);
+      const sectionMatch = course.section.toLowerCase().includes(query);
+      const instructorMatch = course.instructor?.toLowerCase().includes(query);
+      return codeMatch || nameMatch || sectionMatch || instructorMatch;
+    });
+  }, [coursesInOrder, searchQuery]);
+
   // Group courses by course code and name (for compact view)
   // This must be at component level, not inside renderCompactView
   const groupedCourses = useMemo(() => {
     const groups: Record<string, Course[]> = {};
-    coursesInOrder.forEach(course => {
+    filteredCourses.forEach(course => {
       const key = `${course.code}-${course.name}`;
       if (!groups[key]) {
         groups[key] = [];
@@ -130,7 +152,7 @@ const CourseList: React.FC<CourseListProps> = ({ courses }) => {
       groups[key].push(course);
     });
     return groups;
-  }, [coursesInOrder]);
+  }, [filteredCourses]);
 
   const handleAddToTimetable = (course: Course, forceWithConflict: boolean = false) => {
     if (isInTimetable(course.id)) {
@@ -170,18 +192,11 @@ const CourseList: React.FC<CourseListProps> = ({ courses }) => {
           ? `${course.code} has the same exam period (${course.finalExam?.date}) as ${conflictInfo.conflictingCourse.code}. Are you sure you want to add it?`
           : `${course.code} له نفس فترة الامتحان (${course.finalExam?.date}) مثل ${conflictInfo.conflictingCourse.code}. هل أنت متأكد من إضافته؟`;
         
-        if (window.confirm(confirmMessage)) {
-          const added = addCourse(course, true);
-          if (added) {
-            setNotification({
-              message: language === 'en'
-                ? `${course.code} added to timetable`
-                : `تم إضافة ${course.code} إلى الجدول`,
-              type: 'success'
-            });
-            setTimeout(() => setNotification(null), 3000);
-          }
-        }
+        setConfirmationModal({
+          isOpen: true,
+          message: confirmMessage,
+          course: course
+        });
         return;
       }
     }
@@ -360,9 +375,18 @@ const CourseList: React.FC<CourseListProps> = ({ courses }) => {
           {notification.message}
         </div>
       )}
+      <div className="search-bar-container">
+        <input
+          type="text"
+          className="course-search-input"
+          placeholder={language === 'en' ? '🔍 Search courses...' : '🔍 البحث عن المقررات...'}
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
       <div className="section-header-with-toggle">
         <h2 className="section-title">
-          {t.courses} ({courses.length} {language === 'en' ? 'total' : 'إجمالي'})
+          {t.courses} ({filteredCourses.length} {language === 'en' ? 'total' : 'إجمالي'})
         </h2>
         {language === 'en' && (
           <div className="view-controls">
@@ -559,6 +583,29 @@ const CourseList: React.FC<CourseListProps> = ({ courses }) => {
         })}
       </div>
       )}
+      
+      <ConfirmationModal
+        isOpen={confirmationModal.isOpen}
+        message={confirmationModal.message}
+        onConfirm={() => {
+          if (confirmationModal.course) {
+            const added = addCourse(confirmationModal.course, true);
+            if (added) {
+              setNotification({
+                message: language === 'en'
+                  ? `${confirmationModal.course.code} added to timetable`
+                  : `تم إضافة ${confirmationModal.course.code} إلى الجدول`,
+                type: 'success'
+              });
+              setTimeout(() => setNotification(null), 3000);
+            }
+          }
+          setConfirmationModal({ isOpen: false, message: '', course: null });
+        }}
+        onCancel={() => {
+          setConfirmationModal({ isOpen: false, message: '', course: null });
+        }}
+      />
     </section>
   );
 };
