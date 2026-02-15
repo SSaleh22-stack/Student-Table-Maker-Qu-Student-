@@ -374,17 +374,17 @@ export const TimetableProvider: React.FC<{ children: ReactNode }> = ({ children 
   }, []);
 
   const hasConflict = useCallback((course: Course): boolean => {
-    const entry = timetable.find((e) => e.courseId === course.id);
-    if (entry) {
-      return checkScheduleConflict(course, timetable, course.id);
+    // If course is already in timetable, it can't conflict with itself
+    if (isInTimetable(course.id)) {
+      return false;
     }
     return checkScheduleConflict(course, timetable);
   }, [timetable]);
 
   const getConflictInfo = useCallback((course: Course): ConflictInfo | null => {
-    const entry = timetable.find((e) => e.courseId === course.id);
-    if (entry) {
-      return getConflictDetails(course, timetable, course.id);
+    // If course is already in timetable, it can't conflict with itself
+    if (isInTimetable(course.id)) {
+      return null;
     }
     return getConflictDetails(course, timetable);
   }, [timetable]);
