@@ -438,6 +438,11 @@ export const TimetableProvider: React.FC<{ children: ReactNode }> = ({ children 
       return null;
     }
     
+    // If timetable is empty, there's no conflict
+    if (timetable.length === 0) {
+      return null;
+    }
+    
     // Check if course has multiple time slots
     if (course.timeSlots && course.timeSlots.length > 1) {
       for (let slotIndex = 0; slotIndex < course.timeSlots.length; slotIndex++) {

@@ -386,8 +386,15 @@ export const TimetableProvider: React.FC<{ children: ReactNode }> = ({ children 
     if (isInTimetable(course.id)) {
       return null;
     }
+    
+    // If timetable is empty, there's no conflict
+    if (timetable.length === 0) {
+      return null;
+    }
+    
+    // Check for conflicts with other courses in timetable
     return getConflictDetails(course, timetable);
-  }, [timetable]);
+  }, [timetable, isInTimetable]);
 
   const isInTimetable = useCallback((courseId: string): boolean => {
     // Check if course is in timetable (either as main course or as any time slot)
