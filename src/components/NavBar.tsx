@@ -92,6 +92,13 @@ const NavBar: React.FC<NavBarProps> = ({ currentView, onViewChange }) => {
               <span className="navbar-icon">📧</span>
               <span className="navbar-text">{t.contactUs}</span>
             </button>
+            <button 
+              className="navbar-item qeeem-site-nav-btn"
+              onClick={() => window.open('https://qeeem.com/qu', '_blank')}
+            >
+              <span className="navbar-icon">⭐</span>
+              <span className="navbar-text">{t.qeeemSite}</span>
+            </button>
             <LanguageToggle />
           </div>
         </div>

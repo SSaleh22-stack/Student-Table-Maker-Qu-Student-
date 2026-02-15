@@ -19,6 +19,7 @@ export interface Translations {
   instructor: string;
   offeredCourses: string;
   courseReviewHelper: string;
+  qeeemSite: string;
   close: string;
   sunday: string;
   monday: string;
@@ -137,6 +138,7 @@ export const translations: Record<Language, Translations> = {
     instructor: 'Instructor',
     offeredCourses: 'Offered Courses According to Plan',
     courseReviewHelper: 'Course Review Helper',
+    qeeemSite: 'Qeeem Site (Instructor Ratings)',
     close: 'Close',
     sunday: 'Sunday',
     monday: 'Monday',
@@ -253,6 +255,7 @@ export const translations: Record<Language, Translations> = {
     instructor: 'المحاضر',
     offeredCourses: 'المقررات المطروحة وفق الخطة',
     courseReviewHelper: 'مساعد تقييم المقررات',
+    qeeemSite: 'موقع قيم (تقييم الدكاترة)',
     close: 'إغلاق',
     sunday: 'الأحد',
     monday: 'الاثنين',

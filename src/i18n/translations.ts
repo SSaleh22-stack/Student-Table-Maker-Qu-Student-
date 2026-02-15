@@ -63,6 +63,7 @@ export interface Translations {
   instructionsTitle: string;
   instructionsContent: string;
   courseReviewHelper: string;
+  qeeemSite: string;
   openQUReviewPage: string;
   reviewInstructions: string;
   reviewInstructionsContent: string;
@@ -185,6 +186,7 @@ export const translations: Record<Language, Translations> = {
     instructionsTitle: 'How to Use Qu Student',
     instructionsContent: '1. Navigate to the QU student portal and log in\n2. Go to the "Offered Courses" page\n3. Click "المقررات المطروحة" button to view all available courses\n4. Use the search and filter options to find courses\n5. Click "Add to Timetable" to add courses to your schedule\n6. Manage your timetable and view conflicts\n7. Export or print your timetable when ready',
     courseReviewHelper: 'Course Review Helper',
+    qeeemSite: 'Qeeem Site (Instructor Ratings)',
     openQUReviewPage: 'Open QU Review Page',
     reviewInstructions: 'Instructions',
     reviewInstructionsContent: '1. Click "Open QU Review Page" to navigate to the course evaluation page\n2. Once on the evaluation page, a floating widget will appear in the bottom-right corner\n3. Select your preferred choice (Agree or Strongly Agree) from the dropdown\n4. Click "Agree All" to automatically fill all questions\n5. Review your selections and click "Undo" if needed',
@@ -305,6 +307,7 @@ export const translations: Record<Language, Translations> = {
     instructionsTitle: 'كيفية استخدام صانع الجدول الدراسي',
     instructionsContent: 'الدخول للبوابة\n\nادخل إلى بوابة الطالب بجامعة القصيم وسجّل الدخول بحسابك الجامعي.\n\n\n\nفتح صفحة المقررات حسب الخطة\n\nمن القوائم انتقل إلى: المقررات المطروحة وفق الخطة.\n\n\n\nاستخراج المقررات للفصل\n\nاختر الفصل الدراسي المطلوب، ثم اضغط على الأيقونة الموجودة بجانب اختيار الفصل:\n\n"استخراج المقررات المطروحة وفق الخطة".\n\n\n\nالبحث والتصفية\n\nاستخدم خيارات البحث/التصفية للوصول بسرعة للمقرر (مثل: رمز المقرر، اسم المقرر، المستوى، الشعبة…).\n\n\n\nإضافة المقررات إلى الجدول\n\nعند ظهور المقررات، اضغط "إضافة إلى الجدول" أو استخدم الأيقونات المخصصة للإضافة لكل مقرر/شعبة.\n\n\n\nإدارة الجدول والتعارضات\n\nراجع جدولك بعد الإضافة، وتحقق من وجود تعارضات (تداخل أوقات/أيام).\n\nعند وجود تعارض: غيّر الشعبة أو احذف المقرر المتعارض ثم أعد المحاولة.\n\n\n\nالتصدير أو الطباعة\n\nبعد الانتهاء، قم بـ تصدير الجدول (إن توفر خيار PDF/تصدير) أو طباعة الجدول مباشرة.\n\n\n\nملاحظة سريعة: إذا لم تظهر أيقونة "استخراج…" أو خيارات الطباعة/التصدير، جرّب تحديث الصفحة، أو استخدام متصفح Chrome/Edge، والتأكد من السماح بالنوافذ المنبثقة (Pop-ups).',
     courseReviewHelper: 'مساعد تقييم المقررات',
+    qeeemSite: 'موقع قيم (تقييم الدكاترة)',
     openQUReviewPage: 'فتح صفحة تقييم جامعة القصيم',
     reviewInstructions: 'تعليمات',
     reviewInstructionsContent: '1. انقر على "فتح صفحة تقييم جامعة القصيم" للانتقال إلى صفحة التقييم\n2. بمجرد الوصول إلى صفحة التقييم، ستظهر لوحة عائمة في الزاوية اليمنى السفلى\n3. اختر خيارك المفضل (موافق أو موافق بشدة) من القائمة المنسدلة\n4. انقر على "موافقة للجميع" لملء جميع الأسئلة تلقائياً\n5. راجع اختياراتك وانقر على "تراجع" إذا لزم الأمر',
