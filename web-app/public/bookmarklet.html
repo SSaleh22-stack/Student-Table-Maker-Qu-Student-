@@ -176,7 +176,7 @@
         const currentBookmarkletCode = updateBookmarkletCode();
         
         // Get the appropriate title - use Arabic title for bookmark
-        const bookmarkTitle = '🎓 التقط المقررات - Qu Student';
+        const bookmarkTitle = '📚 التقط المقررات - Qu Student';
         
         // Set href and title to the javascript: URL for direct execution
         bookmarkletButton.href = currentBookmarkletCode;
@@ -188,7 +188,6 @@
         // Store original content
         const originalText = bookmarkletButton.textContent;
         const originalHTML = bookmarkletButton.innerHTML;
-        const bookmarkTitle = '🎓 التقط المقررات - Qu Student';
         
         // Update content on mousedown to ensure browsers read the correct name
         bookmarkletButton.addEventListener('mousedown', function() {
