@@ -193,23 +193,11 @@
         bookmarkletButton.style.cursor = 'grab';
         
         // The button text is already set to bookmarkTitle in HTML
-        // No need to store original content since we want the bookmark name to match
-        
-        // Update content on mousedown to ensure browsers read the correct name
-        bookmarkletButton.addEventListener('mousedown', function() {
-          // Ensure the text is set to bookmark title
-          this.textContent = bookmarkTitle;
-          this.innerHTML = bookmarkTitle;
-        });
+        // DON'T change it during drag - Chrome reads it before dragstart executes
         
         bookmarkletButton.addEventListener('dragstart', function(e) {
-          // CRITICAL: Update textContent and innerHTML FIRST, synchronously
-          // Browsers read the element's content at the very start of drag
-          this.textContent = bookmarkTitle;
-          this.innerHTML = bookmarkTitle;
-          
-          // Force a synchronous reflow to ensure the browser sees the updated text
-          void this.offsetHeight;
+          // DON'T update textContent here - Chrome has already read it before this executes
+          // The text is set in HTML and should remain unchanged
           
           // Use the cached bookmarklet code (no await needed)
           let freshCode = cachedBookmarkletCode;
