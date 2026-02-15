@@ -349,7 +349,7 @@ const CourseList: React.FC<CourseListProps> = ({ courses }) => {
 
 
   return (
-    <section className="course-list-section">
+    <section className={`course-list-section ${confirmationModal.isOpen ? 'modal-open' : ''}`}>
       {notification && (
         <div className={`notification ${notification.type}`}>
           {notification.message}

@@ -127,7 +127,7 @@ const OfferedCoursesModal: React.FC<OfferedCoursesModalProps> = ({ courses, isOp
 
   return (
     <div className="offered-courses-modal-overlay" onClick={onClose}>
-      <div className="offered-courses-modal" onClick={(e) => e.stopPropagation()}>
+      <div className={`offered-courses-modal ${confirmationModal.isOpen ? 'confirmation-modal-open' : ''}`} onClick={(e) => e.stopPropagation()}>
         <div className="offered-courses-modal-header">
           <h2>{t.offeredCourses}</h2>
           <button className="close-modal-btn" onClick={onClose}>
