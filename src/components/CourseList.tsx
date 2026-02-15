@@ -155,14 +155,9 @@ const CourseList: React.FC<CourseListProps> = ({ courses }) => {
   }, [filteredCourses]);
 
   const handleAddToTimetable = (course: Course, forceWithConflict: boolean = false) => {
+    // If course is already in timetable, remove it instead
     if (isInTimetable(course.id)) {
-      setNotification({
-        message: language === 'en' 
-          ? `${course.code} is already in your timetable` 
-          : `${course.code} موجود بالفعل في الجدول`,
-        type: 'error'
-      });
-      setTimeout(() => setNotification(null), 3000);
+      handleRemoveFromTimetable(course);
       return;
     }
 
@@ -223,15 +218,16 @@ const CourseList: React.FC<CourseListProps> = ({ courses }) => {
   };
 
   const handleRemoveFromTimetable = (course: Course) => {
-    // If course has multiple time slots, remove all of them
+    // Remove the course from timetable
+    removeCourse(course.id);
+    
+    // If course has multiple time slots, also remove all time slot entries
     if (course.timeSlots && course.timeSlots.length > 1) {
-      // Remove all time slot entries
       course.timeSlots.forEach((_, slotIndex) => {
         removeCourse(`${course.id}-slot-${slotIndex}`);
       });
-    } else {
-      removeCourse(course.id);
     }
+    
     setNotification({
       message: language === 'en'
         ? `${course.code} removed from timetable`
