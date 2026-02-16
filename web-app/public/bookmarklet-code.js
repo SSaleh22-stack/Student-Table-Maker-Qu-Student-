@@ -86,30 +86,46 @@
     let errorRows = 0;
     try {
       console.log('🔵 Extracting courses from QU portal:', window.location.href);
-      const rows = document.querySelectorAll('tbody tr[class^="ROW"]');
-      console.log(`🔵 Found ${rows.length} course rows`);
+      console.log('🔵 Document ready state:', document.readyState);
+      console.log('🔵 Page title:', document.title);
       
+      // Try primary selector first
+      let rows = document.querySelectorAll('tbody tr[class^="ROW"]');
+      console.log(`🔵 Found ${rows.length} course rows with primary selector`);
+      
+      // If no rows found, try alternative selectors (for iPad Safari)
       if (rows.length === 0) {
-        console.error('❌ NO ROWS FOUND! Trying alternative selectors...');
-        // Try alternative selectors
+        console.warn('❌ NO ROWS FOUND with primary selector! Trying alternative selectors...');
         const altSelectors = [
-          'tbody tr',
-          'table tbody tr',
-          'tr[class*="ROW"]',
-          'tr[class*="row"]',
-          '.dataTable tbody tr',
-          'table tr'
+          'tbody tr[class*="ROW"]',  // Case-insensitive
+          'tbody tr[class*="row"]',  // Lowercase
+          'table tbody tr',           // Any tbody tr
+          'tbody tr',                  // Any tbody row
+          '.dataTable tbody tr',      // DataTable
+          'table tr'                  // Any table row
         ];
+        
         for (const selector of altSelectors) {
           const altRows = document.querySelectorAll(selector);
           console.log(`  Trying "${selector}": ${altRows.length} rows`);
           if (altRows.length > 0) {
-            console.warn(`⚠️ Found ${altRows.length} rows with alternative selector: ${selector}`);
-            // Don't use it, just log it for debugging
+            console.warn(`✅ Found ${altRows.length} rows with alternative selector: ${selector}`);
+            rows = altRows;
+            break; // Use the first selector that finds rows
           }
         }
-        console.error('❌ No course rows found with any selector!');
-        return []; // Return empty array - this will trigger the "no courses" alert
+        
+        if (rows.length === 0) {
+          console.error('❌ No course rows found with any selector!');
+          // Log page structure for debugging
+          const tables = document.querySelectorAll('table');
+          console.log('📊 Found', tables.length, 'tables on page');
+          tables.forEach((table, idx) => {
+            const tbodyRows = table.querySelectorAll('tbody tr');
+            console.log(`  Table ${idx}: ${tbodyRows.length} tbody rows`);
+          });
+          return []; // Return empty array - this will trigger retry or error
+        }
       }
       rows.forEach((row, index) => {
         try {
@@ -389,17 +405,24 @@
         console.warn('⚠️ Warning: URL is very long (' + urlWithData.length + ' chars). Some browsers may truncate URLs over 2MB.');
       }
       
-      // Detect Safari browser
+      // Detect Safari browser (including iPad)
       const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent) || 
                        (navigator.vendor && navigator.vendor.indexOf('Apple') > -1 && navigator.userAgent && !navigator.userAgent.match('CriOS') && !navigator.userAgent.match('FxiOS'));
+      const isIPad = /iPad/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
       
-      if (isSafari) {
-        // Safari: Use location.href directly (Safari blocks window.open from bookmarklets)
+      if (isSafari || isIPad) {
+        // Safari/iPad: Use location.href directly (Safari blocks window.open from bookmarklets)
+        // Add small delay to ensure localStorage is saved before redirect
         const message = isArabic
           ? '✅ تم استخراج ' + validCourses.length + ' مقرر بنجاح!\n\nجاري إعادة التوجيه إلى صانع الجدول...'
           : '✅ Successfully extracted ' + validCourses.length + ' courses!\n\nRedirecting to table maker...';
         alert(message);
-        window.location.href = urlWithData;
+        
+        // Small delay to ensure localStorage is persisted (especially important on iPad)
+        setTimeout(function() {
+          console.log('✅ Redirecting to:', urlWithData.substring(0, 100) + '...');
+          window.location.href = urlWithData;
+        }, 100);
       } else {
         // Chrome and other browsers: Try to open in new tab
         const message = isArabic
@@ -416,10 +439,11 @@
     
     // Function to attempt extraction with retry logic (for iPad where DOM might not be ready)
     function attemptExtractionWithRetry(maxRetries, retryDelay, callback) {
-      maxRetries = maxRetries || 3;
-      retryDelay = retryDelay || 500;
+      maxRetries = maxRetries || 5; // Increased retries for iPad
+      retryDelay = retryDelay || 1000; // Longer delay for iPad (1 second)
       
       console.log('🔵🔵🔵 CALLING extractCoursesFromPage() 🔵🔵🔵');
+      console.log('🔵 Attempt:', (5 - maxRetries + 1), 'of 5');
       let courses = extractCoursesFromPage();
       console.log('🔵🔵🔵 EXTRACTION COMPLETE 🔵🔵🔵');
       console.log('🔵 Extracted courses:', courses);
@@ -429,10 +453,15 @@
       
       // If no courses found and we have retries left, wait and retry (iPad DOM might not be ready)
       if ((!courses || courses.length === 0) && maxRetries > 0) {
-        const rowsFound = document.querySelectorAll('tbody tr[class^="ROW"]').length;
-        console.warn(`⚠️ No courses found (${rowsFound} rows). Retrying in ${retryDelay}ms... (${maxRetries} retries left)`);
+        // Check all possible selectors to see if anything exists
+        const primaryRows = document.querySelectorAll('tbody tr[class^="ROW"]').length;
+        const altRows = document.querySelectorAll('tbody tr').length;
+        const allRows = document.querySelectorAll('tr').length;
+        console.warn(`⚠️ No courses found. Primary rows: ${primaryRows}, Alt rows: ${altRows}, All rows: ${allRows}`);
+        console.warn(`⚠️ Retrying in ${retryDelay}ms... (${maxRetries} retries left)`);
+        console.warn(`⚠️ Document ready state: ${document.readyState}`);
         
-        // Wait and retry
+        // Wait and retry with longer delay
         setTimeout(function() {
           attemptExtractionWithRetry(maxRetries - 1, retryDelay, callback);
         }, retryDelay);
@@ -441,11 +470,16 @@
       
       // If still no courses after retries, show error
       if (!courses || courses.length === 0) {
-        const rowsFound = document.querySelectorAll('tbody tr[class^="ROW"]').length;
-        console.error('No courses extracted after retries. Check the page structure.');
+        const primaryRows = document.querySelectorAll('tbody tr[class^="ROW"]').length;
+        const altRows = document.querySelectorAll('tbody tr').length;
+        const allRows = document.querySelectorAll('tr').length;
+        console.error('❌ No courses extracted after all retries. Check the page structure.');
         console.error('Page URL:', window.location.href);
         console.error('Page title:', document.title);
-        console.error('Rows found with selector "tbody tr[class^=\\"ROW\\"]":', rowsFound);
+        console.error('Document ready state:', document.readyState);
+        console.error('Primary rows found:', primaryRows);
+        console.error('Alternative rows found:', altRows);
+        console.error('All rows found:', allRows);
         
         // Try alternative selectors to help debug
         const altSelectors = [
@@ -454,7 +488,7 @@
           'tr[class*="ROW"]',
           'tr[class*="row"]'
         ];
-        console.log('Trying alternative selectors:');
+        console.log('Final check - trying alternative selectors:');
         altSelectors.forEach(selector => {
           const count = document.querySelectorAll(selector).length;
           if (count > 0) {
@@ -463,8 +497,8 @@
         });
         
         const message = isArabic 
-          ? `لم يتم العثور على مقررات في هذه الصفحة.\n\nالصفحة: ${document.title}\nالعنوان: ${window.location.href}\nالصفوف الموجودة: ${rowsFound}\n\nتأكد من أنك في صفحة المقررات المطروحة في بوابة الطالب وأن المقررات مرئية.`
-          : `No courses found on this page.\n\nPage: ${document.title}\nURL: ${window.location.href}\nRows found: ${rowsFound}\n\nMake sure you are on the QU student portal course page (offeredCourses page) and that courses are visible.`;
+          ? `لم يتم العثور على مقررات في هذه الصفحة.\n\nالصفحة: ${document.title}\nالعنوان: ${window.location.href}\n\nتأكد من:\n1. أنك في صفحة المقررات المطروحة\n2. أن الجدول مرئي ومحمّل بالكامل\n3. انتظر قليلاً ثم حاول مرة أخرى`
+          : `No courses found on this page.\n\nPage: ${document.title}\nURL: ${window.location.href}\n\nMake sure:\n1. You are on the QU student portal course page (offeredCourses)\n2. The course table is visible and fully loaded\n3. Wait a moment and try again`;
         alert(message);
         console.error('Stopping execution - no courses to extract');
         return; // IMPORTANT: Don't redirect if no courses found
@@ -474,8 +508,8 @@
       callback(courses);
     }
     
-    // Start extraction with retry logic
-    attemptExtractionWithRetry(3, 500, processCourses);
+    // Start extraction with retry logic (5 retries, 1 second delay for iPad Safari)
+    attemptExtractionWithRetry(5, 1000, processCourses);
   } catch (error) {
     console.error('Bookmarklet error:', error);
     console.error('Error stack:', error.stack);

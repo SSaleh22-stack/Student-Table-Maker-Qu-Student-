@@ -42,38 +42,53 @@ const AppContent: React.FC = () => {
 
   // Check for extracted courses from storage on mount
   React.useEffect(() => {
-    // FIRST: Check URL hash for courses (iPad Safari redirects with #courses=...)
-    const hash = window.location.hash;
-    if (hash && hash.includes('courses=')) {
-      try {
-        // Parse hash: #courses=...&lang=...
-        const hashParams = new URLSearchParams(hash.substring(1)); // Remove #
-        const coursesParam = hashParams.get('courses');
-        if (coursesParam) {
-          const decoded = decodeURIComponent(coursesParam);
-          const parsed = JSON.parse(decoded);
-          if (parsed && Array.isArray(parsed) && parsed.length > 0) {
-            console.log('✅ Loaded courses from URL hash:', parsed.length);
-            setCourses(parsed);
-            setCurrentView('timetable');
-            // Also save to localStorage for consistency
-            try {
-              localStorage.setItem('qu-student-courses', JSON.stringify(parsed));
-              localStorage.setItem('qu-student-courses-timestamp', Date.now().toString());
-            } catch (e) {
-              console.warn('Could not save to localStorage:', e);
+    // Function to parse courses from hash (reusable)
+    const parseCoursesFromHash = () => {
+      const hash = window.location.hash;
+      if (hash && hash.includes('courses=')) {
+        try {
+          const hashParams = new URLSearchParams(hash.substring(1));
+          const coursesParam = hashParams.get('courses');
+          if (coursesParam) {
+            const decoded = decodeURIComponent(coursesParam);
+            const parsed = JSON.parse(decoded);
+            if (parsed && Array.isArray(parsed) && parsed.length > 0) {
+              console.log('✅ Loaded courses from URL hash:', parsed.length);
+              setCourses(parsed);
+              setCurrentView('timetable');
+              // Also save to localStorage for consistency
+              try {
+                localStorage.setItem('qu-student-courses', JSON.stringify(parsed));
+                localStorage.setItem('qu-student-courses-timestamp', Date.now().toString());
+              } catch (e) {
+                console.warn('Could not save to localStorage:', e);
+              }
+              // Clear hash to avoid re-parsing
+              window.history.replaceState({}, '', window.location.pathname + window.location.search);
+              const message = `✅ تم تحميل ${parsed.length} مقرر من الإشارة المرجعية!`;
+              setSuccessMessage(message);
+              setTimeout(() => setSuccessMessage(null), 5000);
+              return true; // Successfully loaded
             }
-            // Clear hash to avoid re-parsing
-            window.history.replaceState({}, '', window.location.pathname + window.location.search);
-            const message = `✅ تم تحميل ${parsed.length} مقرر من الإشارة المرجعية!`;
-            setSuccessMessage(message);
-            setTimeout(() => setSuccessMessage(null), 5000);
-            return; // Exit early since we loaded from hash
           }
+        } catch (error) {
+          console.error('Error parsing courses from URL hash:', error);
         }
-      } catch (error) {
-        console.error('Error parsing courses from URL hash:', error);
       }
+      return false; // No courses in hash
+    };
+    
+    // FIRST: Check URL hash for courses (iPad Safari redirects with #courses=...)
+    const hashLoaded = parseCoursesFromHash();
+    if (hashLoaded) {
+      // Courses loaded from hash, set up listeners and exit
+      const handleHashChange = () => {
+        parseCoursesFromHash();
+      };
+      window.addEventListener('hashchange', handleHashChange);
+      return () => {
+        window.removeEventListener('hashchange', handleHashChange);
+      };
     }
     
     // Check URL parameter
@@ -107,6 +122,13 @@ const AppContent: React.FC = () => {
         console.error('Error parsing courses from localStorage:', error);
       }
     }
+    
+    // Listen for hash changes (important for Safari iPad redirects)
+    const handleHashChange = () => {
+      parseCoursesFromHash();
+    };
+    
+    window.addEventListener('hashchange', handleHashChange);
     
     // Listen for storage changes (when bookmarklet runs on another tab)
     const handleStorageChange = (e: StorageEvent) => {
@@ -153,6 +175,7 @@ const AppContent: React.FC = () => {
     }, 500);
     
     return () => {
+      window.removeEventListener('hashchange', handleHashChange);
       window.removeEventListener('storage', handleStorageChange);
       clearInterval(interval);
     };
