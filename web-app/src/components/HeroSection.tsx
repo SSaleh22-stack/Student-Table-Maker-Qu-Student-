@@ -13,12 +13,12 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onExtractCourses, isExtractin
 
   return (
     <>
-      <section className="hero-section">
-        <div className="hero-overlay"></div>
-        <div className="hero-content">
-          <h1 className="hero-title">{t.appTitle}</h1>
-          <p className="hero-subtitle">{t.appSubtitle}</p>
-          <p className="hero-welcome">{t.welcome}</p>
+    <section className="hero-section">
+      <div className="hero-overlay"></div>
+      <div className="hero-content">
+        <h1 className="hero-title">{t.appTitle}</h1>
+        <p className="hero-subtitle">{t.appSubtitle}</p>
+        <p className="hero-welcome">{t.welcome}</p>
           <div className="hero-buttons">
             <a 
               href="./bookmarklet.html" 
@@ -37,8 +37,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onExtractCourses, isExtractin
               تعليمات
             </button>
           </div>
-        </div>
-      </section>
+      </div>
+    </section>
       
       {showInstructions && (
         <div className="instructions-modal-overlay" onClick={() => setShowInstructions(false)}>

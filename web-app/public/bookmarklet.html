@@ -89,54 +89,16 @@
       transform: translateY(0);
     }
     h1 { color: #2d3748; }
-     .highlight {
-       background: #fff3cd;
-       padding: 0.2rem 0.5rem;
-       border-radius: 4px;
-       font-weight: 600;
-     }
-     .instructions-btn {
-       background: white;
-       color: #667eea;
-       border: none;
-       padding: 0.75rem 1.5rem;
-       font-size: 0.95rem;
-       font-weight: 600;
-       border-radius: 0.5rem;
-       cursor: pointer;
-       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-       transition: all 0.3s ease;
-       position: relative;
-       overflow: hidden;
-     }
-     .instructions-btn::before {
-       content: '';
-       position: absolute;
-       top: 50%;
-       left: 50%;
-       width: 0;
-       height: 0;
-       border-radius: 50%;
-       background: rgba(102, 126, 234, 0.1);
-       transform: translate(-50%, -50%);
-       transition: width 0.5s, height 0.5s;
-     }
-     .instructions-btn:hover::before {
-       width: 400px;
-       height: 400px;
-     }
-     .instructions-btn:hover {
-       transform: translateY(-2px);
-       box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
-     }
-     .instructions-btn:active {
-       transform: translateY(0);
-     }
-   </style>
+    .highlight {
+      background: #fff3cd;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+  </style>
 </head>
 <body>
   <h1>📚 إعداد الإشارة المرجعية - Qu Student</h1>
-  <button class="instructions-btn" id="instructionsBtn" style="margin-bottom: 2rem;">تعليمات</button>
   
   <div class="setup-container">
     <h2>الإعداد السريع</h2>
@@ -150,7 +112,7 @@
     </p>
   </div>
 
-  <div class="instructions" id="instructionsSection" style="display: none;">
+  <div class="instructions">
     <h3>كيفية الاستخدام:</h3>
     <ol style="text-align: right; direction: rtl;">
       <li>بعد إضافة الإشارة المرجعية، اذهب إلى صفحة المقررات المطروحة في بوابة الطالب</li>
@@ -206,24 +168,9 @@
     const bookmarkletUrl = window.location.origin + window.location.pathname.replace('bookmarklet.html', 'extract-courses.html');
     
     
-     // Initialize drag functionality on page load
-     window.addEventListener('DOMContentLoaded', function() {
-       // Toggle instructions section
-       const instructionsBtn = document.getElementById('instructionsBtn');
-       const instructionsSection = document.getElementById('instructionsSection');
-       if (instructionsBtn && instructionsSection) {
-         instructionsBtn.addEventListener('click', function() {
-           if (instructionsSection.style.display === 'none') {
-             instructionsSection.style.display = 'block';
-             this.textContent = 'إخفاء التعليمات';
-           } else {
-             instructionsSection.style.display = 'none';
-             this.textContent = 'تعليمات';
-           }
-         });
-       }
-       
-       const bookmarkletButton = document.getElementById('bookmarkletLink');
+    // Initialize drag functionality on page load
+    window.addEventListener('DOMContentLoaded', function() {
+      const bookmarkletButton = document.getElementById('bookmarkletLink');
       if (bookmarkletButton) {
         // Get the appropriate title - use Arabic title for bookmark
         const bookmarkTitle = '📚 التقط المقررات - Qu Student';
