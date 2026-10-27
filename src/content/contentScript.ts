@@ -3,6 +3,15 @@
  * Injects a floating button to extract courses and listens for messages
  */
 
+// Small stroke icons matching the dashboard (used instead of emoji)
+const svgIcon = (d: string): string =>
+  `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0;display:block">${d}</svg>`;
+const ICON_EXTRACT = svgIcon('<path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>');
+const ICON_CHECK = svgIcon('<path d="M20 6L9 17l-5-5"/>');
+const ICON_X = svgIcon('<path d="M18 6L6 18M6 6l12 12"/>');
+const ICON_ALERT = svgIcon('<path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0zM12 9v4M12 17h.01"/>');
+const withIcon = (icon: string, text: string): string => `${icon}<span>${text}</span>`;
+
 // Check if extension context is valid BEFORE importing modules
 // This prevents errors during module initialization
 let extensionContextValid = false;
@@ -20,14 +29,14 @@ try {
     try {
       const lang = ((window as any).__QU_COURSE_EXTRACTOR_LANG__ || 'ar') as 'en' | 'ar';
       const errorText = lang === 'ar' 
-        ? '⚠️ تم إعادة تحميل الإضافة. يرجى تحديث الصفحة (F5) لاستخدام الإضافة.'
-        : '⚠️ Extension reloaded. Please refresh the page (F5) to use the extension.';
+        ? 'تم إعادة تحميل الإضافة. يرجى تحديث الصفحة (F5) لاستخدام الإضافة.'
+        : 'Extension reloaded. Please refresh the page (F5) to use the extension.';
       
       // Try to update existing button if it exists
       const existingButton = document.getElementById('qu-course-extractor-btn');
       if (existingButton) {
-        existingButton.innerHTML = errorText;
-        existingButton.style.background = 'linear-gradient(135deg, #ed8936 0%, #dd6b20 100%)';
+        existingButton.innerHTML = withIcon(ICON_ALERT, errorText);
+        existingButton.style.background = '#C2410C';
         existingButton.style.cursor = 'not-allowed';
         (existingButton as HTMLButtonElement).disabled = true;
       } else {
@@ -38,13 +47,13 @@ try {
           position: fixed;
           top: 20px;
           right: 20px;
-          background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+          background: #C2410C;
           color: white;
-          padding: 1rem 1.5rem;
-          border-radius: 8px;
-          box-shadow: 0 4px 12px rgba(237, 137, 54, 0.4);
+          padding: 14px 18px;
+          border-radius: 14px;
+          box-shadow: 0 12px 32px rgba(27, 37, 51, 0.2);
           z-index: 999999;
-          font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+          font-family: 'IBM Plex Sans Arabic', 'Segoe UI', Tahoma, Arial, sans-serif;
           font-size: 14px;
           font-weight: 600;
           max-width: 400px;
@@ -101,10 +110,10 @@ const handleContextInvalidated = (error: any): boolean => {
       if (button) {
         const lang = ((window as any).__QU_COURSE_EXTRACTOR_LANG__ || 'ar') as 'en' | 'ar';
         const errorText = lang === 'ar' 
-          ? '⚠️ تم إعادة تحميل الإضافة. يرجى تحديث الصفحة (F5).'
-          : '⚠️ Extension reloaded. Please refresh the page (F5).';
+          ? withIcon(ICON_ALERT, 'تم إعادة تحميل الإضافة. يرجى تحديث الصفحة (F5).')
+          : withIcon(ICON_ALERT, 'Extension reloaded. Please refresh the page (F5).');
         button.innerHTML = errorText;
-        button.style.background = 'linear-gradient(135deg, #ed8936 0%, #dd6b20 100%)';
+        button.style.background = '#C2410C';
         button.style.cursor = 'not-allowed';
         (button as HTMLButtonElement).disabled = true;
       }
@@ -183,43 +192,43 @@ function getCurrentLanguage(): 'en' | 'ar' {
 // Get button text based on language
 function getButtonText(): string {
   return getCurrentLanguage() === 'en' 
-    ? '📚 Extract Courses According to Plan'
-    : '📚 استخراج المقررات المطروحة وفق الخطة';
+    ? withIcon(ICON_EXTRACT, 'Extract Courses According to Plan')
+    : withIcon(ICON_EXTRACT, 'استخراج المقررات المطروحة وفق الخطة');
 }
 
 // Get loading text based on language
 function getLoadingText(): string {
   return getCurrentLanguage() === 'en'
-    ? '<span style="padding-left: 30px;">Extracting...</span>'
+    ? '<span style="padding-right: 30px;">Extracting...</span>'
     : '<span style="padding-right: 30px;">جاري الاستخراج...</span>';
 }
 
 // Get error text based on language
 function getErrorText(): string {
   return getCurrentLanguage() === 'en'
-    ? '❌ Extension Error'
-    : '❌ خطأ في الإضافة';
+    ? withIcon(ICON_X, 'Extension Error')
+    : withIcon(ICON_X, 'خطأ في الإضافة');
 }
 
 // Get no courses text based on language
 function getNoCoursesText(): string {
   return getCurrentLanguage() === 'en'
-    ? '❌ No courses found'
-    : '❌ لم يتم العثور على مقررات';
+    ? withIcon(ICON_X, 'No courses found')
+    : withIcon(ICON_X, 'لم يتم العثور على مقررات');
 }
 
 // Get generic error text based on language
 function getGenericErrorText(): string {
   return getCurrentLanguage() === 'en'
-    ? '❌ Error'
-    : '❌ خطأ';
+    ? withIcon(ICON_X, 'Error')
+    : withIcon(ICON_X, 'خطأ');
 }
 
 // Get success text based on language
 function getSuccessText(): string {
   return getCurrentLanguage() === 'en'
-    ? '✅ Extraction Complete!'
-    : '✅ تم الاستخراج!';
+    ? withIcon(ICON_CHECK, 'Extraction Complete!')
+    : withIcon(ICON_CHECK, 'تم الاستخراج!');
 }
 
 // Load language preference
@@ -326,27 +335,26 @@ function injectExtractButton() {
   // Button styles will be set in insertButtonAtTarget function
 
   // Enhanced hover effects with shimmer
+  // Calm hover: slightly darker and lifted (works for every state color)
   button.addEventListener('mouseenter', () => {
-    button.style.transform = 'translateY(-3px) scale(1.02)';
-    button.style.boxShadow = '0 8px 25px rgba(102, 126, 234, 0.6)';
-    button.style.borderColor = 'rgba(255, 255, 255, 0.3)';
-    button.style.backgroundPosition = 'right center';
+    button.style.transform = 'translateY(-1px)';
+    button.style.boxShadow = '0 6px 16px rgba(14, 116, 144, 0.30)';
+    button.style.filter = 'brightness(0.92)';
   });
 
   button.addEventListener('mouseleave', () => {
-    button.style.transform = 'translateY(0) scale(1)';
-    button.style.boxShadow = '0 4px 15px rgba(102, 126, 234, 0.4)';
-    button.style.borderColor = 'transparent';
-    button.style.backgroundPosition = 'left center';
+    button.style.transform = 'translateY(0)';
+    button.style.boxShadow = '0 2px 8px rgba(14, 116, 144, 0.25)';
+    button.style.filter = 'none';
   });
-  
+
   // Active state
   button.addEventListener('mousedown', () => {
-    button.style.transform = 'translateY(-1px) scale(0.98)';
+    button.style.transform = 'translateY(0)';
   });
-  
+
   button.addEventListener('mouseup', () => {
-    button.style.transform = 'translateY(-3px) scale(1.02)';
+    button.style.transform = 'translateY(-1px)';
   });
 
   // Click handler
@@ -356,7 +364,7 @@ function injectExtractButton() {
     button.innerHTML = getLoadingText();
     button.style.opacity = '0.9';
     button.style.cursor = 'wait';
-    button.style.transform = 'translateY(0) scale(1)';
+    button.style.transform = 'translateY(0)';
     button.style.animation = 'buttonPulse 1.5s ease-in-out infinite';
 
     // Helper function to reset button on error
@@ -364,12 +372,12 @@ function injectExtractButton() {
       button.classList.remove('loading');
       button.classList.add('error');
       button.innerHTML = errorText;
-      button.style.background = 'linear-gradient(135deg, #e53e3e 0%, #c53030 100%)';
+      button.style.background = '#B42318';
       button.style.backgroundSize = '200% auto';
       setTimeout(() => {
         button.classList.remove('error');
         button.innerHTML = getButtonText();
-        button.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+        button.style.background = '#0E7490';
         button.style.backgroundSize = '200% auto';
         button.disabled = false;
         button.style.opacity = '1';
@@ -404,8 +412,8 @@ function injectExtractButton() {
       // Check if chrome.runtime is available before proceeding
       if (!isRuntimeValid()) {
         const errorText = getCurrentLanguage() === 'ar' 
-          ? '⚠️ تم إعادة تحميل الإضافة. يرجى تحديث الصفحة والمحاولة مرة أخرى.'
-          : '⚠️ Extension was reloaded. Please refresh the page and try again.';
+          ? withIcon(ICON_ALERT, 'تم إعادة تحميل الإضافة. يرجى تحديث الصفحة والمحاولة مرة أخرى.')
+          : withIcon(ICON_ALERT, 'Extension was reloaded. Please refresh the page and try again.');
         resetButtonOnError(errorText);
         return;
       }
@@ -427,12 +435,12 @@ function injectExtractButton() {
         button.classList.remove('loading');
         button.classList.add('error');
         button.innerHTML = getNoCoursesText();
-        button.style.background = 'linear-gradient(135deg, #e53e3e 0%, #c53030 100%)';
+        button.style.background = '#B42318';
         button.style.backgroundSize = '200% auto';
         setTimeout(() => {
           button.classList.remove('error');
           button.innerHTML = getButtonText();
-          button.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+          button.style.background = '#0E7490';
           button.style.backgroundSize = '200% auto';
           button.disabled = false;
           button.style.opacity = '1';
@@ -455,8 +463,8 @@ function injectExtractButton() {
       // Double-check runtime validity right before sending message
       if (!isRuntimeValid()) {
         const errorText = getCurrentLanguage() === 'ar' 
-          ? '⚠️ تم إعادة تحميل الإضافة. يرجى تحديث الصفحة والمحاولة مرة أخرى.'
-          : '⚠️ Extension was reloaded. Please refresh the page and try again.';
+          ? withIcon(ICON_ALERT, 'تم إعادة تحميل الإضافة. يرجى تحديث الصفحة والمحاولة مرة أخرى.')
+          : withIcon(ICON_ALERT, 'Extension was reloaded. Please refresh the page and try again.');
         resetButtonOnError(errorText);
         return;
       }
@@ -470,8 +478,8 @@ function injectExtractButton() {
         } catch (runtimeAccessError) {
           // Context invalidated - can't access chrome.runtime
           const errorText = getCurrentLanguage() === 'ar' 
-            ? '⚠️ تم إعادة تحميل الإضافة. يرجى تحديث الصفحة والمحاولة مرة أخرى.'
-            : '⚠️ Extension was reloaded. Please refresh the page and try again.';
+            ? withIcon(ICON_ALERT, 'تم إعادة تحميل الإضافة. يرجى تحديث الصفحة والمحاولة مرة أخرى.')
+            : withIcon(ICON_ALERT, 'Extension was reloaded. Please refresh the page and try again.');
           resetButtonOnError(errorText);
           return;
         }
@@ -509,19 +517,19 @@ function injectExtractButton() {
                     errorMsg.includes('context invalidated') ||
                     !isRuntimeValid()) {
                   const errorText = getCurrentLanguage() === 'ar' 
-                    ? '⚠️ تم إعادة تحميل الإضافة. يرجى تحديث الصفحة والمحاولة مرة أخرى.'
-                    : '⚠️ Extension was reloaded. Please refresh the page and try again.';
+                    ? withIcon(ICON_ALERT, 'تم إعادة تحميل الإضافة. يرجى تحديث الصفحة والمحاولة مرة أخرى.')
+                    : withIcon(ICON_ALERT, 'Extension was reloaded. Please refresh the page and try again.');
                   button.innerHTML = errorText;
                 } else {
                   button.innerHTML = getGenericErrorText();
                 }
                 
-                button.style.background = 'linear-gradient(135deg, #e53e3e 0%, #c53030 100%)';
+                button.style.background = '#B42318';
                 button.style.backgroundSize = '200% auto';
                 setTimeout(() => {
                   button.classList.remove('error');
                   button.innerHTML = getButtonText();
-                  button.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+                  button.style.background = '#0E7490';
                   button.style.backgroundSize = '200% auto';
                   button.disabled = false;
                   button.style.opacity = '1';
@@ -531,12 +539,12 @@ function injectExtractButton() {
               } else {
                 button.classList.add('success');
                 button.innerHTML = getSuccessText();
-                button.style.background = 'linear-gradient(135deg, #48bb78 0%, #38a169 100%)';
+                button.style.background = '#15803D';
                 button.style.backgroundSize = '200% auto';
                 setTimeout(() => {
                   button.classList.remove('success');
                   button.innerHTML = getButtonText();
-                  button.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+                  button.style.background = '#0E7490';
                   button.style.backgroundSize = '200% auto';
                   button.disabled = false;
                   button.style.opacity = '1';
@@ -548,8 +556,8 @@ function injectExtractButton() {
               // Error in callback - likely context invalidated
               console.error('Error in sendMessage callback:', callbackError);
               const errorText = getCurrentLanguage() === 'ar' 
-                ? '⚠️ تم إعادة تحميل الإضافة. يرجى تحديث الصفحة والمحاولة مرة أخرى.'
-                : '⚠️ Extension was reloaded. Please refresh the page and try again.';
+                ? withIcon(ICON_ALERT, 'تم إعادة تحميل الإضافة. يرجى تحديث الصفحة والمحاولة مرة أخرى.')
+                : withIcon(ICON_ALERT, 'Extension was reloaded. Please refresh the page and try again.');
               resetButtonOnError(errorText);
             }
           }
@@ -566,8 +574,8 @@ function injectExtractButton() {
             errorMessage.includes('context invalidated') ||
             !isRuntimeValid()) {
           errorText = getCurrentLanguage() === 'ar' 
-            ? '⚠️ تم إعادة تحميل الإضافة. يرجى تحديث الصفحة والمحاولة مرة أخرى.'
-            : '⚠️ Extension was reloaded. Please refresh the page and try again.';
+            ? withIcon(ICON_ALERT, 'تم إعادة تحميل الإضافة. يرجى تحديث الصفحة والمحاولة مرة أخرى.')
+            : withIcon(ICON_ALERT, 'Extension was reloaded. Please refresh the page and try again.');
         } else {
           errorText = getGenericErrorText();
         }
@@ -584,8 +592,8 @@ function injectExtractButton() {
           errorMessage.includes('message port closed') ||
           errorMessage.includes('context invalidated')) {
         errorText = getCurrentLanguage() === 'ar' 
-          ? '⚠️ تم إعادة تحميل الإضافة. يرجى تحديث الصفحة والمحاولة مرة أخرى.'
-          : '⚠️ Extension was reloaded. Please refresh the page and try again.';
+          ? withIcon(ICON_ALERT, 'تم إعادة تحميل الإضافة. يرجى تحديث الصفحة والمحاولة مرة أخرى.')
+          : withIcon(ICON_ALERT, 'Extension was reloaded. Please refresh the page and try again.');
       } else {
         errorText = getGenericErrorText();
       }
@@ -679,22 +687,25 @@ function injectExtractButton() {
   // Change positioning to relative/absolute within container
   button.style.cssText = `
     position: relative !important;
-    display: inline-block !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
     margin: 10px 0 !important;
     width: auto !important;
+    min-height: 44px !important;
     z-index: 10000 !important;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-    background-size: 200% auto !important;
-    color: white !important;
-    border: 2px solid transparent !important;
-    padding: 14px 28px !important;
-    border-radius: 30px !important;
+    background: #0E7490 !important;
+    color: #FFFFFF !important;
+    border: 0 !important;
+    padding: 0 20px !important;
+    border-radius: 999px !important;
     font-size: 15px !important;
     font-weight: 600 !important;
+    line-height: 1.2 !important;
     cursor: pointer !important;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4) !important;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    font-family: 'Segoe UI', Tahoma, Arial, sans-serif !important;
+    box-shadow: 0 2px 8px rgba(14, 116, 144, 0.25) !important;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease, background-color 0.15s ease !important;
+    font-family: 'IBM Plex Sans Arabic', 'Segoe UI', Tahoma, Arial, sans-serif !important;
     overflow: hidden !important;
     white-space: nowrap !important;
     user-select: none !important;
@@ -715,10 +726,10 @@ function injectExtractButton() {
     existingStyle.textContent = `
       @keyframes buttonPulse {
         0%, 100% {
-          box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+          box-shadow: 0 4px 15px rgba(14, 116, 144, 0.4);
         }
         50% {
-          box-shadow: 0 6px 25px rgba(102, 126, 234, 0.6);
+          box-shadow: 0 6px 25px rgba(14, 116, 144, 0.6);
         }
       }
       
@@ -785,7 +796,12 @@ function injectExtractButton() {
       #qu-course-extractor-btn {
         animation: fadeIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
         position: relative !important;
-        display: inline-block !important;
+        display: inline-flex !important;
+      }
+
+      #qu-course-extractor-btn:focus-visible {
+        outline: 3px solid rgba(14, 116, 144, 0.45) !important;
+        outline-offset: 2px !important;
       }
       
       #qu-extension-error-banner {

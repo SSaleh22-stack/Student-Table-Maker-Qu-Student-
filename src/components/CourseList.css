@@ -79,11 +79,43 @@
   color: var(--qs-muted);
 }
 
-/* Course groups */
+/* Course groups: the only part of the panel that scrolls */
 .qs-groups {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  padding-inline-end: 6px;
+  margin-inline-end: -6px;
+  scrollbar-width: thin;
+  scrollbar-color: #CBD5E1 transparent;
+}
+
+.qs-groups > * {
+  flex-shrink: 0;
+}
+
+.qs-groups::-webkit-scrollbar {
+  width: 8px;
+}
+
+.qs-groups::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 999px;
+}
+
+.qs-groups::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Stacked under the timetable: keep the list from getting endless */
+@media (max-width: 1099px) {
+  .qs-groups {
+    max-height: 70vh;
+  }
 }
 
 .qs-group {
