@@ -251,3 +251,7 @@
     max-width: 100%;
   }
 }
+
+.oc-card-note {
+  color: var(--qs-muted);
+}

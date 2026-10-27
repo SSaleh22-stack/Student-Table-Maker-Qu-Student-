@@ -4,7 +4,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { useTimetable } from '../contexts/TimetableContext';
 import ConfirmationModal from './ConfirmationModal';
 import Icon from './Icon';
-import { getCourseTheme, formatDays, sectionsLabel, coursesLabel } from '../lib/courseTheme';
+import { getCourseTheme, formatDays, sectionsLabel, coursesLabel, hasSchedule, noTimeLabel, formatExam } from '../lib/courseTheme';
 import './CourseList.css';
 
 interface CourseListProps {
@@ -216,10 +216,15 @@ const CourseList: React.FC<CourseListProps> = ({ courses }) => {
     // No conflicts - add course to timetable
     const added = addCourse(course);
     if (added) {
+      const noTime = !hasSchedule(course) && !(course.timeSlots && course.timeSlots.length > 1);
       setNotification({
-        message: language === 'en'
-          ? `${course.code} added to timetable`
-          : `تم إضافة ${course.code} إلى الجدول`,
+        message: noTime
+          ? (language === 'en'
+              ? `${course.code} has no set time, so it was added to the summary only`
+              : `${course.code} بدون وقت محدد، لذلك أُضيف إلى الملخص فقط`)
+          : (language === 'en'
+              ? `${course.code} added to timetable`
+              : `تم إضافة ${course.code} إلى الجدول`),
         type: 'success'
       });
       setTimeout(() => setNotification(null), 3000);
@@ -323,9 +328,11 @@ const CourseList: React.FC<CourseListProps> = ({ courses }) => {
       : [{ days: course.days, startTime: course.startTime, endTime: course.endTime, location: course.location }];
 
   const tileTitle = (course: Course, inTimetable: boolean, conflictCode: string | null) => {
-    const slots = getSlots(course)
-      .map((slot) => `${days(slot.days)} ${slot.startTime}-${slot.endTime}${slot.location ? `\n${slot.location}` : ''}`)
-      .join('\n');
+    const slots = hasSchedule(course) || (course.timeSlots && course.timeSlots.length > 1)
+      ? getSlots(course)
+          .map((slot) => `${days(slot.days)} ${slot.startTime}-${slot.endTime}${slot.location ? `\n${slot.location}` : ''}`)
+          .join('\n')
+      : `${noTimeLabel(language)}${isAr ? ' (يُضاف إلى الملخص فقط)' : ' (summary only)'}`;
     if (inTimetable) return `${isAr ? 'في الجدول — اضغط للإزالة' : 'In timetable — click to remove'}\n${slots}`;
     if (conflictCode) return `${isAr ? `تتعارض مع ${conflictCode}` : `Clashes with ${conflictCode}`}\n${slots}`;
     return `${isAr ? 'اضغط للإضافة' : 'Click to add'}\n${slots}`;
@@ -436,6 +443,24 @@ const CourseList: React.FC<CourseListProps> = ({ courses }) => {
                 ))}
               </dd>
             </div>
+          ) : !hasSchedule(course) ? (
+            <>
+              <div className="qs-detail qs-detail-wide">
+                <dt>{t.time}</dt>
+                <dd>
+                  {noTimeLabel(language)}
+                  <span className="qs-detail-note">
+                    {isAr ? ' — يُضاف إلى الملخص فقط' : ' — added to the summary only'}
+                  </span>
+                </dd>
+              </div>
+              {course.location && (
+                <div className="qs-detail">
+                  <dt>{t.location}</dt>
+                  <dd>{course.location}</dd>
+                </div>
+              )}
+            </>
           ) : (
             <>
               <div className="qs-detail">
@@ -462,13 +487,10 @@ const CourseList: React.FC<CourseListProps> = ({ courses }) => {
           )}
         </dl>
 
-        {course.finalExam && (
+        {formatExam(course.finalExam, t, language) && (
           <div className="qs-section-exam">
             <span className="qs-section-exam-label">{t.finalExam}:</span>{' '}
-            {course.finalExam.date
-              ? `${isAr ? 'فترة' : 'Period'} ${course.finalExam.date}`
-              : days([course.finalExam.day])}
-            {course.finalExam.startTime && ` · ${course.finalExam.startTime} – ${course.finalExam.endTime}`}
+            {formatExam(course.finalExam, t, language)}
           </div>
         )}
       </li>
@@ -511,7 +533,13 @@ const CourseList: React.FC<CourseListProps> = ({ courses }) => {
           </span>
         </span>
         <span className="qs-tile-type">
-          {conflictCode ? (isAr ? 'تعارض' : 'Clash') : isClosed ? t.closed : (typeLabel(course) || '-')}
+          {conflictCode
+            ? (isAr ? 'تعارض' : 'Clash')
+            : isClosed
+            ? t.closed
+            : !hasSchedule(course) && !(course.timeSlots && course.timeSlots.length > 1)
+            ? noTimeLabel(language)
+            : (typeLabel(course) || '-')}
         </span>
         <span className="qs-tile-instructor">{course.instructor || '-'}</span>
       </button>

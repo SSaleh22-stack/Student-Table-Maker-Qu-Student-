@@ -4,7 +4,7 @@ import { useTimetable } from '../contexts/TimetableContext';
 import { Course } from '../types';
 import html2canvas from 'html2canvas';
 import Icon from './Icon';
-import { getCourseTheme, coursesLabel, sectionsLabel } from '../lib/courseTheme';
+import { getCourseTheme, coursesLabel, sectionsLabel, hasSchedule, noTimeLabel, formatDays, formatExam } from '../lib/courseTheme';
 import './TimetableGrid.css';
 
 // Color palette for courses - Darker colors
@@ -104,11 +104,11 @@ const TimetableGrid: React.FC = () => {
       return Object.entries(groupedBySection).map(([section, entries]) => {
         const codes = [...new Set(entries.map(e => e.course.code))].join(', ');
         const names = [...new Set(entries.map(e => e.course.name))].join(', ');
-        const days = [...new Set(entries.flatMap(e => e.course.days))].join(', ');
-        const times = [...new Set(entries.map(e => `${e.course.startTime} - ${e.course.endTime}`))].join(', ');
+        const days = formatDays([...new Set(entries.flatMap(e => e.course.days))], t, language) || '-';
+        const times = [...new Set(entries.map(e => hasSchedule(e.course) ? `${e.course.startTime} - ${e.course.endTime}` : noTimeLabel(language)))].join(', ');
         const locations = [...new Set(entries.map(e => e.course.location).filter(Boolean))].join(', ');
         const instructors = [...new Set(entries.map(e => e.course.instructor).filter(Boolean))].join(', ');
-        const finalExams = [...new Set(entries.map(e => e.course.finalExam?.date).filter(Boolean))].map(d => `${language === 'en' ? 'Period' : 'فترة'} ${d}`).join(', ');
+        const finalExams = [...new Set(entries.map(e => e.course.finalExam?.date).filter(Boolean))].map(d => `${language === 'en' ? 'Period' : 'الفترة'} ${d}`).join(', ');
         const statuses = [...new Set(entries.map(e => e.course.status).filter(Boolean))];
         const classTypes = [...new Set(entries.map(e => e.course.classType).filter(Boolean))];
 
@@ -680,11 +680,11 @@ const TimetableGrid: React.FC = () => {
           `"${course.code}"`,
           `"${course.name}"`,
           `"${course.section}"`,
-          `"${course.days.join(', ')}"`,
-          `"${course.startTime} - ${course.endTime}"`,
+          `"${formatDays(course.days, t, language) || '-'}"`,
+          `"${hasSchedule(course) ? `${course.startTime} - ${course.endTime}` : noTimeLabel(language)}"`,
           `"${course.location || '-'}"`,
           `"${course.instructor || '-'}"`,
-          `"${course.finalExam?.date ? `${language === 'en' ? 'Period' : 'فترة'} ${course.finalExam.date}` : '-'}"`,
+          `"${course.finalExam?.date ? `${language === 'en' ? 'Period' : 'الفترة'} ${course.finalExam.date}` : '-'}"`,
           `"${course.status === 'open' ? t.open : course.status === 'closed' ? t.closed : '-'}"`,
           `"${course.classType === 'practical' ? t.practical : course.classType === 'theoretical' ? t.theoretical : course.classType === 'exercise' ? t.exercise : '-'}"`,
         ];
@@ -753,6 +753,8 @@ const TimetableGrid: React.FC = () => {
 
     timetable.forEach((entry) => {
       const course = entry.course;
+      // Sections without a lecture time have nothing to put on a calendar
+      if (!hasSchedule(course)) return;
       const [startHours, startMinutes] = course.startTime.split(':').map(Number);
       const [endHours, endMinutes] = course.endTime.split(':').map(Number);
 
@@ -809,6 +811,8 @@ const TimetableGrid: React.FC = () => {
   });
   const ttTotalHours = Array.from(ttCourseHours.values()).reduce((sum, hours) => sum + hours, 0);
   const isAr = language === 'ar';
+  // Added sections that have no lecture time: shown below the grid, not on it
+  const noTimeEntries = timetable.filter((entry) => !hasSchedule(entry.course));
 
   return (
     <section className="timetable-section qs-card" dir={isAr ? 'rtl' : 'ltr'}>
@@ -1015,11 +1019,11 @@ const TimetableGrid: React.FC = () => {
                     return Object.entries(groupedBySection).map(([section, entries]) => {
                       const codes = [...new Set(entries.map(e => e.course.code))].join(', ');
                       const names = [...new Set(entries.map(e => e.course.name))].join(', ');
-                      const days = [...new Set(entries.flatMap(e => e.course.days))].join(', ');
-                      const times = [...new Set(entries.map(e => `${e.course.startTime} - ${e.course.endTime}`))].join(', ');
+                      const days = formatDays([...new Set(entries.flatMap(e => e.course.days))], t, language) || '-';
+                      const times = [...new Set(entries.map(e => hasSchedule(e.course) ? `${e.course.startTime} - ${e.course.endTime}` : noTimeLabel(language)))].join(', ');
                       const locations = [...new Set(entries.map(e => e.course.location).filter(Boolean))].join(', ');
                       const instructors = [...new Set(entries.map(e => e.course.instructor).filter(Boolean))].join(', ');
-                      const finalExams = [...new Set(entries.map(e => e.course.finalExam?.date).filter(Boolean))].map(d => `Period ${d}`).join(', ');
+                      const finalExams = [...new Set(entries.map(e => e.course.finalExam?.date).filter(Boolean))].map(d => `${language === 'en' ? 'Period' : 'الفترة'} ${d}`).join(', ');
                       const statuses = [...new Set(entries.map(e => e.course.status).filter(Boolean))];
                       const classTypes = [...new Set(entries.map(e => e.course.classType).filter(Boolean))];
 
@@ -1109,23 +1113,28 @@ const TimetableGrid: React.FC = () => {
                   <div className="course-details-value">
                     {selectedCourse.timeSlots.map((slot, index) => (
                       <div key={index} className="time-slot-detail">
-                        <strong>{slot.days.join(', ')}</strong>: {slot.startTime} - {slot.endTime}
+                        <strong>{formatDays(slot.days, t, language)}</strong>: {slot.startTime} - {slot.endTime}
                         {slot.location && ` (${slot.location})`}
                       </div>
                     ))}
                   </div>
                 </div>
-              ) : (
+              ) : hasSchedule(selectedCourse) ? (
                 <>
                   <div className="course-details-row">
                     <div className="course-details-label">{t.days}:</div>
-                    <div className="course-details-value">{selectedCourse.days.join(', ')}</div>
+                    <div className="course-details-value">{formatDays(selectedCourse.days, t, language)}</div>
                   </div>
                   <div className="course-details-row">
                     <div className="course-details-label">{t.time}:</div>
                     <div className="course-details-value">{selectedCourse.startTime} - {selectedCourse.endTime}</div>
                   </div>
                 </>
+              ) : (
+                <div className="course-details-row">
+                  <div className="course-details-label">{t.time}:</div>
+                  <div className="course-details-value">{noTimeLabel(language)}</div>
+                </div>
               )}
               {selectedCourse.location && (
                 <div className="course-details-row">
@@ -1143,11 +1152,7 @@ const TimetableGrid: React.FC = () => {
                 <div className="course-details-row">
                   <div className="course-details-label">{t.finalExam}:</div>
                   <div className="course-details-value">
-                    {selectedCourse.finalExam.date 
-                      ? `${language === 'en' ? 'Period' : 'فترة'} ${selectedCourse.finalExam.date}`
-                      : selectedCourse.finalExam.day
-                    }
-                    {selectedCourse.finalExam.startTime && ` - ${selectedCourse.finalExam.startTime} - ${selectedCourse.finalExam.endTime}`}
+                    {formatExam(selectedCourse.finalExam, t, language) || '-'}
                     {selectedCourse.finalExam.location && ` (${selectedCourse.finalExam.location})`}
                   </div>
                 </div>
@@ -1377,6 +1382,47 @@ const TimetableGrid: React.FC = () => {
           </div>
         )}
       </div>
+      {noTimeEntries.length > 0 && (
+        <div className="tt-notime">
+          <div className="tt-notime-head">
+            <Icon name="clock" size={16} />
+            <span className="tt-notime-title">
+              {isAr ? 'مقررات بدون وقت محدد' : 'Courses without a set time'}
+            </span>
+            <span className="tt-notime-hint">
+              {isAr ? 'لا تظهر في الجدول، وتُحسب في الملخص' : 'Not placed on the grid; included in the summary'}
+            </span>
+          </div>
+          <ul className="tt-notime-list">
+            {noTimeEntries.map((entry) => {
+              const theme = getCourseTheme(entry.course.code);
+              return (
+                <li key={entry.courseId} className="tt-notime-chip" style={{ background: theme.bg, color: theme.text }}>
+                  <button
+                    type="button"
+                    className="tt-notime-open"
+                    onClick={() => setSelectedCourse(entry.course)}
+                    title={entry.course.name}
+                  >
+                    <span dir="ltr">{entry.course.code}</span>
+                    {entry.course.section && (
+                      <span>· {isAr ? 'شعبة' : 'Sec'} {entry.course.section}</span>
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    className="tt-notime-remove"
+                    onClick={() => removeCourse(entry.courseId)}
+                    aria-label={isAr ? `إزالة ${entry.course.code}` : `Remove ${entry.course.code}`}
+                  >
+                    <Icon name="x" size={14} />
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
     </section>
   );
 };

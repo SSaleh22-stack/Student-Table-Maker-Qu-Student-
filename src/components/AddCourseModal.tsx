@@ -126,13 +126,9 @@ const AddCourseModal: React.FC<AddCourseModalProps> = ({ isOpen, onClose, onAdd 
       endTime: formData.endTime,
       location: formData.location.trim() || undefined,
       instructor: formData.instructor.trim() || undefined,
+      // Only the exam period is known; don't invent a day or time
       finalExam: formData.examPeriod
-        ? {
-            day: formData.days[0] || 'Sun',
-            startTime: '08:00',
-            endTime: '10:00',
-            date: formData.examPeriod,
-          }
+        ? { day: '', startTime: '', endTime: '', date: formData.examPeriod }
         : undefined,
       status: formData.status,
       classType: formData.classType,

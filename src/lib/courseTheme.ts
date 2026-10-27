@@ -57,6 +57,37 @@ export const formatDays = (days: string[], t: DayNames, language: Language): str
   return days.map((day) => names[day] ?? day).join(language === 'ar' ? '، ' : ', ');
 };
 
+/**
+ * True when a section has real lecture days and times.
+ * Sections without a time (e.g. projects or online courses) are kept out of
+ * the weekly grid and only listed in the summary.
+ */
+export const hasSchedule = (course: { days: string[]; startTime: string; endTime: string }): boolean =>
+  course.days.length > 0 && !!course.startTime && !!course.endTime;
+
+/** "بدون وقت محدد" / "No set time" */
+export const noTimeLabel = (language: Language): string =>
+  language === 'ar' ? 'بدون وقت محدد' : 'No set time';
+
+/**
+ * Final exam text. The portal only gives an exam period number, so when a period
+ * exists we show just that (never a guessed time).
+ */
+export const formatExam = (
+  exam: { date?: string; day?: string; startTime?: string; endTime?: string } | undefined,
+  t: DayNames,
+  language: Language
+): string | null => {
+  if (!exam) return null;
+  if (exam.date) {
+    return language === 'ar' ? `الفترة ${exam.date}` : `Period ${exam.date}`;
+  }
+  if (exam.day && exam.startTime && exam.endTime) {
+    return `${formatDays([exam.day], t, language)} · ${exam.startTime} – ${exam.endTime}`;
+  }
+  return null;
+};
+
 /** "3 شعب", "شعبتان", "1 section", ... */
 export const sectionsLabel = (count: number, language: Language): string => {
   if (language === 'en') {

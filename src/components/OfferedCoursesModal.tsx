@@ -4,7 +4,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { useTimetable } from '../contexts/TimetableContext';
 import ConfirmationModal from './ConfirmationModal';
 import Icon from './Icon';
-import { getCourseTheme, formatDays } from '../lib/courseTheme';
+import { getCourseTheme, formatDays, hasSchedule, noTimeLabel } from '../lib/courseTheme';
 import './OfferedCoursesModal.css';
 
 interface OfferedCoursesModalProps {
@@ -117,10 +117,15 @@ const OfferedCoursesModal: React.FC<OfferedCoursesModalProps> = ({ courses, isOp
     // No conflicts - add course to timetable
     const added = addCourse(course);
     if (added) {
+      const noTime = !hasSchedule(course) && !(course.timeSlots && course.timeSlots.length > 1);
       setNotification({
-        message: language === 'en'
-          ? `${course.code} added to timetable`
-          : `تم إضافة ${course.code} إلى الجدول`,
+        message: noTime
+          ? (language === 'en'
+              ? `${course.code} has no set time, so it was added to the summary only`
+              : `${course.code} بدون وقت محدد، لذلك أُضيف إلى الملخص فقط`)
+          : (language === 'en'
+              ? `${course.code} added to timetable`
+              : `تم إضافة ${course.code} إلى الجدول`),
         type: 'success'
       });
       setTimeout(() => setNotification(null), 3000);
@@ -339,7 +344,15 @@ const OfferedCoursesModal: React.FC<OfferedCoursesModalProps> = ({ courses, isOp
                       </div>
 
                       <ul className="oc-card-meta">
-                        {slots.map((slot, index) => (
+                        {slots.length === 1 && !hasSchedule(slots[0]) ? (
+                          <li>
+                            <Icon name="clock" size={15} />
+                            <span>
+                              {noTimeLabel(language)}
+                              <span className="oc-card-note">{isAr ? ' — يُضاف إلى الملخص فقط' : ' — summary only'}</span>
+                            </span>
+                          </li>
+                        ) : slots.map((slot, index) => (
                           <li key={index}>
                             <Icon name="clock" size={15} />
                             <span>

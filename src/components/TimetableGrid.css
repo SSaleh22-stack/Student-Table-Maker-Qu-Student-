@@ -344,6 +344,84 @@
   pointer-events: none;
 }
 
+/* Added sections with no lecture time (kept off the grid) */
+.tt-notime {
+  margin-top: 16px;
+  padding: 14px 16px;
+  border-radius: var(--qs-radius-lg);
+  background: var(--qs-surface-3);
+  border: 1px dashed var(--qs-border-strong);
+}
+
+.tt-notime-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  margin-bottom: 10px;
+  color: var(--qs-text-2);
+}
+
+.tt-notime-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--qs-text);
+}
+
+.tt-notime-hint {
+  font-size: 13px;
+  color: var(--qs-muted);
+}
+
+.tt-notime-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tt-notime-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.tt-notime-open,
+.tt-notime-remove {
+  min-height: 36px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.tt-notime-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 4px 0 14px;
+  padding-inline-start: 14px;
+  padding-inline-end: 4px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.tt-notime-remove {
+  width: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tt-notime-open:hover,
+.tt-notime-remove:hover {
+  background: rgba(255, 255, 255, 0.55);
+}
+
 /* Summary + course details windows */
 .summary-modal-overlay {
   position: fixed;
