@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import Icon, { IconName } from './Icon';
+import Logo from './Logo';
 import './NavBar.css';
 
 type ViewMode = 'timetable' | 'gpa' | 'absence';
@@ -63,9 +64,7 @@ const NavBar: React.FC<NavBarProps> = ({ currentView, onViewChange }) => {
     <>
       <header className="qs-header">
         <div className="qs-brand">
-          <span className="qs-brand-mark">
-            <Icon name="calendar" size={22} />
-          </span>
+          <Logo size={44} className="qs-brand-mark" />
           <span className="qs-brand-name">{t.appTitle}</span>
         </div>
 

@@ -14,14 +14,8 @@
 }
 
 .qs-brand-mark {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: var(--qs-accent);
-  color: #FFFFFF;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-shrink: 0;
+  display: block;
 }
 
 .qs-brand-name {

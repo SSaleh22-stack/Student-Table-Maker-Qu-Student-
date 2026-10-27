@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <title>Qu Student (simplified for 16px)</title>
+  <rect width="128" height="128" rx="30" fill="#0E7490"/>
+  <rect x="24" y="36" width="74" height="60" rx="14" fill="none" stroke="#FFFFFF" stroke-width="13"/>
+  <path d="M46 22v18M78 22v18" fill="none" stroke="#FFFFFF" stroke-width="13" stroke-linecap="round"/>
+  <path d="M80 78l24 24" fill="none" stroke="#0E7490" stroke-width="28" stroke-linecap="round"/>
+  <path d="M80 78l24 24" fill="none" stroke="#FFFFFF" stroke-width="15" stroke-linecap="round"/>
+</svg>
