@@ -1,8 +1,11 @@
 import React, { createContext, useContext, ReactNode } from 'react';
 import { translations } from '../i18n/translations';
+import { Language } from '../types';
 
+// The website is Arabic-only. `language` is typed as the shared Language type so
+// the components shared with the extension (which also support English) compile.
 interface LanguageContextType {
-  language: 'ar';
+  language: Language;
   t: typeof translations.ar;
 }
 
@@ -28,4 +31,3 @@ export const useLanguage = (): LanguageContextType => {
   }
   return context;
 };
-

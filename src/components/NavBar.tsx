@@ -54,6 +54,20 @@ const NavBar: React.FC<NavBarProps> = ({ currentView, onViewChange }) => {
     }
   };
 
+  // Instructions come either as titled sections (separated by blank lines)
+  // or as a simple numbered list ("1. ...\n2. ..."): show each as one step
+  const instructionSteps = t.instructionsContent.includes('\n\n\n')
+    ? t.instructionsContent
+        .split('\n\n\n')
+        .map((section) => section.split('\n').filter((line) => line.trim()))
+        .filter((lines) => lines.length > 0)
+        .map((lines) => ({ title: lines[0], text: lines.slice(1).join('\n') }))
+    : t.instructionsContent
+        .split('\n')
+        .map((line) => line.trim())
+        .filter(Boolean)
+        .map((line) => ({ title: line.replace(/^\d+[.)]\s*/, ''), text: '' }));
+
   const viewItems: { view: ViewMode; icon: IconName; label: string; title: string }[] = [
     { view: 'timetable', icon: 'calendar', label: t.timetable, title: t.timetable },
     { view: 'gpa', icon: 'calculator', label: isAr ? 'المعدل' : 'GPA', title: t.gpaCalculator },
@@ -150,19 +164,12 @@ const NavBar: React.FC<NavBarProps> = ({ currentView, onViewChange }) => {
             </div>
             <div className="qs-modal-body">
               <ol className="qs-steps">
-                {t.instructionsContent.split('\n\n\n').map((section, index) => {
-                  if (!section.trim()) return null;
-                  const lines = section.split('\n').filter((line) => line.trim());
-                  if (lines.length === 0) return null;
-                  const title = lines[0];
-                  const content = lines.slice(1).join('\n');
-                  return (
-                    <li key={index} className="qs-step">
-                      <span className="qs-step-title">{title}</span>
-                      {content && <span className="qs-step-text">{content}</span>}
-                    </li>
-                  );
-                })}
+                {instructionSteps.map((step, index) => (
+                  <li key={index} className="qs-step">
+                    <span className="qs-step-title">{step.title}</span>
+                    {step.text && <span className="qs-step-text">{step.text}</span>}
+                  </li>
+                ))}
               </ol>
             </div>
           </div>

@@ -13,10 +13,11 @@ import {
   validateGpa,
   validateHours,
 } from '../lib/gpa';
+import Icon from './Icon';
 import './GpaCalculator.css';
 
 const GpaCalculator: React.FC = () => {
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
   const [scale, setScale] = useState<GPAScale>(5);
   const [prevGpa, setPrevGpa] = useState<number>(0);
   const [prevHours, setPrevHours] = useState<number>(0);
@@ -33,23 +34,39 @@ const GpaCalculator: React.FC = () => {
     const loadSavedData = async () => {
       try {
         if (typeof chrome !== 'undefined' && chrome.storage) {
-          // Extension: Load from chrome.storage.sync
-          chrome.storage.sync.get(
-            [
-              'gpaScale',
-              'gpaPrevGpa',
-              'gpaPrevHours',
-              'gpaCourses',
-              'gpaGradePointMap',
-            ],
-            (result) => {
-              if (result.gpaScale) setScale(result.gpaScale);
-              if (result.gpaPrevGpa !== undefined) setPrevGpa(result.gpaPrevGpa);
-              if (result.gpaPrevHours !== undefined) setPrevHours(result.gpaPrevHours);
-              if (result.gpaCourses) setCourses(result.gpaCourses);
-              if (result.gpaGradePointMap) setGradePointMap(result.gpaGradePointMap);
+          // First, check for GPA data from content script (chrome.storage.local)
+          chrome.storage.local.get(['gpaData'], (localResult) => {
+            if (localResult.gpaData) {
+              // Load data from content script
+              const gpaData = localResult.gpaData;
+              if (gpaData.cumulativeGPA !== undefined) setPrevGpa(gpaData.cumulativeGPA);
+              if (gpaData.earnedHours !== undefined) setPrevHours(gpaData.earnedHours);
+              if (gpaData.scale) setScale(gpaData.scale);
+              if (gpaData.courses && Array.isArray(gpaData.courses)) setCourses(gpaData.courses);
+              if (gpaData.gradePointMap) setGradePointMap(gpaData.gradePointMap);
+              
+              // Clear the data after loading
+              chrome.storage.local.remove(['gpaData']);
+            } else {
+              // No data from content script, load from chrome.storage.sync (saved preferences)
+              chrome.storage.sync.get(
+                [
+                  'gpaScale',
+                  'gpaPrevGpa',
+                  'gpaPrevHours',
+                  'gpaCourses',
+                  'gpaGradePointMap',
+                ],
+                (result) => {
+                  if (result.gpaScale) setScale(result.gpaScale);
+                  if (result.gpaPrevGpa !== undefined) setPrevGpa(result.gpaPrevGpa);
+                  if (result.gpaPrevHours !== undefined) setPrevHours(result.gpaPrevHours);
+                  if (result.gpaCourses) setCourses(result.gpaCourses);
+                  if (result.gpaGradePointMap) setGradePointMap(result.gpaGradePointMap);
+                }
+              );
             }
-          );
+          });
         } else {
           // Webapp: Load from localStorage
           const savedScale = localStorage.getItem('gpaScale');
@@ -165,14 +182,25 @@ const GpaCalculator: React.FC = () => {
     setGradePointMap({ ...gradePointMap, [grade]: value });
   };
 
+  const isAr = language === 'ar';
+
   return (
-    <div className="gpa-calculator" dir="rtl">
+    <div className="gpa-calculator" dir={isAr ? 'rtl' : 'ltr'}>
       <div className="gpa-header">
-        <h1 className="gpa-title">{t.gpaCalculator || 'GPA Calculator'}</h1>
+        <div>
+          <h1 className="gpa-title">{t.gpaCalculator || 'GPA Calculator'}</h1>
+          <p className="gpa-subtitle">
+            {isAr
+              ? 'احسب معدلك الفصلي والتراكمي الجديد من درجات وساعات مقررات هذا الفصل.'
+              : "Work out your semester and new cumulative GPA from this semester's grades and hours."}
+          </p>
+        </div>
         <button
-          className="gpa-advanced-btn"
+          type="button"
+          className="qs-btn qs-btn-soft"
           onClick={() => setShowAdvanced(!showAdvanced)}
         >
+          <Icon name="sliders" />
           {t.gpaAdvanced || 'Advanced'}
         </button>
       </div>
@@ -181,20 +209,22 @@ const GpaCalculator: React.FC = () => {
       <div className="gpa-card">
         <h2 className="gpa-card-title">{t.gpaSettings || 'Settings'}</h2>
         <div className="gpa-settings-grid">
-          <div className="gpa-setting-item">
-            <label>{t.gpaScale || 'GPA Scale'}</label>
+          <div className="qs-field">
+            <label className="qs-label" htmlFor="gpa-scale">{t.gpaScale || 'GPA Scale'}</label>
             <select
+              id="gpa-scale"
               value={scale}
               onChange={(e) => setScale(parseInt(e.target.value) as GPAScale)}
-              className="gpa-select"
+              className="qs-select"
             >
               <option value={5}>5.0</option>
               <option value={4}>4.0</option>
             </select>
           </div>
-          <div className="gpa-setting-item">
-            <label>{t.gpaPrevGpa || 'Previous GPA'}</label>
+          <div className="qs-field">
+            <label className="qs-label" htmlFor="gpa-prev">{t.gpaPrevGpa || 'Previous GPA'}</label>
             <input
+              id="gpa-prev"
               type="number"
               min="0"
               max={scale}
@@ -206,12 +236,13 @@ const GpaCalculator: React.FC = () => {
                   setPrevGpa(value);
                 }
               }}
-              className="gpa-input"
+              className="qs-input"
             />
           </div>
-          <div className="gpa-setting-item">
-            <label>{t.gpaPrevHours || 'Previous Hours'}</label>
+          <div className="qs-field">
+            <label className="qs-label" htmlFor="gpa-prev-hours">{t.gpaPrevHours || 'Previous Hours'}</label>
             <input
+              id="gpa-prev-hours"
               type="number"
               min="0"
               step="0.5"
@@ -222,7 +253,7 @@ const GpaCalculator: React.FC = () => {
                   setPrevHours(value);
                 }
               }}
-              className="gpa-input"
+              className="qs-input"
             />
           </div>
         </div>
@@ -233,10 +264,12 @@ const GpaCalculator: React.FC = () => {
         <div className="gpa-card-header">
           <h2 className="gpa-card-title">{t.gpaCurrentCourses || 'Current Courses'}</h2>
           <div className="gpa-card-actions">
-            <button className="gpa-btn gpa-btn-secondary" onClick={handleAddCourse}>
-              + {t.gpaAddCourse || 'Add Course'}
+            <button type="button" className="qs-btn qs-btn-soft qs-btn-sm" onClick={handleAddCourse}>
+              <Icon name="plus" size={16} />
+              {t.gpaAddCourse || 'Add Course'}
             </button>
-            <button className="gpa-btn gpa-btn-danger" onClick={handleClearAll}>
+            <button type="button" className="qs-btn qs-btn-danger-text qs-btn-sm" onClick={handleClearAll}>
+              <Icon name="trash" size={16} />
               {t.gpaClearAll || 'Clear All'}
             </button>
           </div>
@@ -249,14 +282,17 @@ const GpaCalculator: React.FC = () => {
                 <th>{t.gpaGrade || 'Grade'}</th>
                 <th>{t.gpaHours || 'Hours'}</th>
                 <th>{t.gpaPoints || 'Points'}</th>
-                <th>{t.gpaActions || 'Actions'}</th>
+                <th>
+                  <span className="gpa-sr-only">{t.gpaActions || 'Actions'}</span>
+                </th>
               </tr>
             </thead>
             <tbody>
-              {courses.map((course) => {
+              {courses.map((course, index) => {
                 const coursePoints = course.grade && course.hours > 0
                   ? (gradePointMap[course.grade] || 0) * course.hours
                   : 0;
+                const rowLabel = course.title || `${t.gpaCourseName || 'Course'} ${index + 1}`;
                 return (
                   <tr key={course.id}>
                     <td>
@@ -267,7 +303,8 @@ const GpaCalculator: React.FC = () => {
                           handleCourseChange(course.id, 'title', e.target.value)
                         }
                         placeholder={t.gpaCourseNamePlaceholder || 'Course name'}
-                        className="gpa-input gpa-input-text"
+                        aria-label={t.gpaCourseName || 'Course name'}
+                        className="qs-input gpa-cell-name"
                       />
                     </td>
                     <td>
@@ -276,11 +313,12 @@ const GpaCalculator: React.FC = () => {
                         onChange={(e) =>
                           handleCourseChange(course.id, 'grade', e.target.value as GradeLetter)
                         }
-                        className="gpa-select"
+                        aria-label={`${t.gpaGrade || 'Grade'} – ${rowLabel}`}
+                        className="qs-select gpa-cell-grade"
                       >
                         {gradeOptions.map((grade) => (
                           <option key={grade} value={grade}>
-                            {grade || 'غير محدد'}
+                            {grade || (isAr ? 'غير محدد' : 'Not Specified')}
                           </option>
                         ))}
                       </select>
@@ -297,7 +335,8 @@ const GpaCalculator: React.FC = () => {
                             handleCourseChange(course.id, 'hours', value);
                           }
                         }}
-                        className="gpa-input gpa-input-number"
+                        aria-label={`${t.gpaHours || 'Hours'} – ${rowLabel}`}
+                        className="qs-input gpa-cell-hours"
                       />
                     </td>
                     <td className="gpa-points-cell">
@@ -306,19 +345,23 @@ const GpaCalculator: React.FC = () => {
                     <td>
                       <div className="gpa-row-actions">
                         <button
+                          type="button"
                           className="gpa-btn-icon"
                           onClick={() => handleDuplicateCourse(course)}
                           title={t.gpaDuplicate || 'Duplicate'}
+                          aria-label={`${t.gpaDuplicate || 'Duplicate'} – ${rowLabel}`}
                         >
-                          📋
+                          <Icon name="copy" size={16} />
                         </button>
                         <button
-                          className="gpa-btn-icon gpa-btn-danger"
+                          type="button"
+                          className="gpa-btn-icon gpa-btn-icon-danger"
                           onClick={() => handleRemoveCourse(course.id)}
                           disabled={courses.length === 1}
                           title={t.gpaRemove || 'Remove'}
+                          aria-label={`${t.gpaRemove || 'Remove'} – ${rowLabel}`}
                         >
-                          ×
+                          <Icon name="x" size={16} />
                         </button>
                       </div>
                     </td>
@@ -335,71 +378,82 @@ const GpaCalculator: React.FC = () => {
         <h2 className="gpa-card-title">{t.gpaResults || 'Results'}</h2>
         <div className="gpa-results-grid">
           <div className="gpa-result-section">
-            <h3>{t.gpaSemesterResults || 'Semester Results'}</h3>
-            <div className="gpa-result-item">
-              <span className="gpa-result-label">{t.gpaCurrentHours || 'Current Hours'}</span>
-              <span className="gpa-result-value">{currentHours.toFixed(1)}</span>
-            </div>
-            <div className="gpa-result-item">
-              <span className="gpa-result-label">{t.gpaCurrentPoints || 'Current Quality Points'}</span>
-              <span className="gpa-result-value">{currentQualityPoints.toFixed(2)}</span>
-            </div>
-            <div className="gpa-result-item gpa-result-highlight">
-              <span className="gpa-result-label">{t.gpaSemesterGpa || 'Semester GPA'}</span>
-              <span className="gpa-result-value gpa-result-big">
+            <div className="gpa-big gpa-big-semester">
+              <span className="gpa-big-label">{t.gpaSemesterGpa || 'Semester GPA'}</span>
+              <span className="gpa-big-value">
                 {semesterGpa !== null ? semesterGpa.toFixed(2) : '—'}
+                <span className="gpa-big-scale"> / {scale}</span>
               </span>
             </div>
+            <dl className="gpa-result-list">
+              <div>
+                <dt>{t.gpaCurrentHours || 'Current Hours'}</dt>
+                <dd>{currentHours.toFixed(1)}</dd>
+              </div>
+              <div>
+                <dt>{t.gpaCurrentPoints || 'Current Quality Points'}</dt>
+                <dd>{currentQualityPoints.toFixed(2)}</dd>
+              </div>
+            </dl>
           </div>
           <div className="gpa-result-section">
-            <h3>{t.gpaCumulativeResults || 'Cumulative Results'}</h3>
-            <div className="gpa-result-item">
-              <span className="gpa-result-label">{t.gpaTotalHours || 'Total Hours'}</span>
-              <span className="gpa-result-value">{(prevHours + currentHours).toFixed(1)}</span>
-            </div>
-            <div className="gpa-result-item">
-              <span className="gpa-result-label">{t.gpaTotalPoints || 'Total Quality Points'}</span>
-              <span className="gpa-result-value">
-                {(prevGpa * prevHours + currentQualityPoints).toFixed(2)}
-              </span>
-            </div>
-            <div className="gpa-result-item gpa-result-highlight">
-              <span className="gpa-result-label">{t.gpaNewCumulativeGpa || 'New Cumulative GPA'}</span>
-              <span className="gpa-result-value gpa-result-big">
+            <div className="gpa-big gpa-big-cumulative">
+              <span className="gpa-big-label">{t.gpaNewCumulativeGpa || 'New Cumulative GPA'}</span>
+              <span className="gpa-big-value">
                 {cumulativeGpa !== null ? cumulativeGpa.toFixed(2) : '—'}
+                <span className="gpa-big-scale"> / {scale}</span>
               </span>
             </div>
+            <dl className="gpa-result-list">
+              <div>
+                <dt>{t.gpaTotalHours || 'Total Hours'}</dt>
+                <dd>{(prevHours + currentHours).toFixed(1)}</dd>
+              </div>
+              <div>
+                <dt>{t.gpaTotalPoints || 'Total Quality Points'}</dt>
+                <dd>{(prevGpa * prevHours + currentQualityPoints).toFixed(2)}</dd>
+              </div>
+            </dl>
           </div>
         </div>
         {currentHours === 0 && (
-          <div className="gpa-warning">
-            {t.gpaNoHoursWarning || 'Please add courses with credit hours to calculate GPA.'}
+          <div className="qs-alert qs-alert-warning gpa-warning" role="status">
+            <Icon name="alert" />
+            <span>{t.gpaNoHoursWarning || 'Please add courses with credit hours to calculate GPA.'}</span>
           </div>
         )}
       </div>
 
       {/* Advanced Modal */}
       {showAdvanced && (
-        <div className="gpa-modal-overlay" onClick={() => setShowAdvanced(false)}>
-          <div className="gpa-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="gpa-modal-header">
-              <h2>{t.gpaAdvancedGradeMapping || 'Advanced Grade Mapping'}</h2>
+        <div className="qs-modal-overlay" onClick={() => setShowAdvanced(false)}>
+          <div
+            className="qs-modal gpa-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="gpa-modal-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="qs-modal-header">
+              <h2 id="gpa-modal-title">{t.gpaAdvancedGradeMapping || 'Advanced Grade Mapping'}</h2>
               <button
-                className="gpa-modal-close"
+                type="button"
+                className="qs-btn qs-btn-ghost qs-btn-sm"
                 onClick={() => setShowAdvanced(false)}
               >
-                ×
+                {t.close}
               </button>
             </div>
-            <div className="gpa-modal-content">
+            <div className="qs-modal-body">
               <p className="gpa-modal-description">
                 {t.gpaAdvancedDescription || 'Customize grade point values for the selected scale.'}
               </p>
               <div className="gpa-grade-map-grid">
                 {gradeOptions.filter(g => g !== '').map((grade) => (
                   <div key={grade} className="gpa-grade-map-item">
-                    <label>{grade}</label>
+                    <label htmlFor={`gpa-map-${grade}`} dir="ltr">{grade}</label>
                     <input
+                      id={`gpa-map-${grade}`}
                       type="number"
                       min="0"
                       max={scale}
@@ -408,23 +462,25 @@ const GpaCalculator: React.FC = () => {
                       onChange={(e) =>
                         handleGradeMapChange(grade, parseFloat(e.target.value) || 0)
                       }
-                      className="gpa-input"
+                      className="qs-input"
                     />
                   </div>
                 ))}
               </div>
               <div className="gpa-modal-actions">
                 <button
-                  className="gpa-btn gpa-btn-secondary"
+                  type="button"
+                  className="qs-btn qs-btn-ghost"
                   onClick={handleResetGradeMap}
                 >
                   {t.gpaResetToDefaults || 'Reset to Defaults'}
                 </button>
                 <button
-                  className="gpa-btn gpa-btn-primary"
+                  type="button"
+                  className="qs-btn qs-btn-primary"
                   onClick={() => setShowAdvanced(false)}
                 >
-                  {t.gpaClose || 'Close'}
+                  {isAr ? 'تم' : 'Done'}
                 </button>
               </div>
             </div>
@@ -436,4 +492,3 @@ const GpaCalculator: React.FC = () => {
 };
 
 export default GpaCalculator;
-

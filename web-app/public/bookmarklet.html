@@ -5,100 +5,142 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>إعداد الإشارة المرجعية - Qu Student</title>
   <link rel="icon" type="image/png" href="/icon-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap">
   <style>
+    * { box-sizing: border-box; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      max-width: 600px;
-      margin: 2rem auto;
-      padding: 1rem;
-      line-height: 1.6;
+      margin: 0;
+      padding: 32px 16px 48px;
+      background: #EEF3F8;
+      color: #1B2533;
+      font-family: 'IBM Plex Sans Arabic', 'Segoe UI', Tahoma, system-ui, sans-serif;
+      line-height: 1.7;
       text-align: center;
     }
-    .setup-container {
-      background: white;
-      border-radius: 12px;
-      padding: 2rem;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      margin: 2rem 0;
+    .page {
+      max-width: 620px;
+      margin: 0 auto;
     }
-    .setup-btn {
-      display: inline-block;
-      padding: 1rem 2rem;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+    .page-header svg { width: 48px; height: 48px; display: block; }
+    h1 {
+      margin: 0;
+      font-size: 26px;
+      font-weight: 700;
+      color: #1B2533;
+    }
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 40px;
+      padding: 0 14px;
+      border-radius: 999px;
+      color: #0E7490;
+      font-weight: 500;
       text-decoration: none;
-      border: none;
-      border-radius: 8px;
+    }
+    .back-link:hover { background: rgba(14, 116, 144, 0.10); }
+    .setup-container {
+      margin: 20px 0;
+      padding: 28px 24px;
+      background: #FFFFFF;
+      border-radius: 24px;
+      box-shadow: 0 1px 2px rgba(27, 37, 51, 0.06), 0 8px 32px rgba(27, 37, 51, 0.08);
+    }
+    .setup-container h2 {
+      margin: 0 0 8px;
+      font-size: 20px;
       font-weight: 600;
-      font-size: 1.1rem;
-      margin: 1rem 0;
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-      cursor: pointer;
-      transition: all 0.3s;
     }
-    .setup-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5);
+    .setup-btn,
+    .bookmarklet-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 52px;
+      margin: 12px 0;
+      padding: 0 26px;
+      border: 0;
+      border-radius: 999px;
+      background: #0E7490;
+      color: #FFFFFF;
+      font-family: inherit;
+      font-size: 17px;
+      font-weight: 600;
+      text-decoration: none;
+      box-shadow: 0 4px 14px rgba(14, 116, 144, 0.25);
+      cursor: grab;
+      transition: background-color 0.15s ease, box-shadow 0.15s ease;
     }
-    .setup-btn:active {
-      transform: translateY(0);
+    .setup-btn { cursor: pointer; }
+    .setup-btn:hover,
+    .bookmarklet-button:hover {
+      background: #155E75;
+      box-shadow: 0 6px 18px rgba(14, 116, 144, 0.3);
+    }
+    .bookmarklet-button:active { cursor: grabbing; }
+    kbd {
+      display: inline-block;
+      padding: 1px 8px;
+      border: 1px solid #CBD5E1;
+      border-radius: 6px;
+      background: #F7F9FC !important;
+      font-family: inherit;
+      font-size: 0.9em;
     }
     .instructions {
-      background: #f0fff4;
-      border-left: 4px solid #48bb78;
-      padding: 1rem;
-      margin: 1rem 0;
-      text-align: left;
-      border-radius: 6px;
-    }
-    [dir="rtl"] .instructions {
-      border-left: none;
-      border-right: 4px solid #48bb78;
+      margin: 20px 0;
+      padding: 18px 20px;
+      border-radius: 18px;
+      background: #FFFFFF;
       text-align: right;
     }
-    .success-message {
-      background: #c6f6d5;
-      color: #22543d;
-      padding: 1rem;
-      border-radius: 6px;
-      margin: 1rem 0;
-      display: none;
-    }
-    .bookmarklet-button {
-      display: inline-block;
-      padding: 1rem 2rem;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      text-decoration: none;
-      border: none;
-      border-radius: 8px;
-      margin: 0.5rem;
+    .instructions h3 {
+      margin: 0 0 6px;
+      font-size: 17px;
       font-weight: 600;
-      font-size: 1.1rem;
-      cursor: grab;
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-      transition: all 0.3s;
     }
-    .bookmarklet-button:hover {
-      background: linear-gradient(135deg, #5568d3 0%, #6a3d8a 100%);
-      transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5);
+    .instructions ol {
+      margin: 0;
+      padding-inline-start: 22px;
+      color: #3C4A5C;
     }
-    .bookmarklet-button:active {
-      cursor: grabbing;
-      transform: translateY(0);
+    .instructions li { margin: 6px 0; }
+    .success-message {
+      display: none;
+      margin: 16px 0;
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: #E5F5EA;
+      border: 1px solid #BFE3C9;
+      color: #14612F;
     }
-    h1 { color: #2d3748; }
     .highlight {
-      background: #fff3cd;
-      padding: 0.2rem 0.5rem;
-      border-radius: 4px;
+      padding: 1px 8px;
+      border-radius: 6px;
+      background: #FFF8F0;
+      color: #A4500B;
       font-weight: 600;
     }
   </style>
 </head>
 <body>
-  <h1>📚 إعداد الإشارة المرجعية - Qu Student</h1>
+  <div class="page">
+  <a class="back-link" href="./">→ العودة إلى الجدول</a>
+  <div class="page-header">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" aria-hidden="true">    <rect width="128" height="128" rx="30" fill="#0E7490"/>  <rect x="26" y="34" width="72" height="62" rx="14" fill="none" stroke="#FFFFFF" stroke-width="9"/>  <path d="M46 24v16M78 24v16" fill="none" stroke="#FFFFFF" stroke-width="9" stroke-linecap="round"/>  <path d="M26 56h72" fill="none" stroke="#FFFFFF" stroke-width="7"/>  <rect x="37" y="66" width="22" height="18" rx="5" fill="#7FD3E3"/>  <path d="M80 78l24 24" fill="none" stroke="#0E7490" stroke-width="21" stroke-linecap="round"/>  <path d="M80 78l24 24" fill="none" stroke="#FFFFFF" stroke-width="11" stroke-linecap="round"/></svg>
+    <h1>إعداد الإشارة المرجعية</h1>
+  </div>
   
   <div class="setup-container">
     <h2>الإعداد السريع</h2>
@@ -122,6 +164,7 @@
     </ol>
   </div>
 
+  </div>
   <script>
     // Get language preference from web app's localStorage
     // This allows the bookmarklet setup page to use the same language as the dashboard

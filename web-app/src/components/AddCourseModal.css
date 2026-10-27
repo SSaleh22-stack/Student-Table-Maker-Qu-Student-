@@ -1,279 +1,169 @@
-.add-course-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+/* "Add course manually" window */
+.qs-modal.ac-modal {
+  max-width: 760px;
+}
+
+.ac-title-wrap {
   display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.ac-title-icon {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--qs-accent-soft);
+  color: var(--qs-accent);
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
-  padding: 2rem;
-  animation: fadeIn 0.3s ease-out;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+.ac-subtitle {
+  margin: 2px 0 0;
+  font-size: 14px;
+  color: var(--qs-muted);
 }
 
-.add-course-modal {
-  background: white;
-  border-radius: 0.75rem;
-  max-width: 700px;
-  width: 100%;
-  max-height: 90vh;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  animation: slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-  border: 1px solid rgba(102, 126, 234, 0.1);
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.add-course-modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem;
-  border-bottom: 2px solid #e0e0e0;
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-}
-
-.add-course-modal-header h2 {
-  margin: 0;
-  font-size: 1.5rem;
-  color: #333;
-  font-weight: 600;
-}
-
-.close-modal-btn {
-  background: #e53e3e;
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  font-weight: 600;
-  transition: all 0.3s ease;
-  font-size: 0.9rem;
-}
-
-.close-modal-btn:hover {
-  background: #c53030;
-  transform: scale(1.05);
-}
-
-.add-course-form {
-  padding: 1.5rem;
-  overflow-y: auto;
+.ac-form {
   flex: 1;
-}
-
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-
-.form-group {
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
 }
 
-.form-group label {
+.ac-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ac-section {
+  margin: 0;
+  padding: 16px 18px 18px;
+  border: 0;
+  border-radius: var(--qs-radius-lg);
+  background: var(--qs-surface-3);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.ac-section-title {
+  float: left; /* lets the legend sit inside the rounded box */
+  width: 100%;
+  padding: 0;
+  margin-bottom: 2px;
+  font-size: 15px;
   font-weight: 600;
-  color: #333;
-  font-size: 0.9rem;
+  color: var(--qs-text);
 }
 
-.required {
-  color: #e53e3e;
+[dir="rtl"] .ac-section-title {
+  float: right;
 }
 
-.form-group input[type="text"],
-.form-group input[type="time"],
-.form-group select {
-  padding: 0.75rem;
-  border: 2px solid #e0e0e0;
-  border-radius: 0.5rem;
-  font-size: 0.95rem;
-  transition: all 0.3s ease;
-  font-family: inherit;
-  background: white;
+.ac-section-title + * {
+  clear: both;
 }
 
-.form-group input[type="text"]:hover,
-.form-group input[type="time"]:hover,
-.form-group select:hover {
-  border-color: #b0b0b0;
+.ac-grid {
+  display: grid;
+  gap: 14px;
 }
 
-.form-group input[type="text"]:focus,
-.form-group input[type="time"]:focus,
-.form-group select:focus {
-  outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-  transform: translateY(-1px);
+.ac-grid-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.form-group input.error {
-  border-color: #e53e3e;
+.ac-grid-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-.error-message {
-  color: #e53e3e;
-  font-size: 0.85rem;
-  margin-top: -0.25rem;
+.ac-span-2 {
+  grid-column: span 2;
 }
 
-.days-checkboxes {
+/* Day picker buttons */
+.ac-days {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
-  padding: 0.5rem;
-  background: #f8f9fa;
-  border-radius: 0.5rem;
-  border: 2px solid #e0e0e0;
+  gap: 8px;
 }
 
-.day-checkbox {
-  display: flex;
+.ac-day {
+  position: relative;
+  display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--qs-border-strong);
+  border-radius: 999px;
+  background: var(--qs-surface);
+  color: var(--qs-text);
+  font-size: 15px;
+  font-weight: 500;
   cursor: pointer;
-  padding: 0.5rem 0.75rem;
-  background: white;
-  border-radius: 0.4rem;
-  transition: all 0.2s ease;
   user-select: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
-.day-checkbox:hover {
-  background: #f0f2f5;
+.ac-day:hover {
+  border-color: var(--qs-accent);
 }
 
-.day-checkbox input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
-  cursor: pointer;
-  accent-color: #667eea;
+.ac-day input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
 }
 
-.day-checkbox input[type="checkbox"]:checked + span {
-  color: #667eea;
-  font-weight: 600;
+.ac-day:focus-within {
+  outline: 2px solid var(--qs-accent);
+  outline-offset: 2px;
 }
 
-.day-checkbox span {
-  font-size: 0.9rem;
-  color: #333;
-  transition: all 0.2s ease;
+.ac-day.is-checked {
+  border-color: var(--qs-accent);
+  background: var(--qs-accent);
+  color: #FFFFFF;
 }
 
-.form-actions {
+.ac-footer {
   display: flex;
   justify-content: flex-end;
-  gap: 1rem;
-  margin-top: 2rem;
-  padding-top: 1.5rem;
-  border-top: 2px solid #e0e0e0;
+  gap: 10px;
+  padding: 14px 24px;
+  border-top: 1px solid var(--qs-border);
+  background: var(--qs-surface);
 }
 
-.cancel-btn,
-.submit-btn {
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 0.5rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 1rem;
-}
+@media (max-width: 640px) {
+  .ac-body {
+    padding: 16px 14px;
+  }
 
-.cancel-btn {
-  background: #718096;
-  color: white;
-}
-
-.cancel-btn:hover {
-  background: #4a5568;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(74, 85, 104, 0.3);
-}
-
-.submit-btn {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
-}
-
-.submit-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-}
-
-.submit-btn:active,
-.cancel-btn:active {
-  transform: translateY(0);
-}
-
-[dir="rtl"] .add-course-modal-header {
-  flex-direction: row-reverse;
-}
-
-[dir="rtl"] .form-row {
-  direction: rtl;
-}
-
-[dir="rtl"] .form-group label {
-  text-align: right;
-}
-
-[dir="rtl"] .form-group input,
-[dir="rtl"] .form-group select {
-  text-align: right;
-}
-
-[dir="rtl"] .days-checkboxes {
-  direction: rtl;
-}
-
-[dir="rtl"] .day-checkbox {
-  flex-direction: row-reverse;
-}
-
-[dir="rtl"] .form-actions {
-  flex-direction: row-reverse;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .form-row {
+  .ac-grid-2,
+  .ac-grid-3 {
     grid-template-columns: 1fr;
   }
 
-  .add-course-modal {
-    max-width: 95%;
-    max-height: 95vh;
+  .ac-span-2 {
+    grid-column: auto;
+  }
+
+  .ac-footer .qs-btn {
+    flex: 1;
   }
 }
