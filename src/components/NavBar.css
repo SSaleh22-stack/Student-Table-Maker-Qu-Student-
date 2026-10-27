@@ -100,7 +100,7 @@
 }
 
 /* Modal content shared by instructions, review helper and contact */
-.qs-modal-sm {
+.qs-modal.qs-modal-sm {
   max-width: 560px;
 }
 

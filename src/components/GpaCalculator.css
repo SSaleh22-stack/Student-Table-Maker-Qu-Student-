@@ -1,508 +1,314 @@
+/* GPA calculator page */
 .gpa-calculator {
-  max-width: 1200px;
+  width: 100%;
+  max-width: 1100px;
   margin: 0 auto;
-  padding: 2rem;
-  background: #f5f7fa;
-  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
 .gpa-header {
   display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
+  gap: 12px;
+  padding: 4px 4px 0;
 }
 
 .gpa-title {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #2d3748;
   margin: 0;
-}
-
-.gpa-advanced-btn {
-  background: var(--qs-accent);
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 0.5rem;
+  font-size: 28px;
   font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(14, 116, 144, 0.3);
+  color: var(--qs-text);
 }
 
-.gpa-advanced-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(14, 116, 144, 0.4);
+.gpa-subtitle {
+  margin: 4px 0 0;
+  font-size: 15px;
+  color: var(--qs-muted);
 }
 
 .gpa-card {
-  background: white;
-  border-radius: 0.75rem;
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 22px 24px 24px;
+  background: var(--qs-surface);
+  border-radius: var(--qs-radius-xl);
 }
 
 .gpa-card-header {
   display: flex;
-  justify-content: space-between;
+  flex-wrap: wrap;
   align-items: center;
-  margin-bottom: 1rem;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 14px;
 }
 
 .gpa-card-title {
-  font-size: 1.5rem;
+  margin: 0 0 14px;
+  font-size: 20px;
   font-weight: 600;
-  color: #333;
-  margin: 0 0 1rem 0;
+  color: var(--qs-text);
+}
+
+.gpa-card-header .gpa-card-title {
+  margin: 0;
 }
 
 .gpa-card-actions {
   display: flex;
-  gap: 0.75rem;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .gpa-settings-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.5rem;
+  gap: 14px;
 }
 
-.gpa-setting-item {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.gpa-setting-item label {
-  font-weight: 600;
-  color: #555;
-  font-size: 0.9rem;
-}
-
-.gpa-input,
-.gpa-select {
-  padding: 0.75rem;
-  border: 2px solid #e0e0e0;
-  border-radius: 0.5rem;
-  font-size: 1rem;
-  transition: border-color 0.3s ease;
-}
-
-.gpa-input:focus,
-.gpa-select:focus {
-  outline: none;
-  border-color: var(--qs-accent);
-}
-
-.gpa-input-text {
-  width: 100%;
-}
-
-.gpa-input-number {
-  width: 100px;
-}
-
+/* Courses table */
 .gpa-table-container {
   overflow-x: auto;
 }
 
 .gpa-table {
   width: 100%;
-  border-collapse: collapse;
-  margin-top: 1rem;
-}
-
-.gpa-table thead {
-  background: #f8f9fa;
+  min-width: 560px;
+  border-collapse: separate;
+  border-spacing: 0;
 }
 
 .gpa-table th {
-  padding: 1rem;
-  text-align: left;
+  padding: 10px 8px;
+  background: var(--qs-surface-2);
+  color: var(--qs-text-2);
+  font-size: 14px;
   font-weight: 600;
-  color: #333;
-  border-bottom: 2px solid #e0e0e0;
+  text-align: start;
   white-space: nowrap;
 }
 
-.gpa-table td {
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid #e0e0e0;
+.gpa-table th:first-child {
+  border-start-start-radius: 10px;
+  border-end-start-radius: 10px;
 }
 
-.gpa-table tbody tr:hover {
-  background: #f8f9fa;
+.gpa-table th:last-child {
+  border-start-end-radius: 10px;
+  border-end-end-radius: 10px;
+}
+
+.gpa-table td {
+  padding: 8px;
+  border-bottom: 1px solid var(--qs-border);
+  vertical-align: middle;
+}
+
+.gpa-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.gpa-cell-name {
+  min-width: 180px;
+}
+
+.gpa-cell-grade {
+  min-width: 120px;
+}
+
+.gpa-cell-hours {
+  width: 96px;
 }
 
 .gpa-points-cell {
+  font-size: 15px;
   font-weight: 600;
   color: var(--qs-accent);
+  font-variant-numeric: tabular-nums;
 }
 
 .gpa-row-actions {
   display: flex;
-  gap: 0.5rem;
-}
-
-.gpa-btn {
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 0.5rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 0.9rem;
-}
-
-.gpa-btn-primary {
-  background: var(--qs-accent);
-  color: white;
-}
-
-.gpa-btn-secondary {
-  background: #e0e0e0;
-  color: #333;
-}
-
-.gpa-btn-danger {
-  background: #f56565;
-  color: white;
-}
-
-.gpa-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
-
-.gpa-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
+  gap: 4px;
 }
 
 .gpa-btn-icon {
-  background: transparent;
-  border: none;
-  font-size: 1.2rem;
-  cursor: pointer;
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.25rem;
-  transition: background 0.2s;
-}
-
-.gpa-btn-icon:hover {
-  background: #f0f0f0;
-}
-
-.gpa-results-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 2rem;
-  margin-top: 1rem;
-}
-
-.gpa-result-section {
-  background: #f8f9fa;
-  padding: 1.5rem;
-  border-radius: 0.5rem;
-}
-
-.gpa-result-section h3 {
-  margin: 0 0 1rem 0;
-  font-size: 1.2rem;
-  color: #333;
-  border-bottom: 2px solid var(--qs-accent);
-  padding-bottom: 0.5rem;
-}
-
-.gpa-result-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.75rem 0;
-  border-bottom: 1px solid #e0e0e0;
-}
-
-.gpa-result-item:last-child {
-  border-bottom: none;
-}
-
-.gpa-result-highlight {
-  background: var(--qs-accent-soft);
-  padding: 1rem;
-  border-radius: 0.5rem;
-  margin-top: 0.5rem;
-  border: 2px solid var(--qs-accent);
-}
-
-.gpa-result-label {
-  font-weight: 600;
-  color: #555;
-}
-
-.gpa-result-value {
-  font-weight: 700;
-  color: #333;
-}
-
-.gpa-result-big {
-  font-size: 1.5rem;
-  color: var(--qs-accent);
-}
-
-.gpa-warning {
-  background: #fff3cd;
-  border-left: 4px solid #ffc107;
-  padding: 1rem;
-  border-radius: 0.5rem;
-  margin-top: 1rem;
-  color: #856404;
-}
-
-.gpa-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 2rem;
-}
-
-.gpa-modal {
-  background: white;
-  border-radius: 0.75rem;
-  max-width: 600px;
-  width: 100%;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-}
-
-.gpa-modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem;
-  border-bottom: 2px solid #e0e0e0;
-}
-
-.gpa-modal-header h2 {
-  margin: 0;
-  font-size: 1.5rem;
-  color: #333;
-}
-
-.gpa-modal-close {
-  background: #e53e3e;
-  color: white;
-  border: none;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  font-size: 1.5rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
-}
-
-.gpa-modal-close:hover {
-  background: #c53030;
-  transform: scale(1.1);
-}
-
-.gpa-modal-content {
-  padding: 1.5rem;
-}
-
-.gpa-modal-description {
-  color: #666;
-  margin-bottom: 1.5rem;
-  line-height: 1.6;
-}
-
-.gpa-grade-map-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.gpa-grade-map-item {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.gpa-grade-map-item label {
-  font-weight: 600;
-  color: #555;
-  font-size: 0.9rem;
-}
-
-.gpa-modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.75rem;
-  margin-top: 1.5rem;
-}
-
-/* RTL Support */
-[dir="rtl"] .gpa-header {
-  flex-direction: row-reverse;
-}
-
-[dir="rtl"] .gpa-card-header {
-  flex-direction: row-reverse;
-}
-
-[dir="rtl"] .gpa-card-actions {
-  flex-direction: row-reverse;
-}
-
-[dir="rtl"] .gpa-table th,
-[dir="rtl"] .gpa-table td {
-  text-align: right;
-}
-
-[dir="rtl"] .gpa-result-item {
-  flex-direction: row-reverse;
-}
-
-[dir="rtl"] .gpa-modal-header {
-  flex-direction: row-reverse;
-}
-
-[dir="rtl"] .gpa-modal-actions {
-  flex-direction: row-reverse;
-}
-
-[dir="rtl"] .gpa-row-actions {
-  flex-direction: row-reverse;
-}
-
-
-/* ---- Soft Planner look ---- */
-.gpa-calculator {
-  width: 100%;
-  max-width: 1100px;
-  min-height: 0;
-  margin: 0 auto;
+  width: 38px;
+  height: 38px;
   padding: 0;
-  background: transparent;
-}
-
-.gpa-header {
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 20px;
-}
-
-.gpa-title {
-  font-size: 28px;
-  font-weight: 600;
-  color: var(--qs-text);
-}
-
-.gpa-advanced-btn {
-  min-height: 44px;
-  padding: 0 20px;
-  border-radius: 999px;
-  font-weight: 500;
-  box-shadow: none;
-}
-
-.gpa-advanced-btn:hover {
-  transform: none;
-  box-shadow: none;
-  background: var(--qs-accent-hover);
-}
-
-.gpa-card {
-  padding: 24px;
-  margin-bottom: 20px;
-  border-radius: var(--qs-radius-xl);
-  box-shadow: none;
-}
-
-.gpa-card-title {
-  font-size: 20px;
-  font-weight: 600;
-  color: var(--qs-text);
-}
-
-.gpa-btn {
-  min-height: 40px;
-  padding: 0 16px;
-  border-radius: 999px;
-  font-weight: 500;
-}
-
-.gpa-btn:hover {
-  transform: none;
-  box-shadow: none;
-}
-
-.gpa-btn-secondary {
-  background: var(--qs-surface-2);
-  color: var(--qs-text);
-}
-
-.gpa-btn-danger {
-  background: var(--qs-danger-soft);
-  color: var(--qs-danger);
-}
-
-.gpa-btn-icon {
-  width: 36px;
-  height: 36px;
-  padding: 0;
+  border: 0;
   border-radius: 50%;
+  background: transparent;
+  color: var(--qs-text-2);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--qs-text-2);
-}
-
-.gpa-btn-icon.gpa-btn-danger {
-  background: transparent;
-  color: var(--qs-danger);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
 }
 
 .gpa-btn-icon:hover:not(:disabled) {
   background: var(--qs-surface-2);
 }
 
+.gpa-btn-icon-danger {
+  color: var(--qs-danger);
+}
+
+.gpa-btn-icon-danger:hover:not(:disabled) {
+  background: var(--qs-danger-soft);
+}
+
+.gpa-btn-icon:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.gpa-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Results */
+.gpa-results-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
 .gpa-result-section {
-  background: var(--qs-surface-3);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
   border-radius: var(--qs-radius-lg);
+  background: var(--qs-surface-3);
 }
 
-.gpa-result-section h3 {
-  color: var(--qs-text);
-  border-bottom-color: var(--qs-border);
-}
-
-.gpa-result-highlight {
-  border: 0;
-  background: var(--qs-accent-soft);
+.gpa-big {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 18px;
   border-radius: var(--qs-radius-md);
 }
 
-.gpa-modal-overlay {
-  background: rgba(27, 37, 51, 0.45);
+.gpa-big-semester {
+  background: #E3F2F6;
+  color: #0B4F63;
 }
 
-.gpa-modal {
-  border-radius: var(--qs-radius-xl);
-  box-shadow: var(--qs-shadow-lg);
+.gpa-big-cumulative {
+  background: #E5F5EA;
+  color: #14612F;
+}
+
+.gpa-big-label {
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.gpa-big-value {
+  font-size: 40px;
+  font-weight: 600;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+
+.gpa-big-scale {
+  font-size: 18px;
+  font-weight: 500;
+  opacity: 0.8;
+}
+
+.gpa-result-list {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.gpa-result-list > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 4px;
+  border-bottom: 1px solid var(--qs-border);
+}
+
+.gpa-result-list > div:last-child {
+  border-bottom: 0;
+}
+
+.gpa-result-list dt {
+  font-size: 14px;
+  color: var(--qs-muted);
+}
+
+.gpa-result-list dd {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--qs-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.gpa-warning {
+  margin-top: 16px;
+}
+
+/* Advanced grade mapping window */
+.qs-modal.gpa-modal {
+  max-width: 640px;
+}
+
+.gpa-modal-description {
+  margin: 0 0 16px;
+  color: var(--qs-muted);
+}
+
+.gpa-grade-map-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px;
+}
+
+.gpa-grade-map-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  border-radius: var(--qs-radius-md);
+  background: var(--qs-surface-3);
+}
+
+.gpa-grade-map-item label {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--qs-text);
+  text-align: center;
+}
+
+.gpa-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+@media (max-width: 640px) {
+  .gpa-card {
+    padding: 18px 14px;
+  }
+
+  .gpa-big-value {
+    font-size: 34px;
+  }
 }

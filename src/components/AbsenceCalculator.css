@@ -1,192 +1,222 @@
-.absence-calculator {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem;
-  background: #f5f7fa;
-  min-height: 100vh;
-}
-
-.absence-header {
-  margin-bottom: 2rem;
-}
-
-.absence-title {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #2d3748;
-  margin: 0;
-}
-
-.absence-card {
-  background: white;
-  border-radius: 0.75rem;
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.absence-card-title {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #333;
-  margin: 0 0 1.5rem 0;
-}
-
-.absence-input-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1.5rem;
-}
-
-.absence-input-item {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.absence-input-item label {
-  font-weight: 600;
-  color: #555;
-  font-size: 0.9rem;
-}
-
-.absence-input,
-.absence-select {
-  padding: 0.75rem;
-  border: 2px solid #e0e0e0;
-  border-radius: 0.5rem;
-  font-size: 1rem;
-  transition: border-color 0.3s ease;
-}
-
-.absence-input:focus,
-.absence-select:focus {
-  outline: none;
-  border-color: var(--qs-accent);
-}
-
-.absence-error {
-  background: #fee;
-  border-left: 4px solid #e53e3e;
-  padding: 1rem;
-  border-radius: 0.5rem;
-  margin-top: 1rem;
-  color: #742a2a;
-  font-size: 0.95rem;
-}
-
-.absence-results-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 1.5rem;
-}
-
-.absence-result-item {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  padding: 1rem;
-  background: #f8f9fa;
-  border-radius: 0.5rem;
-  border: 1px solid #e0e0e0;
-}
-
-.absence-result-label {
-  font-weight: 500;
-  color: #555;
-  font-size: 0.9rem;
-}
-
-.absence-result-value {
-  font-weight: 700;
-  color: #333;
-  font-size: 1.5rem;
-}
-
-.absence-result-percent {
-  font-size: 2rem;
-}
-
-.absence-result-status {
-  grid-column: 1 / -1;
-}
-
-.absence-result-badge {
-  display: inline-block;
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  font-weight: 600;
-  font-size: 1rem;
-  text-align: center;
-}
-
-.absence-status-message {
-  padding: 1.5rem;
-  border-radius: 0.5rem;
-  border: 2px solid;
-  margin-top: 1rem;
-}
-
-.absence-status-message strong {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-size: 1.1rem;
-}
-
-.absence-status-message p {
-  margin: 0;
-  line-height: 1.6;
-}
-
-/* RTL Support */
-[dir="rtl"] .absence-calculator {
-  text-align: right;
-}
-
-[dir="rtl"] .absence-input-item {
-  text-align: right;
-}
-
-[dir="rtl"] .absence-result-item {
-  text-align: right;
-}
-
-[dir="rtl"] .absence-error {
-  border-left: none;
-  border-right: 4px solid #e53e3e;
-}
-
-
-/* ---- Soft Planner look ---- */
+/* Absence calculator page */
 .absence-calculator {
   width: 100%;
   max-width: 1100px;
-  min-height: 0;
   margin: 0 auto;
-  padding: 0;
-  background: transparent;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
 .absence-header {
-  margin-bottom: 20px;
+  padding: 4px 4px 0;
 }
 
 .absence-title {
+  margin: 0;
   font-size: 28px;
   font-weight: 600;
   color: var(--qs-text);
 }
 
+.absence-subtitle {
+  margin: 4px 0 0;
+  font-size: 15px;
+  color: var(--qs-muted);
+}
+
 .absence-card {
-  padding: 24px;
-  margin-bottom: 20px;
+  padding: 22px 24px 24px;
+  background: var(--qs-surface);
   border-radius: var(--qs-radius-xl);
-  box-shadow: none;
 }
 
 .absence-card-title {
+  margin: 0 0 14px;
   font-size: 20px;
   font-weight: 600;
   color: var(--qs-text);
+}
+
+.absence-input-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+}
+
+.absence-error {
+  margin-top: 16px;
+}
+
+/* Results */
+.absence-results-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.absence-results-head .absence-card-title {
+  margin: 0;
+}
+
+.absence-badge {
+  padding: 4px 14px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.absence-meter {
+  height: 12px;
+  border-radius: 999px;
+  background: var(--qs-surface-2);
+  overflow: hidden;
+}
+
+.absence-meter-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+.absence-meter-text {
+  margin: 8px 0 16px;
+  font-size: 14px;
+  color: var(--qs-muted);
+}
+
+.absence-results-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.absence-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px 18px;
+  border-radius: var(--qs-radius-lg);
+  background: var(--qs-surface-3);
+  color: var(--qs-text);
+}
+
+.absence-stat-label {
+  font-size: 14px;
+  color: var(--qs-muted);
+}
+
+.absence-stat-value {
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
+.absence-status-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 16px 18px;
+  border-radius: var(--qs-radius-lg);
+  border: 1px solid transparent;
+}
+
+.absence-status-message strong {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.absence-status-message p {
+  margin: 4px 0 0;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.absence-status-icon {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFFFFF;
+}
+
+/* Status colors: safe → warning → danger → exceeded */
+.absence-badge.is-safe,
+.absence-status-message.is-safe {
+  background: var(--qs-success-bg);
+  color: var(--qs-success);
+}
+
+.absence-badge.is-warning,
+.absence-status-message.is-warning {
+  background: var(--qs-warning-bg);
+  color: var(--qs-warning);
+}
+
+.absence-badge.is-danger,
+.absence-status-message.is-danger,
+.absence-badge.is-exceeded,
+.absence-status-message.is-exceeded {
+  background: var(--qs-danger-soft);
+  color: var(--qs-danger);
+}
+
+.absence-status-message.is-safe {
+  border-color: #BFE3C9;
+}
+
+.absence-status-message.is-warning {
+  border-color: var(--qs-warning-border);
+}
+
+.absence-status-message.is-danger,
+.absence-status-message.is-exceeded {
+  border-color: #F5C2BD;
+}
+
+.absence-status-message.is-safe .absence-status-icon,
+.absence-meter-fill.is-safe {
+  background: #15803D;
+}
+
+.absence-status-message.is-warning .absence-status-icon,
+.absence-meter-fill.is-warning {
+  background: #C2410C;
+}
+
+.absence-status-message.is-danger .absence-status-icon,
+.absence-meter-fill.is-danger {
+  background: #B42318;
+}
+
+.absence-status-message.is-exceeded .absence-status-icon,
+.absence-meter-fill.is-exceeded {
+  background: #7A1B12;
+}
+
+.absence-stat.is-safe .absence-stat-value {
+  color: var(--qs-success);
+}
+
+.absence-stat.is-warning .absence-stat-value {
+  color: var(--qs-warning);
+}
+
+.absence-stat.is-danger .absence-stat-value,
+.absence-stat.is-exceeded .absence-stat-value {
+  color: var(--qs-danger);
+}
+
+@media (max-width: 640px) {
+  .absence-card {
+    padding: 18px 14px;
+  }
 }

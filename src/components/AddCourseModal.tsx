@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { Course } from '../types';
+import Icon from './Icon';
 import './AddCourseModal.css';
 
 interface AddCourseModalProps {
@@ -161,185 +162,207 @@ const AddCourseModal: React.FC<AddCourseModalProps> = ({ isOpen, onClose, onAdd 
 
   if (!isOpen) return null;
 
+  const isAr = language === 'ar';
+  const req = <span className="qs-required" aria-hidden="true">*</span>;
+
   return (
-    <div className="add-course-modal-overlay" onClick={handleClose}>
-      <div className="add-course-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="add-course-modal-header">
-          <h2>{language === 'en' ? '➕ Add Course Manually' : '➕ إضافة مقرر يدوياً'}</h2>
-          <button className="close-modal-btn" onClick={handleClose}>
+    <div className="qs-modal-overlay" onClick={handleClose}>
+      <div
+        className="qs-modal ac-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="ac-title"
+        dir={isAr ? 'rtl' : 'ltr'}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="qs-modal-header">
+          <div className="ac-title-wrap">
+            <span className="ac-title-icon">
+              <Icon name="plus" size={22} />
+            </span>
+            <div>
+              <h2 id="ac-title">{isAr ? 'إضافة مقرر يدوياً' : 'Add course manually'}</h2>
+              <p className="ac-subtitle">
+                {isAr ? 'الحقول المعلّمة بـ * مطلوبة' : 'Fields marked * are required'}
+              </p>
+            </div>
+          </div>
+          <button type="button" className="qs-btn qs-btn-ghost qs-btn-sm" onClick={handleClose}>
             {t.close}
           </button>
         </div>
 
-        <form className="add-course-form" onSubmit={handleSubmit}>
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="code">
-                {t.courseCode} <span className="required">*</span>
-              </label>
-              <input
-                type="text"
-                id="code"
-                value={formData.code}
-                onChange={(e) => handleChange('code', e.target.value)}
-                className={errors.code ? 'error' : ''}
-                placeholder={language === 'en' ? 'e.g., CS101' : 'مثال: CS101'}
-              />
-              {errors.code && <span className="error-message">{errors.code}</span>}
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="name">
-                {t.courseName} <span className="required">*</span>
-              </label>
-              <input
-                type="text"
-                id="name"
-                value={formData.name}
-                onChange={(e) => handleChange('name', e.target.value)}
-                className={errors.name ? 'error' : ''}
-                placeholder={language === 'en' ? 'Course name' : 'اسم المقرر'}
-              />
-              {errors.name && <span className="error-message">{errors.name}</span>}
-            </div>
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="section">
-                {t.section} <span className="required">*</span>
-              </label>
-              <input
-                type="text"
-                id="section"
-                value={formData.section}
-                onChange={(e) => handleChange('section', e.target.value)}
-                className={errors.section ? 'error' : ''}
-                placeholder={language === 'en' ? 'e.g., 01' : 'مثال: 01'}
-              />
-              {errors.section && <span className="error-message">{errors.section}</span>}
-            </div>
-
-            <div className="form-group">
-              <label>
-                {t.days} <span className="required">*</span>
-              </label>
-              <div className="days-checkboxes">
-                {daysOptions.map((day) => (
-                  <label key={day.value} className="day-checkbox">
-                    <input
-                      type="checkbox"
-                      checked={formData.days.includes(day.value)}
-                      onChange={() => handleDayToggle(day.value)}
-                    />
-                    <span>{day.label}</span>
-                  </label>
-                ))}
+        <form className="ac-form" onSubmit={handleSubmit} noValidate>
+          <div className="ac-body">
+            <fieldset className="ac-section">
+              <legend className="ac-section-title">{isAr ? 'بيانات المقرر' : 'Course details'}</legend>
+              <div className="ac-grid ac-grid-3">
+                <div className="qs-field">
+                  <label className="qs-label" htmlFor="code">{t.courseCode} {req}</label>
+                  <input
+                    type="text"
+                    id="code"
+                    dir="ltr"
+                    value={formData.code}
+                    onChange={(e) => handleChange('code', e.target.value)}
+                    className={`qs-input ${errors.code ? 'is-error' : ''}`}
+                    aria-invalid={!!errors.code}
+                    placeholder={isAr ? 'مثال: CS101' : 'e.g., CS101'}
+                  />
+                  {errors.code && <span className="qs-field-error">{errors.code}</span>}
+                </div>
+                <div className="qs-field ac-span-2">
+                  <label className="qs-label" htmlFor="name">{t.courseName} {req}</label>
+                  <input
+                    type="text"
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) => handleChange('name', e.target.value)}
+                    className={`qs-input ${errors.name ? 'is-error' : ''}`}
+                    aria-invalid={!!errors.name}
+                    placeholder={isAr ? 'اسم المقرر' : 'Course name'}
+                  />
+                  {errors.name && <span className="qs-field-error">{errors.name}</span>}
+                </div>
+                <div className="qs-field">
+                  <label className="qs-label" htmlFor="section">{t.section} {req}</label>
+                  <input
+                    type="text"
+                    id="section"
+                    dir="ltr"
+                    value={formData.section}
+                    onChange={(e) => handleChange('section', e.target.value)}
+                    className={`qs-input ${errors.section ? 'is-error' : ''}`}
+                    aria-invalid={!!errors.section}
+                    placeholder={isAr ? 'مثال: 01' : 'e.g., 01'}
+                  />
+                  {errors.section && <span className="qs-field-error">{errors.section}</span>}
+                </div>
+                <div className="qs-field">
+                  <label className="qs-label" htmlFor="status">{t.status}</label>
+                  <select
+                    id="status"
+                    className="qs-select"
+                    value={formData.status}
+                    onChange={(e) => handleChange('status', e.target.value)}
+                  >
+                    <option value="open">{t.open}</option>
+                    <option value="closed">{t.closed}</option>
+                  </select>
+                </div>
+                <div className="qs-field">
+                  <label className="qs-label" htmlFor="classType">{t.classType}</label>
+                  <select
+                    id="classType"
+                    className="qs-select"
+                    value={formData.classType}
+                    onChange={(e) => handleChange('classType', e.target.value)}
+                  >
+                    <option value="theoretical">{t.theoretical}</option>
+                    <option value="practical">{t.practical}</option>
+                    <option value="exercise">{t.exercise}</option>
+                  </select>
+                </div>
               </div>
-              {errors.days && <span className="error-message">{errors.days}</span>}
-            </div>
+            </fieldset>
+
+            <fieldset className="ac-section">
+              <legend className="ac-section-title">{isAr ? 'الموعد' : 'Schedule'}</legend>
+              <div className="qs-field">
+                <span className="qs-label" id="ac-days-label">{t.days} {req}</span>
+                <div className="ac-days" role="group" aria-labelledby="ac-days-label">
+                  {daysOptions.map((day) => {
+                    const checked = formData.days.includes(day.value);
+                    return (
+                      <label key={day.value} className={`ac-day ${checked ? 'is-checked' : ''}`}>
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => handleDayToggle(day.value)}
+                        />
+                        {checked && <Icon name="check" size={14} />}
+                        <span>{day.label}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+                {errors.days && <span className="qs-field-error">{errors.days}</span>}
+              </div>
+              <div className="ac-grid ac-grid-2">
+                <div className="qs-field">
+                  <label className="qs-label" htmlFor="startTime">{isAr ? 'وقت البداية' : 'Start time'} {req}</label>
+                  <input
+                    type="time"
+                    id="startTime"
+                    value={formData.startTime}
+                    onChange={(e) => handleChange('startTime', e.target.value)}
+                    className={`qs-input ${errors.startTime ? 'is-error' : ''}`}
+                    aria-invalid={!!errors.startTime}
+                  />
+                  {errors.startTime && <span className="qs-field-error">{errors.startTime}</span>}
+                </div>
+                <div className="qs-field">
+                  <label className="qs-label" htmlFor="endTime">{isAr ? 'وقت النهاية' : 'End time'} {req}</label>
+                  <input
+                    type="time"
+                    id="endTime"
+                    value={formData.endTime}
+                    onChange={(e) => handleChange('endTime', e.target.value)}
+                    className={`qs-input ${errors.endTime ? 'is-error' : ''}`}
+                    aria-invalid={!!errors.endTime}
+                  />
+                  {errors.endTime && <span className="qs-field-error">{errors.endTime}</span>}
+                </div>
+              </div>
+            </fieldset>
+
+            <fieldset className="ac-section">
+              <legend className="ac-section-title">{isAr ? 'معلومات إضافية (اختياري)' : 'More details (optional)'}</legend>
+              <div className="ac-grid ac-grid-3">
+                <div className="qs-field">
+                  <label className="qs-label" htmlFor="location">{t.location}</label>
+                  <input
+                    type="text"
+                    id="location"
+                    className="qs-input"
+                    value={formData.location}
+                    onChange={(e) => handleChange('location', e.target.value)}
+                    placeholder={isAr ? 'مثال: مبنى 5، قاعة 201' : 'e.g., Building 5, Room 201'}
+                  />
+                </div>
+                <div className="qs-field">
+                  <label className="qs-label" htmlFor="instructor">{t.instructor}</label>
+                  <input
+                    type="text"
+                    id="instructor"
+                    className="qs-input"
+                    value={formData.instructor}
+                    onChange={(e) => handleChange('instructor', e.target.value)}
+                    placeholder={isAr ? 'اسم المحاضر' : 'Instructor name'}
+                  />
+                </div>
+                <div className="qs-field">
+                  <label className="qs-label" htmlFor="examPeriod">{isAr ? 'فترة الامتحان' : 'Exam period'}</label>
+                  <input
+                    type="text"
+                    id="examPeriod"
+                    className="qs-input"
+                    value={formData.examPeriod}
+                    onChange={(e) => handleChange('examPeriod', e.target.value)}
+                    placeholder={isAr ? 'مثال: 1، 2، 3...' : 'e.g., 1, 2, 3...'}
+                  />
+                </div>
+              </div>
+            </fieldset>
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="startTime">
-                {language === 'en' ? 'Start Time' : 'وقت البداية'} <span className="required">*</span>
-              </label>
-              <input
-                type="time"
-                id="startTime"
-                value={formData.startTime}
-                onChange={(e) => handleChange('startTime', e.target.value)}
-                className={errors.startTime ? 'error' : ''}
-              />
-              {errors.startTime && <span className="error-message">{errors.startTime}</span>}
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="endTime">
-                {language === 'en' ? 'End Time' : 'وقت النهاية'} <span className="required">*</span>
-              </label>
-              <input
-                type="time"
-                id="endTime"
-                value={formData.endTime}
-                onChange={(e) => handleChange('endTime', e.target.value)}
-                className={errors.endTime ? 'error' : ''}
-              />
-              {errors.endTime && <span className="error-message">{errors.endTime}</span>}
-            </div>
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="location">{t.location}</label>
-              <input
-                type="text"
-                id="location"
-                value={formData.location}
-                onChange={(e) => handleChange('location', e.target.value)}
-                placeholder={language === 'en' ? 'e.g., Building 5, Room 201' : 'مثال: مبنى 5، قاعة 201'}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="instructor">{t.instructor}</label>
-              <input
-                type="text"
-                id="instructor"
-                value={formData.instructor}
-                onChange={(e) => handleChange('instructor', e.target.value)}
-                placeholder={language === 'en' ? 'Instructor name' : 'اسم المحاضر'}
-              />
-            </div>
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="examPeriod">
-                {language === 'en' ? 'Exam Period' : 'فترة الامتحان'}
-              </label>
-              <input
-                type="text"
-                id="examPeriod"
-                value={formData.examPeriod}
-                onChange={(e) => handleChange('examPeriod', e.target.value)}
-                placeholder={language === 'en' ? 'e.g., 1, 2, 3...' : 'مثال: 1، 2، 3...'}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="status">{t.status}</label>
-              <select
-                id="status"
-                value={formData.status}
-                onChange={(e) => handleChange('status', e.target.value)}
-              >
-                <option value="open">{t.open}</option>
-                <option value="closed">{t.closed}</option>
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="classType">{t.classType}</label>
-              <select
-                id="classType"
-                value={formData.classType}
-                onChange={(e) => handleChange('classType', e.target.value)}
-              >
-                <option value="theoretical">{t.theoretical}</option>
-                <option value="practical">{t.practical}</option>
-                <option value="exercise">{t.exercise}</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="form-actions">
-            <button type="button" className="cancel-btn" onClick={handleClose}>
-              {t.close}
+          <div className="ac-footer">
+            <button type="button" className="qs-btn qs-btn-ghost" onClick={handleClose}>
+              {isAr ? 'إلغاء' : 'Cancel'}
             </button>
-            <button type="submit" className="submit-btn">
-              {language === 'en' ? '➕ Add Course' : '➕ إضافة المقرر'}
+            <button type="submit" className="qs-btn qs-btn-primary">
+              <Icon name="plus" />
+              {isAr ? 'إضافة المقرر' : 'Add course'}
             </button>
           </div>
         </form>
@@ -349,4 +372,3 @@ const AddCourseModal: React.FC<AddCourseModalProps> = ({ isOpen, onClose, onAdd 
 };
 
 export default AddCourseModal;
-
