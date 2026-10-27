@@ -13,6 +13,7 @@ import {
   validateGpa,
   validateHours,
 } from '../lib/gpa';
+import Icon from './Icon';
 import './GpaCalculator.css';
 
 const GpaCalculator: React.FC = () => {
@@ -325,16 +326,18 @@ const GpaCalculator: React.FC = () => {
                           className="gpa-btn-icon"
                           onClick={() => handleDuplicateCourse(course)}
                           title={t.gpaDuplicate || 'Duplicate'}
+                          aria-label={t.gpaDuplicate || 'Duplicate'}
                         >
-                          📋
+                          <Icon name="copy" size={16} />
                         </button>
                         <button
                           className="gpa-btn-icon gpa-btn-danger"
                           onClick={() => handleRemoveCourse(course.id)}
                           disabled={courses.length === 1}
                           title={t.gpaRemove || 'Remove'}
+                          aria-label={t.gpaRemove || 'Remove'}
                         >
-                          ×
+                          <Icon name="x" size={16} />
                         </button>
                       </div>
                     </td>

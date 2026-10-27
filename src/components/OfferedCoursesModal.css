@@ -88,7 +88,7 @@
 
 .search-input:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: var(--qs-accent);
 }
 
 .code-filter-group {
@@ -116,7 +116,7 @@
 
 .code-filter-input:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: var(--qs-accent);
 }
 
 [dir="rtl"] .offered-courses-search-row {
@@ -134,7 +134,7 @@
 
 [dir="rtl"] .filter-select:hover,
 [dir="rtl"] .filter-select:focus {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23667eea' d='M6 3l5 5H1z'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%230E7490' d='M6 3l5 5H1z'/%3E%3C/svg%3E");
 }
 
 [dir="rtl"] .filter-select option {
@@ -186,14 +186,14 @@
 }
 
 .filter-btn:hover {
-  border-color: #667eea;
-  color: #667eea;
+  border-color: var(--qs-accent);
+  color: var(--qs-accent);
 }
 
 .filter-btn.active {
-  background: #667eea;
+  background: var(--qs-accent);
   color: white;
-  border-color: #667eea;
+  border-color: var(--qs-accent);
 }
 
 .filter-select {
@@ -217,16 +217,16 @@
 }
 
 .filter-select:hover {
-  border-color: #667eea;
-  color: #667eea;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23667eea' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  border-color: var(--qs-accent);
+  color: var(--qs-accent);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%230E7490' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
 }
 
 .filter-select:focus {
   outline: none;
-  border-color: #667eea;
-  color: #667eea;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23667eea' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  border-color: var(--qs-accent);
+  color: var(--qs-accent);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%230E7490' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
 }
 
 .filter-select option {
@@ -274,7 +274,7 @@
 
 .offered-course-item:hover {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border-color: #667eea;
+  border-color: var(--qs-accent);
 }
 
 .offered-course-info {
@@ -304,7 +304,7 @@
 .offered-course-code {
   font-weight: 700;
   font-size: 1.1rem;
-  color: #667eea;
+  color: var(--qs-accent);
 }
 
 .offered-course-section {
@@ -373,7 +373,7 @@
   display: flex;
   gap: 0.35rem;
   padding: 0.15rem 0.35rem;
-  background: rgba(102, 126, 234, 0.05);
+  background: rgba(14, 116, 144, 0.05);
   border-radius: 0.2rem;
   margin-top: 0.15rem;
   font-size: 0.8rem;
@@ -443,7 +443,7 @@
 }
 
 .add-course-btn {
-  background: #667eea;
+  background: var(--qs-accent);
   color: white;
   border: none;
   padding: 0.4rem 0.8rem;
@@ -456,7 +456,7 @@
 }
 
 .add-course-btn:hover:not(:disabled) {
-  background: #5568d3;
+  background: var(--qs-accent-hover);
   transform: translateY(-1px);
 }
 
@@ -621,3 +621,57 @@
   flex-direction: row-reverse;
 }
 
+
+/* ---- Soft Planner look ---- */
+.offered-courses-modal-overlay {
+  padding: 24px 16px;
+  background: rgba(27, 37, 51, 0.45);
+}
+
+.offered-courses-modal {
+  border-radius: var(--qs-radius-xl);
+  box-shadow: var(--qs-shadow-lg);
+}
+
+.offered-courses-modal-header {
+  padding: 18px 24px;
+  background: var(--qs-surface);
+  border-bottom: 1px solid var(--qs-border);
+}
+
+.offered-courses-modal-header h2 {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--qs-text);
+}
+
+.close-modal-btn {
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: var(--qs-surface-2);
+  color: var(--qs-text);
+  font-weight: 500;
+}
+
+.close-modal-btn:hover {
+  background: #E4E9F0;
+  transform: none;
+}
+
+.add-course-btn {
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: 999px;
+  font-weight: 500;
+}
+
+.add-course-btn:hover:not(:disabled) {
+  transform: none;
+}
+
+.add-course-btn.conflict {
+  background: var(--qs-warning-bg);
+  color: var(--qs-warning);
+  border: 1px solid var(--qs-warning-border);
+}

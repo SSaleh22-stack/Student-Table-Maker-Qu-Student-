@@ -3,6 +3,8 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { useTimetable } from '../contexts/TimetableContext';
 import { Course } from '../types';
 import html2canvas from 'html2canvas';
+import Icon from './Icon';
+import { getCourseTheme, coursesLabel, sectionsLabel } from '../lib/courseTheme';
 import './TimetableGrid.css';
 
 // Color palette for courses - Darker colors
@@ -795,226 +797,130 @@ const TimetableGrid: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
+  // Totals shown next to the title
+  const ttUniqueCourses = new Set(timetable.map((entry) => entry.course.code)).size;
+  const ttTotalSections = timetable.length;
+  const ttTotalConflicts = timetable.filter((entry) => entry.isConflictSection).length;
+  const ttCourseHours = new Map<string, number>();
+  timetable.forEach((entry) => {
+    if (entry.course.hours && !ttCourseHours.has(entry.course.code)) {
+      ttCourseHours.set(entry.course.code, parseFloat(entry.course.hours) || 0);
+    }
+  });
+  const ttTotalHours = Array.from(ttCourseHours.values()).reduce((sum, hours) => sum + hours, 0);
+  const isAr = language === 'ar';
+
   return (
-    <section className="timetable-section" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+    <section className="timetable-section qs-card" dir={isAr ? 'rtl' : 'ltr'}>
       <div className="timetable-header">
-        {language === 'ar' ? (
-          <>
-            <div className="timetable-actions">
-              {timetable.length > 0 && (
-                <>
-                      <button
-                        className="summary-btn"
-                        onClick={() => setShowSummary(true)}
-                      >
-                        📊 {t.summary}
-                      </button>
-              <div className="export-menu-container">
-                <button
-                  className="export-btn"
-                  onClick={() => setShowExportMenu(!showExportMenu)}
-                  title={t.export}
-                >
-                  💾 {t.export}
-                </button>
-                {showExportMenu && (
-                  <div className="export-menu">
-                    <button
-                      className="export-menu-item"
-                      onClick={() => {
-                        exportToPDF();
-                        setShowExportMenu(false);
-                      }}
-                    >
-                      {t.exportToPDF}
-                    </button>
-                    <button
-                      className="export-menu-item"
-                      onClick={() => {
-                        exportJPGTimetable();
-                        setShowExportMenu(false);
-                      }}
-                    >
-                      {t.exportToJPG}
-                    </button>
-                    <button
-                      className="export-menu-item"
-                      onClick={() => {
-                        exportToExcel();
-                        setShowExportMenu(false);
-                      }}
-                    >
-                      {t.exportToExcel}
-                    </button>
-                    <button
-                      className="export-menu-item"
-                      onClick={() => {
-                        exportToCalendar();
-                        setShowExportMenu(false);
-                      }}
-                    >
-                      {t.exportToCalendar}
-                    </button>
-                  </div>
-                )}
-              </div>
-                      <button
-                        className="remove-all-btn"
-                        onClick={() => {
-                          if (window.confirm(language === 'en' 
-                            ? 'Are you sure you want to remove all courses from the timetable?' 
-                            : 'هل أنت متأكد من إزالة جميع المقررات من الجدول؟')) {
-                            removeAllCourses();
-                          }
-                        }}
-                        title={language === 'en' ? 'Remove all courses' : 'إزالة جميع المقررات'}
-                      >
-                        🗑️ {language === 'en' ? 'Remove All' : 'إزالة الكل'}
-                      </button>
-                </>
+        <div className="timetable-heading">
+          <h2 className="timetable-title">{isAr ? 'أسبوعك' : 'Your week'}</h2>
+          {timetable.length > 0 ? (
+            <div className="timetable-stats">
+              <span className="tt-chip">{coursesLabel(ttUniqueCourses, language)}</span>
+              {ttTotalHours > 0 && (
+                <span className="tt-chip">{isAr ? `${ttTotalHours} ساعة` : `${ttTotalHours} credit hours`}</span>
+              )}
+              <span className="tt-chip">{sectionsLabel(ttTotalSections, language)}</span>
+              {ttTotalConflicts > 0 && (
+                <span className="tt-chip tt-chip-warn">
+                  <Icon name="alert" size={14} />
+                  {isAr ? `${ttTotalConflicts} تعارض` : `${ttTotalConflicts} ${ttTotalConflicts === 1 ? 'clash' : 'clashes'}`}
+                </span>
               )}
             </div>
-            <h2 className="timetable-title">
-              الجدول الأسبوعي {timetable.length > 0 && (() => {
-                const uniqueCourses = new Set(timetable.map(entry => entry.course.code)).size;
-                const totalSections = timetable.length;
-                const totalConflicts = timetable.filter(entry => entry.isConflictSection).length;
-                // Calculate total hours - sum hours from unique courses only
-                const courseHoursMap = new Map<string, string>();
-                timetable.forEach(entry => {
-                  const courseCode = entry.course.code;
-                  if (entry.course.hours && !courseHoursMap.has(courseCode)) {
-                    courseHoursMap.set(courseCode, entry.course.hours);
-                  }
-                });
-                const totalHours = Array.from(courseHoursMap.values()).reduce((sum, hours) => {
-                  const hoursNum = parseFloat(hours) || 0;
-                  return sum + hoursNum;
-                }, 0);
-                return (
-                  <>
-                    <span className="total-courses-text">إجمالي المقررات {uniqueCourses}</span>
-                    {totalHours > 0 && (
-                      <span className="total-hours-text">إجمالي الساعات {totalHours}</span>
-                    )}
-                    <span className="total-sections-text">عدد الشعب {totalSections}</span>
-                    {totalConflicts > 0 && (
-                      <span className="total-conflicts-text">التعارضات {totalConflicts}</span>
-                    )}
-                  </>
-                );
-              })()}
-            </h2>
-          </>
-        ) : (
-          <>
-            <h2 className="timetable-title">
-              Weekly Schedule {timetable.length > 0 && (() => {
-                const uniqueCourses = new Set(timetable.map(entry => entry.course.code)).size;
-                const totalSections = timetable.length;
-                const totalConflicts = timetable.filter(entry => entry.isConflictSection).length;
-                // Calculate total hours - sum hours from unique courses only
-                const courseHoursMap = new Map<string, string>();
-                timetable.forEach(entry => {
-                  const courseCode = entry.course.code;
-                  if (entry.course.hours && !courseHoursMap.has(courseCode)) {
-                    courseHoursMap.set(courseCode, entry.course.hours);
-                  }
-                });
-                const totalHours = Array.from(courseHoursMap.values()).reduce((sum, hours) => {
-                  const hoursNum = parseFloat(hours) || 0;
-                  return sum + hoursNum;
-                }, 0);
-                return (
-                  <>
-                    <span className="total-courses-text">total courses {uniqueCourses}</span>
-                    {totalHours > 0 && (
-                      <span className="total-hours-text">total hours {totalHours}</span>
-                    )}
-                    <span className="total-sections-text">sections {totalSections}</span>
-                    {totalConflicts > 0 && (
-                      <span className="total-conflicts-text">conflicts {totalConflicts}</span>
-                    )}
-                  </>
-                );
-              })()}
-            </h2>
-            <div className="timetable-actions">
-          {timetable.length > 0 && (
-            <>
-                      <button
-                        className="summary-btn"
-                        onClick={() => setShowSummary(true)}
-                      >
-                        📊 {t.summary}
-                      </button>
-              <div className="export-menu-container">
-                <button
-                  className="export-btn"
-                  onClick={() => setShowExportMenu(!showExportMenu)}
-                  title={t.export}
-                >
-                  💾 {t.export} <span className="dropdown-arrow">▼</span>
-                </button>
-                {showExportMenu && (
-                  <div className="export-menu">
-                    <button
-                      className="export-menu-item"
-                      onClick={() => {
-                        exportToPDF();
-                        setShowExportMenu(false);
-                      }}
-                    >
-                      {t.exportToPDF}
-                    </button>
-                    <button
-                      className="export-menu-item"
-                      onClick={() => {
-                        exportJPGTimetable();
-                        setShowExportMenu(false);
-                      }}
-                    >
-                      {t.exportToJPG}
-                    </button>
-                    <button
-                      className="export-menu-item"
-                      onClick={() => {
-                        exportToExcel();
-                        setShowExportMenu(false);
-                      }}
-                    >
-                      {t.exportToExcel}
-                    </button>
-                    <button
-                      className="export-menu-item"
-                      onClick={() => {
-                        exportToCalendar();
-                        setShowExportMenu(false);
-                      }}
-                    >
-                      {t.exportToCalendar}
-                    </button>
-                  </div>
-                )}
-              </div>
-                      <button
-                        className="remove-all-btn"
-                        onClick={() => {
-                          if (window.confirm(
-                            language === 'en'
-                              ? 'Are you sure you want to remove all courses from the timetable?'
-                              : 'هل أنت متأكد من إزالة جميع المقررات من الجدول؟'
-                          )) {
-                            removeAllCourses();
-                          }
-                        }}
-                      >
-                        🗑️ {t.removeAll}
-                      </button>
-            </> 
+          ) : (
+            <p className="timetable-subtitle">
+              {isAr ? 'أضف شعبة من قائمة المقررات لتظهر هنا' : 'Add a section from the course list to see it here'}
+            </p>
           )}
         </div>
-          </>
+        {timetable.length > 0 && (
+          <div className="timetable-actions">
+            <button type="button" className="qs-btn qs-btn-ghost" onClick={() => setShowSummary(true)}>
+              <Icon name="fileText" />
+              {t.summary}
+            </button>
+            <div className="export-menu-container">
+              <button
+                type="button"
+                className="qs-btn qs-btn-dark"
+                aria-haspopup="menu"
+                aria-expanded={showExportMenu}
+                onClick={() => setShowExportMenu(!showExportMenu)}
+              >
+                <Icon name="share" />
+                {t.export}
+                <Icon name="chevronDown" size={14} />
+              </button>
+              {showExportMenu && (
+                <div className="export-menu" role="menu">
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="export-menu-item"
+                    onClick={() => {
+                      exportToPDF();
+                      setShowExportMenu(false);
+                    }}
+                  >
+                    <Icon name="fileText" />
+                    {t.exportToPDF}
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="export-menu-item"
+                    onClick={() => {
+                      exportJPGTimetable();
+                      setShowExportMenu(false);
+                    }}
+                  >
+                    <Icon name="image" />
+                    {t.exportToJPG}
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="export-menu-item"
+                    onClick={() => {
+                      exportToExcel();
+                      setShowExportMenu(false);
+                    }}
+                  >
+                    <Icon name="table" />
+                    {t.exportToExcel}
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="export-menu-item"
+                    onClick={() => {
+                      exportToCalendar();
+                      setShowExportMenu(false);
+                    }}
+                  >
+                    <Icon name="calendar" />
+                    {t.exportToCalendar}
+                  </button>
+                </div>
+              )}
+            </div>
+            <button
+              type="button"
+              className="qs-btn qs-btn-danger-text"
+              onClick={() => {
+                if (window.confirm(isAr
+                  ? 'هل أنت متأكد من إزالة جميع المقررات من الجدول؟'
+                  : 'Are you sure you want to remove all courses from the timetable?')) {
+                  removeAllCourses();
+                }
+              }}
+            >
+              <Icon name="trash" />
+              {t.removeAll}
+            </button>
+          </div>
         )}
       </div>
       {/* Close export menu when clicking outside */}
@@ -1152,8 +1058,9 @@ const TimetableGrid: React.FC = () => {
                                 });
                               }}
                               title={language === 'en' ? 'Remove from timetable' : 'إزالة من الجدول'}
+                              aria-label={language === 'en' ? 'Remove from timetable' : 'إزالة من الجدول'}
                             >
-                              🗑️
+                              <Icon name="trash" size={16} />
                             </button>
                           </td>
                         </tr>
@@ -1274,11 +1181,13 @@ const TimetableGrid: React.FC = () => {
       <div className="timetable-container">
         {timetable.length === 0 ? (
           <div className="timetable-empty">
-            <div className="empty-state-icon">📅</div>
-            <h3>{language === 'en' ? 'Empty Timetable' : 'جدول فارغ'}</h3>
-            <p>{language === 'en' 
-              ? 'Add courses from the list on the right to build your weekly schedule.'
-              : 'أضف المقررات من القائمة على اليمين لبناء جدولك الأسبوعي.'}</p>
+            <div className="empty-state-icon">
+              <Icon name="calendar" size={32} />
+            </div>
+            <h3>{language === 'en' ? 'Your timetable is empty' : 'جدولك فارغ'}</h3>
+            <p>{language === 'en'
+              ? 'Pick a section from the offered courses list and it will appear here.'
+              : 'اختر شعبة من قائمة المقررات المطروحة وستظهر هنا مباشرة.'}</p>
           </div>
         ) : (
           <div className="timetable-grid">
@@ -1293,7 +1202,8 @@ const TimetableGrid: React.FC = () => {
             
             {/* Time column */}
             <div className="time-column">
-              {timeSlots.map((time) => (
+              {/* One label per hour row (07:00 – 19:00); the grid ends at 20:00 */}
+              {timeSlots.slice(0, -1).map((time) => (
                 <div key={time} className="time-slot">
                   {time}
                 </div>
@@ -1334,10 +1244,10 @@ const TimetableGrid: React.FC = () => {
                         const course = entry.course;
                         const isConflictSection = entry.isConflictSection;
                         const style = getCourseBlockStyle(course.startTime, course.endTime);
-                        const [color1, color2] = getCourseColor(course.code);
+                        const theme = getCourseTheme(course.code);
 
                         // Make conflict sections smaller (reduce height by 30%)
-                        const adjustedStyle = isConflictSection 
+                        const adjustedStyle = isConflictSection
                           ? { ...style, height: `calc(${style.height} * 0.7)` }
                           : style;
 
@@ -1347,9 +1257,20 @@ const TimetableGrid: React.FC = () => {
                             className={`course-block ${isConflictSection ? 'conflict-section' : ''}`}
                             style={{
                               ...adjustedStyle,
-                              background: `linear-gradient(135deg, ${color1} 0%, ${color2} 100%)`,
+                              background: theme.bg,
+                              color: theme.text,
+                              borderColor: isConflictSection ? undefined : theme.border,
                             }}
+                            role="button"
+                            tabIndex={0}
+                            aria-label={`${course.code} ${course.section ? `(${language === 'en' ? 'Section' : 'الشعبة'} ${course.section})` : ''} ${course.startTime} - ${course.endTime}`}
                             onClick={() => setSelectedCourse(course)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                setSelectedCourse(course);
+                              }
+                            }}
                           >
                             <div className="course-block-header">
                               <div>
@@ -1371,9 +1292,11 @@ const TimetableGrid: React.FC = () => {
                                   removeCourse(entry.courseId);
                                 }}
                                 onMouseDown={(e) => e.stopPropagation()}
+                                onKeyDown={(e) => e.stopPropagation()}
                                 title={language === 'en' ? 'Remove course' : 'إزالة المقرر'}
+                                aria-label={language === 'en' ? `Remove ${course.code}` : `إزالة ${course.code}`}
                               >
-                                ×
+                                <Icon name="x" size={14} />
                               </button>
                             </div>
                             {course.location && (
@@ -1393,14 +1316,14 @@ const TimetableGrid: React.FC = () => {
                               if (dayCourses.some(entry => entry.courseId === slotId)) return null;
                               
                               const style = getCourseBlockStyle(slot.startTime, slot.endTime);
-                              const [color1, color2] = getCourseColor(hoveredCourse.code);
+                              const theme = getCourseTheme(hoveredCourse.code);
                               return (
                                 <div
                                   key={`hovered-${slotId}`}
                                   className="course-block hover-preview"
                                   style={{
                                     ...style,
-                                    background: `linear-gradient(135deg, rgba(${hexToRgb(color1)}, 0.6) 0%, rgba(${hexToRgb(color2)}, 0.6) 100%)`,
+                                    background: theme.bg, color: theme.text, borderColor: theme.text,
                                   }}
                                 >
                                   <div className="course-block-header">
@@ -1421,14 +1344,14 @@ const TimetableGrid: React.FC = () => {
                         } else {
                           // Single time slot course
                           const style = getCourseBlockStyle(hoveredCourse.startTime, hoveredCourse.endTime);
-                          const [color1, color2] = getCourseColor(hoveredCourse.code);
+                          const theme = getCourseTheme(hoveredCourse.code);
                           return (
                             <div
                               key={`hovered-${hoveredCourse.id}`}
                               className="course-block hover-preview"
                               style={{
                                 ...style,
-                                background: `linear-gradient(135deg, rgba(${hexToRgb(color1)}, 0.6) 0%, rgba(${hexToRgb(color2)}, 0.6) 100%)`,
+                                background: theme.bg, color: theme.text, borderColor: theme.text,
                               }}
                             >
                               <div className="course-block-header">

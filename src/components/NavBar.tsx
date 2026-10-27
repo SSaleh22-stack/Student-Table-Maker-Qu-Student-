@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
-import LanguageToggle from './LanguageToggle';
+import Icon, { IconName } from './Icon';
 import './NavBar.css';
 
 type ViewMode = 'timetable' | 'gpa' | 'absence';
@@ -11,16 +11,20 @@ interface NavBarProps {
 }
 
 const NavBar: React.FC<NavBarProps> = ({ currentView, onViewChange }) => {
-  const { t, language } = useLanguage();
+  const { t, language, setLanguage } = useLanguage();
   const [showReviewHelper, setShowReviewHelper] = useState(false);
   const [showContactUs, setShowContactUs] = useState(false);
+  const [showInstructions, setShowInstructions] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const isAr = language === 'ar';
 
   const handleOpenReviewPage = () => {
     if (typeof chrome !== 'undefined' && chrome.tabs) {
       chrome.tabs.create({
         url: 'https://stu-gate.qu.edu.sa/'
       });
+    } else {
+      window.open('https://stu-gate.qu.edu.sa/', '_blank', 'noopener');
     }
   };
 
@@ -49,192 +53,222 @@ const NavBar: React.FC<NavBarProps> = ({ currentView, onViewChange }) => {
     }
   };
 
+  const viewItems: { view: ViewMode; icon: IconName; label: string; title: string }[] = [
+    { view: 'timetable', icon: 'calendar', label: t.timetable, title: t.timetable },
+    { view: 'gpa', icon: 'calculator', label: isAr ? 'المعدل' : 'GPA', title: t.gpaCalculator },
+    { view: 'absence', icon: 'userMinus', label: isAr ? 'الغياب' : 'Absence', title: t.absenceCalculator },
+  ];
+
   return (
     <>
-      <nav className="navbar">
-        <div className="navbar-container">
-          <div className="navbar-brand">
-            <span className="navbar-title">{t.appTitle}</span>
-          </div>
-          <div className="navbar-menu">
-            <button 
-              className={`navbar-item ${currentView === 'timetable' ? 'active' : ''}`}
-              onClick={() => onViewChange('timetable')}
-            >
-              <span className="navbar-icon">📅</span>
-              <span className="navbar-text">{t.timetable}</span>
-            </button>
-            <button 
-              className={`navbar-item ${currentView === 'gpa' ? 'active' : ''}`}
-              onClick={() => onViewChange('gpa')}
-            >
-              <span className="navbar-icon">💯</span>
-              <span className="navbar-text">{t.gpaCalculator}</span>
-            </button>
-            <button 
-              className={`navbar-item ${currentView === 'absence' ? 'active' : ''}`}
-              onClick={() => onViewChange('absence')}
-            >
-              <span className="navbar-icon">📊</span>
-              <span className="navbar-text">{t.absenceCalculator}</span>
-            </button>
-            <button 
-              className="navbar-item review-helper-nav-btn"
-              onClick={() => setShowReviewHelper(true)}
-            >
-              <span className="navbar-icon">📝</span>
-              <span className="navbar-text">{t.courseReviewHelper}</span>
-            </button>
-            <button 
-              className="navbar-item contact-us-nav-btn"
-              onClick={() => setShowContactUs(true)}
-            >
-              <span className="navbar-icon">📧</span>
-              <span className="navbar-text">{t.contactUs}</span>
-            </button>
-            <button 
-              className="navbar-item qeeem-site-nav-btn"
-              onClick={() => window.open('https://qeeem.com/qu', '_blank')}
-            >
-              <span className="navbar-icon">⭐</span>
-              <span className="navbar-text">{t.qeeemSite}</span>
-            </button>
-            <LanguageToggle />
-          </div>
+      <header className="qs-header">
+        <div className="qs-brand">
+          <span className="qs-brand-mark">
+            <Icon name="calendar" size={22} />
+          </span>
+          <span className="qs-brand-name">{t.appTitle}</span>
         </div>
-      </nav>
 
-      {showReviewHelper && (
-        <div className="review-helper-modal-overlay" onClick={() => setShowReviewHelper(false)}>
-          <div className="review-helper-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="review-helper-modal-header">
-              <h2 className="review-helper-modal-title">{t.courseReviewHelper}</h2>
-              <button 
-                className="review-helper-modal-close" 
-                onClick={() => setShowReviewHelper(false)}
-              >
+        <nav className="qs-nav" aria-label={isAr ? 'القائمة الرئيسية' : 'Main menu'}>
+          {viewItems.map((item) => (
+            <button
+              key={item.view}
+              type="button"
+              className={`qs-nav-item ${currentView === item.view ? 'active' : ''}`}
+              aria-current={currentView === item.view ? 'page' : undefined}
+              title={item.title}
+              onClick={() => onViewChange(item.view)}
+            >
+              <Icon name={item.icon} />
+              <span>{item.label}</span>
+            </button>
+          ))}
+          <button
+            type="button"
+            className="qs-nav-item"
+            title={t.courseReviewHelper}
+            onClick={() => setShowReviewHelper(true)}
+          >
+            <Icon name="clipboardCheck" />
+            <span>{isAr ? 'تقييم المقررات' : 'Course reviews'}</span>
+          </button>
+          <button
+            type="button"
+            className="qs-nav-item"
+            title={t.qeeemSite}
+            onClick={() => window.open('https://qeeem.com/qu', '_blank', 'noopener')}
+          >
+            <Icon name="star" />
+            <span>{isAr ? 'تقييم الدكاترة' : 'Instructor ratings'}</span>
+          </button>
+        </nav>
+
+        <div className="qs-header-actions">
+          <button
+            type="button"
+            className="qs-icon-btn"
+            aria-label={t.instructions}
+            title={t.instructions}
+            onClick={() => setShowInstructions(true)}
+          >
+            <Icon name="help" size={20} />
+          </button>
+          <button
+            type="button"
+            className="qs-icon-btn"
+            aria-label={t.contactUs}
+            title={t.contactUs}
+            onClick={() => setShowContactUs(true)}
+          >
+            <Icon name="mail" size={20} />
+          </button>
+          <button
+            type="button"
+            className="qs-lang-btn"
+            lang={isAr ? 'en' : 'ar'}
+            aria-label={isAr ? 'التبديل إلى الإنجليزية' : 'Switch to Arabic'}
+            onClick={() => setLanguage(isAr ? 'en' : 'ar')}
+          >
+            {isAr ? 'English' : 'العربية'}
+          </button>
+        </div>
+      </header>
+
+      {showInstructions && (
+        <div className="qs-modal-overlay" onClick={() => setShowInstructions(false)}>
+          <div
+            className="qs-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="qs-instructions-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="qs-modal-header">
+              <h2 id="qs-instructions-title">{t.instructionsTitle}</h2>
+              <button type="button" className="qs-btn qs-btn-ghost qs-btn-sm" onClick={() => setShowInstructions(false)}>
                 {t.close}
               </button>
             </div>
-            <div className="review-helper-modal-body">
-              <div className="review-helper-section-content">
-                <div className="review-helper-intro">
-                  <p className="review-helper-intro-text">
-                    {language === 'en' 
-                      ? 'This tool helps you quickly fill out course evaluation forms on the QU student portal. Select your preferred response option and apply it to all questions at once.'
-                      : 'تساعدك هذه الأداة على ملء نماذج تقييم المقررات بسرعة في بوابة الطالب بجامعة القصيم. اختر خيار الاستجابة المفضل لديك وطبقه على جميع الأسئلة دفعة واحدة.'
-                    }
-                  </p>
-                </div>
+            <div className="qs-modal-body">
+              <ol className="qs-steps">
+                {t.instructionsContent.split('\n\n\n').map((section, index) => {
+                  if (!section.trim()) return null;
+                  const lines = section.split('\n').filter((line) => line.trim());
+                  if (lines.length === 0) return null;
+                  const title = lines[0];
+                  const content = lines.slice(1).join('\n');
+                  return (
+                    <li key={index} className="qs-step">
+                      <span className="qs-step-title">{title}</span>
+                      {content && <span className="qs-step-text">{content}</span>}
+                    </li>
+                  );
+                })}
+              </ol>
+            </div>
+          </div>
+        </div>
+      )}
 
-                <div className="review-helper-instructions">
-                  <h3 className="review-helper-instructions-title">
-                    {t.reviewInstructions}
-                  </h3>
-                  <ol className="review-helper-steps">
-                    <li>
-                      {language === 'en' 
-                        ? 'Click "Open QU Review Page" below to navigate to the course evaluation page'
-                        : 'انقر على "فتح صفحة تقييم جامعة القصيم" أدناه للانتقال إلى صفحة التقييم'
-                      }
-                    </li>
-                    <li>
-                      {language === 'en'
-                        ? 'Once on the evaluation page, a floating widget will appear in the bottom-right corner'
-                        : 'بمجرد الوصول إلى صفحة التقييم، ستظهر لوحة عائمة في الزاوية اليمنى السفلى'
-                      }
-                    </li>
-                    <li>
-                      {language === 'en'
-                        ? 'Select your preferred choice from the dropdown menu:'
-                        : 'اختر خيارك المفضل من القائمة المنسدلة:'
-                      }
-                      <ul className="review-helper-options">
-                        <li>
-                          {language === 'en' ? 'Strongly Agree' : 'موافق بشدة'} / {language === 'en' ? 'Agree' : 'موافق'}
-                        </li>
-                        <li>
-                          {language === 'en' ? 'Unsure' : 'غير متأكد'}
-                        </li>
-                        <li>
-                          {language === 'en' ? 'Disagree' : 'غير موافق'} / {language === 'en' ? 'Strongly Disagree' : 'غير موافق بشدة'}
-                        </li>
-                      </ul>
-                    </li>
-                    <li>
-                      {language === 'en'
-                        ? 'Click "Fill All" to automatically fill all questions with your selected choice'
-                        : 'انقر على "ملء الكل" لملء جميع الأسئلة تلقائياً بالخيار المحدد'
-                      }
-                    </li>
-                    <li>
-                      {language === 'en'
-                        ? 'Review your selections and click "Undo" if you need to restore previous answers'
-                        : 'راجع اختياراتك وانقر على "تراجع" إذا كنت بحاجة إلى استعادة الإجابات السابقة'
-                      }
-                    </li>
-                    <li>
-                      {language === 'en'
-                        ? 'The tool only fills radio button questions and leaves text fields untouched'
-                        : 'الأداة تملأ فقط أسئلة الأزرار الراديوية وتترك حقول النص كما هي'
-                      }
-                    </li>
-                  </ol>
-                </div>
+      {showReviewHelper && (
+        <div className="qs-modal-overlay" onClick={() => setShowReviewHelper(false)}>
+          <div
+            className="qs-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="qs-review-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="qs-modal-header">
+              <h2 id="qs-review-title">{t.courseReviewHelper}</h2>
+              <button type="button" className="qs-btn qs-btn-ghost qs-btn-sm" onClick={() => setShowReviewHelper(false)}>
+                {t.close}
+              </button>
+            </div>
+            <div className="qs-modal-body">
+              <p className="qs-modal-intro">
+                {language === 'en'
+                  ? 'This tool helps you quickly fill out course evaluation forms on the QU student portal. Select your preferred response option and apply it to all questions at once.'
+                  : 'تساعدك هذه الأداة على ملء نماذج تقييم المقررات بسرعة في بوابة الطالب بجامعة القصيم. اختر خيار الاستجابة المفضل لديك وطبقه على جميع الأسئلة دفعة واحدة.'}
+              </p>
 
-                <div className="review-helper-features">
-                  <h3 className="review-helper-features-title">
-                    {language === 'en' ? 'Features' : 'المميزات'}
-                  </h3>
-                  <ul className="review-helper-features-list">
+              <h3 className="qs-modal-subtitle">{t.reviewInstructions}</h3>
+              <ol className="qs-numbered">
+                <li>
+                  {language === 'en'
+                    ? 'Click "Open QU Review Page" below to navigate to the course evaluation page'
+                    : 'انقر على "فتح صفحة تقييم جامعة القصيم" أدناه للانتقال إلى صفحة التقييم'}
+                </li>
+                <li>
+                  {language === 'en'
+                    ? 'Once on the evaluation page, a floating widget will appear in the bottom-right corner'
+                    : 'بمجرد الوصول إلى صفحة التقييم، ستظهر لوحة عائمة في الزاوية اليمنى السفلى'}
+                </li>
+                <li>
+                  {language === 'en'
+                    ? 'Select your preferred choice from the dropdown menu:'
+                    : 'اختر خيارك المفضل من القائمة المنسدلة:'}
+                  <ul className="qs-options">
                     <li>
-                      {language === 'en'
-                        ? '✅ Automatic detection of Likert scale questions'
-                        : '✅ الكشف التلقائي عن أسئلة مقياس ليكرت'
-                      }
+                      {language === 'en' ? 'Strongly Agree' : 'موافق بشدة'} / {language === 'en' ? 'Agree' : 'موافق'}
                     </li>
+                    <li>{language === 'en' ? 'Unsure' : 'غير متأكد'}</li>
                     <li>
-                      {language === 'en'
-                        ? '✅ Support for all 5 response options (Strongly Agree to Strongly Disagree)'
-                        : '✅ دعم جميع خيارات الاستجابة الخمسة (من موافق بشدة إلى غير موافق بشدة)'
-                      }
-                    </li>
-                    <li>
-                      {language === 'en'
-                        ? '✅ Undo functionality to restore previous selections'
-                        : '✅ وظيفة التراجع لاستعادة الاختيارات السابقة'
-                      }
-                    </li>
-                    <li>
-                      {language === 'en'
-                        ? '✅ Confirmation dialog before applying changes'
-                        : '✅ حوار تأكيد قبل تطبيق التغييرات'
-                      }
-                    </li>
-                    <li>
-                      {language === 'en'
-                        ? '✅ Works with dynamically loaded content (SPA support)'
-                        : '✅ يعمل مع المحتوى المحمل ديناميكياً (دعم SPA)'
-                      }
-                    </li>
-                    <li>
-                      {language === 'en'
-                        ? '✅ Bilingual interface (English/Arabic)'
-                        : '✅ واجهة ثنائية اللغة (الإنجليزية/العربية)'
-                      }
+                      {language === 'en' ? 'Disagree' : 'غير موافق'} / {language === 'en' ? 'Strongly Disagree' : 'غير موافق بشدة'}
                     </li>
                   </ul>
-                </div>
+                </li>
+                <li>
+                  {language === 'en'
+                    ? 'Click "Fill All" to automatically fill all questions with your selected choice'
+                    : 'انقر على "ملء الكل" لملء جميع الأسئلة تلقائياً بالخيار المحدد'}
+                </li>
+                <li>
+                  {language === 'en'
+                    ? 'Review your selections and click "Undo" if you need to restore previous answers'
+                    : 'راجع اختياراتك وانقر على "تراجع" إذا كنت بحاجة إلى استعادة الإجابات السابقة'}
+                </li>
+                <li>
+                  {language === 'en'
+                    ? 'The tool only fills radio button questions and leaves text fields untouched'
+                    : 'الأداة تملأ فقط أسئلة الأزرار الراديوية وتترك حقول النص كما هي'}
+                </li>
+              </ol>
 
-                <div className="review-helper-action">
-                  <button 
-                    className="review-helper-action-btn"
-                    onClick={handleOpenReviewPage}
-                  >
-                    <span className="review-helper-action-icon">🔗</span>
-                    <span className="review-helper-action-text">{t.openQUReviewPage}</span>
-                  </button>
-                </div>
+              <h3 className="qs-modal-subtitle">{language === 'en' ? 'Features' : 'المميزات'}</h3>
+              <ul className="qs-checklist">
+                {(language === 'en'
+                  ? [
+                      'Automatic detection of Likert scale questions',
+                      'Support for all 5 response options (Strongly Agree to Strongly Disagree)',
+                      'Undo functionality to restore previous selections',
+                      'Confirmation dialog before applying changes',
+                      'Works with dynamically loaded content (SPA support)',
+                      'Bilingual interface (English/Arabic)',
+                    ]
+                  : [
+                      'الكشف التلقائي عن أسئلة مقياس ليكرت',
+                      'دعم جميع خيارات الاستجابة الخمسة (من موافق بشدة إلى غير موافق بشدة)',
+                      'وظيفة التراجع لاستعادة الاختيارات السابقة',
+                      'حوار تأكيد قبل تطبيق التغييرات',
+                      'يعمل مع المحتوى المحمل ديناميكياً (دعم SPA)',
+                      'واجهة ثنائية اللغة (الإنجليزية/العربية)',
+                    ]
+                ).map((feature) => (
+                  <li key={feature}>
+                    <span className="qs-check-dot">
+                      <Icon name="check" size={14} />
+                    </span>
+                    {feature}
+                  </li>
+                ))}
+              </ul>
+
+              <div className="qs-modal-actions">
+                <button type="button" className="qs-btn qs-btn-primary qs-btn-lg" onClick={handleOpenReviewPage}>
+                  <Icon name="externalLink" size={20} />
+                  {t.openQUReviewPage}
+                </button>
               </div>
             </div>
           </div>
@@ -242,58 +276,62 @@ const NavBar: React.FC<NavBarProps> = ({ currentView, onViewChange }) => {
       )}
 
       {showContactUs && (
-        <div className="contact-us-modal-overlay" onClick={() => setShowContactUs(false)}>
-          <div className="contact-us-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="contact-us-modal-header">
-              <h2 className="contact-us-modal-title">{t.contactUs}</h2>
-              <button 
-                className="contact-us-modal-close" 
-                onClick={() => setShowContactUs(false)}
-              >
+        <div className="qs-modal-overlay" onClick={() => setShowContactUs(false)}>
+          <div
+            className="qs-modal qs-modal-sm"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="qs-contact-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="qs-modal-header">
+              <h2 id="qs-contact-title">{t.contactUs}</h2>
+              <button type="button" className="qs-btn qs-btn-ghost qs-btn-sm" onClick={() => setShowContactUs(false)}>
                 {t.close}
               </button>
             </div>
-            <div className="contact-us-modal-body">
-              <div className="contact-us-intro">
-                <p className="contact-us-intro-text">
-                  {language === 'en' 
-                    ? 'Get in touch with us! We\'d love to hear from you. Use the contact information below to reach out.'
-                    : 'تواصل معنا! نحن نحب أن نسمع منك. استخدم معلومات الاتصال أدناه للتواصل.'
-                  }
-                </p>
-              </div>
+            <div className="qs-modal-body">
+              <p className="qs-modal-intro">
+                {language === 'en'
+                  ? "Get in touch with us! We'd love to hear from you. Use the contact information below to reach out."
+                  : 'تواصل معنا! نحن نحب أن نسمع منك. استخدم معلومات الاتصال أدناه للتواصل.'}
+              </p>
 
-              <div className="contact-us-info">
-                <div className="contact-us-item">
-                  <div className="contact-us-item-header">
-                    <span className="contact-us-item-icon">📧</span>
-                    <h3 className="contact-us-item-title">{t.contactEmailLabel}</h3>
+              <div className="qs-contact-list">
+                <div className="qs-contact-item">
+                  <span className="qs-contact-icon">
+                    <Icon name="mail" size={20} />
+                  </span>
+                  <div className="qs-contact-text">
+                    <span className="qs-contact-label">{t.contactEmailLabel}</span>
+                    <span className="qs-contact-value" dir="ltr">qu4611@gmail.com</span>
                   </div>
-                  <div className="contact-us-item-content">
-                    <div className="contact-us-item-value">qu4611@gmail.com</div>
-                    <button 
-                      className="contact-us-copy-btn"
-                      onClick={() => handleCopyToClipboard('qu4611@gmail.com', 'email')}
-                    >
-                      {copiedField === 'email' ? '✓ ' + t.contactCopied : t.contactCopyEmail}
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    className={`qs-btn qs-btn-sm ${copiedField === 'email' ? 'qs-btn-soft' : 'qs-btn-outline'}`}
+                    onClick={() => handleCopyToClipboard('qu4611@gmail.com', 'email')}
+                  >
+                    <Icon name={copiedField === 'email' ? 'check' : 'copy'} size={16} />
+                    {copiedField === 'email' ? t.contactCopied : t.contactCopyEmail}
+                  </button>
                 </div>
 
-                <div className="contact-us-item">
-                  <div className="contact-us-item-header">
-                    <span className="contact-us-item-icon">✈️</span>
-                    <h3 className="contact-us-item-title">{t.contactTelegramLabel}</h3>
+                <div className="qs-contact-item">
+                  <span className="qs-contact-icon">
+                    <Icon name="send" size={20} />
+                  </span>
+                  <div className="qs-contact-text">
+                    <span className="qs-contact-label">{t.contactTelegramLabel}</span>
+                    <span className="qs-contact-value" dir="ltr">@qu4611</span>
                   </div>
-                  <div className="contact-us-item-content">
-                    <div className="contact-us-item-value">@qu4611</div>
-                    <button 
-                      className="contact-us-copy-btn"
-                      onClick={() => handleCopyToClipboard('@qu4611', 'telegram')}
-                    >
-                      {copiedField === 'telegram' ? '✓ ' + t.contactCopied : t.contactCopyTelegram}
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    className={`qs-btn qs-btn-sm ${copiedField === 'telegram' ? 'qs-btn-soft' : 'qs-btn-outline'}`}
+                    onClick={() => handleCopyToClipboard('@qu4611', 'telegram')}
+                  >
+                    <Icon name={copiedField === 'telegram' ? 'check' : 'copy'} size={16} />
+                    {copiedField === 'telegram' ? t.contactCopied : t.contactCopyTelegram}
+                  </button>
                 </div>
               </div>
             </div>
@@ -305,4 +343,3 @@ const NavBar: React.FC<NavBarProps> = ({ currentView, onViewChange }) => {
 };
 
 export default NavBar;
-

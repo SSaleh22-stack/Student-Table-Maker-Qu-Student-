@@ -5,6 +5,7 @@ import {
   calculateAbsence,
   validateAbsenceInput,
 } from '../lib/absence';
+import Icon from './Icon';
 import './AbsenceCalculator.css';
 
 const AbsenceCalculator: React.FC = () => {
@@ -202,8 +203,8 @@ const AbsenceCalculator: React.FC = () => {
           </div>
         </div>
         {!validation.valid && validation.error && (
-          <div className="absence-error">
-            ⚠️ {validation.error}
+          <div className="absence-error" role="alert">
+            <Icon name="alert" size={16} /> {validation.error}
           </div>
         )}
       </div>
@@ -266,7 +267,7 @@ const AbsenceCalculator: React.FC = () => {
           >
             {result.canStillAttend ? (
               <div>
-                <strong>✅ {t.absenceCanStillAttend || 'You can still attend'}</strong>
+                <strong><Icon name="check" size={16} /> {t.absenceCanStillAttend || 'You can still attend'}</strong>
                 <p>
                   {language === 'en' 
                     ? `You have ${result.hoursRemaining.toFixed(1)} hours remaining before reaching the ${maxAbsencePercent}% limit.`
@@ -276,7 +277,7 @@ const AbsenceCalculator: React.FC = () => {
               </div>
             ) : (
               <div>
-                <strong>❌ {t.absenceCannotAttend || 'You cannot attend (exceeded limit)'}</strong>
+                <strong><Icon name="x" size={16} /> {t.absenceCannotAttend || 'You cannot attend (exceeded limit)'}</strong>
                 <p>
                   {language === 'en'
                     ? `You have exceeded the ${maxAbsencePercent}% absence limit by ${Math.abs(result.hoursRemaining).toFixed(1)} hours.`

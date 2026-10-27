@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { LanguageProvider, useLanguage } from '../contexts/LanguageContext';
 import { TimetableProvider } from '../contexts/TimetableContext';
-import LanguageToggle from './LanguageToggle';
+import Icon from './Icon';
 import NavBar from './NavBar';
 import HeroSection from './HeroSection';
 import CourseList from './CourseList';
@@ -11,6 +11,7 @@ import AddCourseModal from './AddCourseModal';
 import GpaCalculator from './GpaCalculator';
 import AbsenceCalculator from './AbsenceCalculator';
 import { Course } from '../types';
+import './theme.css';
 import './App.css';
 
 // Dummy courses for Phase 2 - includes multiple sections to demonstrate grouping
@@ -147,9 +148,9 @@ const dummyCourses: Course[] = [
 type ViewMode = 'timetable' | 'gpa' | 'absence';
 
 const AppContent: React.FC = () => {
-  const { language, t } = useLanguage();
+  const { language } = useLanguage();
   const [currentView, setCurrentView] = useState<ViewMode>('timetable');
-  
+
   // Check for GPA data on mount and navigate to GPA page if present
   React.useEffect(() => {
     const checkForGpaData = async () => {
@@ -163,7 +164,7 @@ const AppContent: React.FC = () => {
           }
         });
       }
-      
+
       // Also check URL parameter
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.get('gpa') === 'true') {
@@ -172,12 +173,10 @@ const AppContent: React.FC = () => {
         window.history.replaceState({}, '', window.location.pathname);
       }
     };
-    
+
     checkForGpaData();
   }, []);
   const [courses, setCourses] = useState<Course[]>([]);
-  const [isExtracting, setIsExtracting] = useState(false);
-  const [extractionError, setExtractionError] = useState<string | null>(null);
   const [showOfferedCoursesModal, setShowOfferedCoursesModal] = useState(false);
   const [showAddCourseModal, setShowAddCourseModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -205,182 +204,68 @@ const AppContent: React.FC = () => {
     }
   }, []);
 
-  const handleExtractCourses = () => {
-    setIsExtracting(true);
-    setExtractionError(null);
-
-    // Check if chrome.runtime is available
-    if (typeof chrome === 'undefined' || !chrome.runtime || !chrome.runtime.sendMessage) {
-      setIsExtracting(false);
-      setExtractionError(
-        language === 'en'
-          ? 'Chrome extension APIs are not available. Please make sure you are using this extension in Chrome.'
-          : 'واجهات برمجة الإضافة غير متاحة. يرجى التأكد من استخدام هذه الإضافة في Chrome.'
-      );
-      return;
-    }
-
-    // Check if extension context is still valid
-    if (!chrome.runtime || !chrome.runtime.id) {
-      setIsExtracting(false);
-      setExtractionError(
-        language === 'en'
-          ? 'Extension context invalidated. Please reload the page and try again.'
-          : 'تم إبطال سياق الإضافة. يرجى إعادة تحميل الصفحة والمحاولة مرة أخرى.'
-      );
-      return;
-    }
-
-    // Send message to background script to extract courses
-    try {
-      chrome.runtime.sendMessage(
-        { type: 'EXTRACT_COURSES_FROM_TAB' },
-        (response) => {
-          setIsExtracting(false);
-
-          if (chrome.runtime.lastError) {
-            const errorMsg = chrome.runtime.lastError.message;
-            if (errorMsg.includes('Extension context invalidated') || errorMsg.includes('message port closed')) {
-              setExtractionError(
-                language === 'en'
-                  ? 'Extension was reloaded. Please refresh the QU student page and try extracting again.'
-                  : 'تم إعادة تحميل الإضافة. يرجى تحديث صفحة الطالب والمحاولة مرة أخرى.'
-              );
-            } else {
-              setExtractionError(
-                language === 'en'
-                  ? `Failed to communicate with extension: ${errorMsg}. Please reload the page.`
-                  : `فشل التواصل مع الإضافة: ${errorMsg}. يرجى إعادة تحميل الصفحة.`
-              );
-            }
-            return;
-          }
-
-        if (response && response.type === 'COURSES_EXTRACTED' && response.success) {
-          const extractedCourses = response.payload as Course[];
-          if (extractedCourses.length > 0) {
-            setCourses(extractedCourses);
-            // Ensure we're on the timetable view after extraction
-            setCurrentView('timetable');
-            setExtractionError(null);
-          } else {
-            setExtractionError(
-              language === 'en'
-                ? 'No courses found on this page. Please make sure you are on the QU student course page (offeredCourses page) and the page has fully loaded.'
-                : 'لم يتم العثور على مقررات في هذه الصفحة. يرجى التأكد من أنك في صفحة المقررات المطروحة وأن الصفحة تم تحميلها بالكامل.'
-            );
-          }
-        } else if (response && response.type === 'EXTRACTION_FAILED') {
-          // Handle extraction failed response
-          const errorMsg = response.error || 
-            (language === 'en'
-              ? 'Failed to extract courses. Please make sure you are logged in and on the offered courses page (offeredCoursesIndex.faces).'
-              : 'فشل استخراج المقررات. يرجى التأكد من تسجيل الدخول وأنك في صفحة المقررات المطروحة.');
-          setExtractionError(errorMsg);
-        } else {
-          // No response or unexpected response format
-          const errorMsg = response?.error || 
-            (language === 'en'
-              ? 'Failed to extract courses. Please make sure you are logged in and on the offered courses page (offeredCoursesIndex.faces).'
-              : 'فشل استخراج المقررات. يرجى التأكد من تسجيل الدخول وأنك في صفحة المقررات المطروحة.');
-          setExtractionError(errorMsg);
-        }
-      }
-      );
-    } catch (error) {
-      setIsExtracting(false);
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      if (errorMessage.includes('Extension context invalidated') || errorMessage.includes('message port closed')) {
-        setExtractionError(
-          language === 'en'
-            ? 'Extension was reloaded. Please refresh the QU student page and try extracting again.'
-            : 'تم إعادة تحميل الإضافة. يرجى تحديث صفحة الطالب والمحاولة مرة أخرى.'
-        );
-      } else {
-        setExtractionError(
-          language === 'en'
-            ? `Error: ${errorMessage}. Please reload the page.`
-            : `خطأ: ${errorMessage}. يرجى إعادة تحميل الصفحة.`
-        );
-      }
-    }
-  };
+  // Keep the page language and direction in sync for screen readers and fonts
+  React.useEffect(() => {
+    document.documentElement.lang = language;
+    document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
+  }, [language]);
 
   return (
     <div className="app" dir={language === 'ar' ? 'rtl' : 'ltr'}>
-      <NavBar currentView={currentView} onViewChange={setCurrentView} />
-      
-      {currentView === 'timetable' ? (
-        <>
-          <HeroSection 
-            onExtractCourses={handleExtractCourses}
-            isExtracting={isExtracting}
-          />
-          {extractionError && (
-            <div className="extraction-error">
-              <span className="error-icon">⚠️</span>
-              <span className="error-message">{extractionError}</span>
-            </div>
-          )}
-          {successMessage && (
-            <div className="success-message">
-              <span className="success-icon">✅</span>
-              <span className="success-message-text">{successMessage}</span>
-            </div>
-          )}
-          <div className="offered-courses-button-container">
-            <button 
-              className="offered-courses-btn"
-              onClick={() => setShowOfferedCoursesModal(true)}
-            >
-              📋 {t.offeredCourses}
-            </button>
-            <button 
-              className="add-course-manually-btn"
-              onClick={() => setShowAddCourseModal(true)}
-            >
-              ➕ {language === 'en' ? 'Add Course Manually' : 'إضافة مقرر يدوياً'}
-            </button>
-          </div>
-          <OfferedCoursesModal
-            courses={courses}
-            isOpen={showOfferedCoursesModal}
-            onClose={() => setShowOfferedCoursesModal(false)}
-          />
-          <AddCourseModal
-            isOpen={showAddCourseModal}
-            onClose={() => setShowAddCourseModal(false)}
-            onAdd={(course) => {
-              // Add __originalIndex to manually added courses so they appear at the end
-              const courseWithIndex = {
-                ...course,
-                __originalIndex: 999999 + (courses.length || 0) // High number to ensure they appear after extracted courses
-              };
-              setCourses((prev) => [...prev, courseWithIndex]);
-              setShowAddCourseModal(false);
-              const message = language === 'en'
-                ? `✅ Course "${course.code}" has been added successfully! Check the course list on the right pane.`
-                : `✅ تم إضافة المقرر "${course.code}" بنجاح! تحقق من قائمة المقررات في اللوحة اليمنى.`;
-              setSuccessMessage(message);
-              setTimeout(() => setSuccessMessage(null), 5000);
-            }}
-          />
-          <div className="app-content">
-            <div className="main-layout">
-              <div className="timetable-wrapper">
+      <div className="qs-shell">
+        <NavBar currentView={currentView} onViewChange={setCurrentView} />
+
+        {currentView === 'timetable' ? (
+          <>
+            <HeroSection
+              hasCourses={courses.length > 0}
+              onOpenOfferedCourses={() => setShowOfferedCoursesModal(true)}
+              onAddCourse={() => setShowAddCourseModal(true)}
+            />
+            {successMessage && (
+              <div className="qs-alert qs-alert-success" role="status">
+                <Icon name="check" />
+                <span>{successMessage}</span>
+              </div>
+            )}
+            <OfferedCoursesModal
+              courses={courses}
+              isOpen={showOfferedCoursesModal}
+              onClose={() => setShowOfferedCoursesModal(false)}
+            />
+            <AddCourseModal
+              isOpen={showAddCourseModal}
+              onClose={() => setShowAddCourseModal(false)}
+              onAdd={(course) => {
+                // Add __originalIndex to manually added courses so they appear at the end
+                const courseWithIndex = {
+                  ...course,
+                  __originalIndex: 999999 + (courses.length || 0) // High number to ensure they appear after extracted courses
+                };
+                setCourses((prev) => [...prev, courseWithIndex]);
+                setShowAddCourseModal(false);
+                const message = language === 'en'
+                  ? `Course "${course.code}" was added. You can find it in the offered courses list.`
+                  : `تمت إضافة المقرر "${course.code}" بنجاح. تجده في قائمة المقررات المطروحة.`;
+                setSuccessMessage(message);
+                setTimeout(() => setSuccessMessage(null), 5000);
+              }}
+            />
+            <div className="qs-main">
+              <div className="qs-main-timetable">
                 <TimetableGrid />
               </div>
-              <div className="course-list-wrapper">
+              <div className="qs-main-courses">
                 <CourseList courses={courses} />
               </div>
             </div>
-          </div>
-        </>
-      ) : currentView === 'gpa' ? (
-        <GpaCalculator />
-      ) : (
-        <AbsenceCalculator />
-      )}
+          </>
+        ) : currentView === 'gpa' ? (
+          <GpaCalculator />
+        ) : (
+          <AbsenceCalculator />
+        )}
+      </div>
     </div>
   );
 };
@@ -396,4 +281,3 @@ const App: React.FC = () => {
 };
 
 export default App;
-

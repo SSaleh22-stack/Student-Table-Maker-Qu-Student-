@@ -62,7 +62,7 @@
 .absence-input:focus,
 .absence-select:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: var(--qs-accent);
 }
 
 .absence-error {
@@ -157,3 +157,36 @@
   border-right: 4px solid #e53e3e;
 }
 
+
+/* ---- Soft Planner look ---- */
+.absence-calculator {
+  width: 100%;
+  max-width: 1100px;
+  min-height: 0;
+  margin: 0 auto;
+  padding: 0;
+  background: transparent;
+}
+
+.absence-header {
+  margin-bottom: 20px;
+}
+
+.absence-title {
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--qs-text);
+}
+
+.absence-card {
+  padding: 24px;
+  margin-bottom: 20px;
+  border-radius: var(--qs-radius-xl);
+  box-shadow: none;
+}
+
+.absence-card-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--qs-text);
+}

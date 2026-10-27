@@ -112,14 +112,14 @@
 }
 
 .confirmation-modal-btn-confirm {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--qs-accent);
   color: white;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 2px 8px rgba(14, 116, 144, 0.3);
 }
 
 .confirmation-modal-btn-confirm:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 12px rgba(14, 116, 144, 0.4);
 }
 
 .confirmation-modal-btn:active {
@@ -132,4 +132,32 @@
 
 [dir="rtl"] .confirmation-modal-message {
   text-align: right;
+}
+
+/* ---- Soft Planner look ---- */
+.confirmation-modal-overlay {
+  background: rgba(27, 37, 51, 0.45);
+}
+
+.confirmation-modal {
+  border-radius: var(--qs-radius-xl);
+  box-shadow: var(--qs-shadow-lg);
+}
+
+.confirmation-modal-header {
+  background: var(--qs-warning-bg);
+}
+
+.confirmation-modal-btn {
+  min-height: 44px;
+  padding: 0 20px;
+  border-radius: 999px;
+  font-weight: 500;
+  box-shadow: none;
+}
+
+.confirmation-modal-btn-confirm:hover {
+  transform: none;
+  box-shadow: none;
+  background: var(--qs-accent-hover);
 }

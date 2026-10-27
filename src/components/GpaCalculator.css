@@ -21,7 +21,7 @@
 }
 
 .gpa-advanced-btn {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--qs-accent);
   color: white;
   border: none;
   padding: 0.75rem 1.5rem;
@@ -29,12 +29,12 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 2px 8px rgba(14, 116, 144, 0.3);
 }
 
 .gpa-advanced-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 12px rgba(14, 116, 144, 0.4);
 }
 
 .gpa-card {
@@ -94,7 +94,7 @@
 .gpa-input:focus,
 .gpa-select:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: var(--qs-accent);
 }
 
 .gpa-input-text {
@@ -139,7 +139,7 @@
 
 .gpa-points-cell {
   font-weight: 600;
-  color: #667eea;
+  color: var(--qs-accent);
 }
 
 .gpa-row-actions {
@@ -158,7 +158,7 @@
 }
 
 .gpa-btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--qs-accent);
   color: white;
 }
 
@@ -214,7 +214,7 @@
   margin: 0 0 1rem 0;
   font-size: 1.2rem;
   color: #333;
-  border-bottom: 2px solid #667eea;
+  border-bottom: 2px solid var(--qs-accent);
   padding-bottom: 0.5rem;
 }
 
@@ -231,11 +231,11 @@
 }
 
 .gpa-result-highlight {
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  background: var(--qs-accent-soft);
   padding: 1rem;
   border-radius: 0.5rem;
   margin-top: 0.5rem;
-  border: 2px solid #667eea;
+  border: 2px solid var(--qs-accent);
 }
 
 .gpa-result-label {
@@ -250,7 +250,7 @@
 
 .gpa-result-big {
   font-size: 1.5rem;
-  color: #667eea;
+  color: var(--qs-accent);
 }
 
 .gpa-warning {
@@ -390,3 +390,119 @@
   flex-direction: row-reverse;
 }
 
+
+/* ---- Soft Planner look ---- */
+.gpa-calculator {
+  width: 100%;
+  max-width: 1100px;
+  min-height: 0;
+  margin: 0 auto;
+  padding: 0;
+  background: transparent;
+}
+
+.gpa-header {
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.gpa-title {
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--qs-text);
+}
+
+.gpa-advanced-btn {
+  min-height: 44px;
+  padding: 0 20px;
+  border-radius: 999px;
+  font-weight: 500;
+  box-shadow: none;
+}
+
+.gpa-advanced-btn:hover {
+  transform: none;
+  box-shadow: none;
+  background: var(--qs-accent-hover);
+}
+
+.gpa-card {
+  padding: 24px;
+  margin-bottom: 20px;
+  border-radius: var(--qs-radius-xl);
+  box-shadow: none;
+}
+
+.gpa-card-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--qs-text);
+}
+
+.gpa-btn {
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 999px;
+  font-weight: 500;
+}
+
+.gpa-btn:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.gpa-btn-secondary {
+  background: var(--qs-surface-2);
+  color: var(--qs-text);
+}
+
+.gpa-btn-danger {
+  background: var(--qs-danger-soft);
+  color: var(--qs-danger);
+}
+
+.gpa-btn-icon {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--qs-text-2);
+}
+
+.gpa-btn-icon.gpa-btn-danger {
+  background: transparent;
+  color: var(--qs-danger);
+}
+
+.gpa-btn-icon:hover:not(:disabled) {
+  background: var(--qs-surface-2);
+}
+
+.gpa-result-section {
+  background: var(--qs-surface-3);
+  border-radius: var(--qs-radius-lg);
+}
+
+.gpa-result-section h3 {
+  color: var(--qs-text);
+  border-bottom-color: var(--qs-border);
+}
+
+.gpa-result-highlight {
+  border: 0;
+  background: var(--qs-accent-soft);
+  border-radius: var(--qs-radius-md);
+}
+
+.gpa-modal-overlay {
+  background: rgba(27, 37, 51, 0.45);
+}
+
+.gpa-modal {
+  border-radius: var(--qs-radius-xl);
+  box-shadow: var(--qs-shadow-lg);
+}

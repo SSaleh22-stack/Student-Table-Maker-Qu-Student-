@@ -16,8 +16,8 @@
 }
 
 .spinner {
-  border: 3px solid rgba(102, 126, 234, 0.1);
-  border-top: 3px solid #667eea;
+  border: 3px solid rgba(14, 116, 144, 0.1);
+  border-top: 3px solid var(--qs-accent);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -50,7 +50,7 @@
 }
 
 .spinner-message {
-  color: #667eea;
+  color: var(--qs-accent);
   font-weight: 500;
   font-size: 0.95rem;
   margin: 0;
