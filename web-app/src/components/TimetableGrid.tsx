@@ -51,6 +51,21 @@ const TimetableGrid: React.FC = () => {
   const [showExportMenu, setShowExportMenu] = React.useState(false);
   const [selectedCourse, setSelectedCourse] = React.useState<Course | null>(null);
 
+  // One summary row per section. A section's separate meeting times share a row,
+  // but different courses that happen to have the same section number stay apart.
+  const groupTimetableBySection = () => {
+    const groups = new Map<string, typeof timetable>();
+    timetable.forEach((entry) => {
+      const key = `${entry.course.code}|${entry.course.section || 'N/A'}`;
+      groups.set(key, [...(groups.get(key) || []), entry]);
+    });
+    return Array.from(groups, ([key, entries]) => ({
+      key,
+      section: entries[0].course.section || 'N/A',
+      entries,
+    }));
+  };
+
   // Generate time slots (7:00 to 20:00 in 1-hour intervals)
   const timeSlots: string[] = [];
   for (let hour = 7; hour <= 20; hour++) {
@@ -90,18 +105,7 @@ const TimetableGrid: React.FC = () => {
   const exportToPDF = () => {
     // Generate summary table HTML
     const generateSummaryTable = () => {
-      // Group courses by section number
-      const groupedBySection: Record<string, typeof timetable> = {};
-      timetable.forEach(entry => {
-        const section = entry.course.section || 'N/A';
-        if (!groupedBySection[section]) {
-          groupedBySection[section] = [];
-        }
-        groupedBySection[section].push(entry);
-      });
-
-      // Generate rows for grouped courses
-      return Object.entries(groupedBySection).map(([section, entries]) => {
+      return groupTimetableBySection().map(({ section, entries }) => {
         const codes = [...new Set(entries.map(e => e.course.code))].join(', ');
         const names = [...new Set(entries.map(e => e.course.name))].join(', ');
         const days = formatDays([...new Set(entries.flatMap(e => e.course.days))], t, language) || '-';
@@ -1005,18 +1009,7 @@ const TimetableGrid: React.FC = () => {
                 </thead>
                 <tbody>
                   {(() => {
-                    // Group courses by section number
-                    const groupedBySection: Record<string, typeof timetable> = {};
-                    timetable.forEach(entry => {
-                      const section = entry.course.section || 'N/A';
-                      if (!groupedBySection[section]) {
-                        groupedBySection[section] = [];
-                      }
-                      groupedBySection[section].push(entry);
-                    });
-
-                    // Render grouped courses
-                    return Object.entries(groupedBySection).map(([section, entries]) => {
+                    return groupTimetableBySection().map(({ key, section, entries }) => {
                       const codes = [...new Set(entries.map(e => e.course.code))].join(', ');
                       const names = [...new Set(entries.map(e => e.course.name))].join(', ');
                       const days = formatDays([...new Set(entries.flatMap(e => e.course.days))], t, language) || '-';
@@ -1028,7 +1021,7 @@ const TimetableGrid: React.FC = () => {
                       const classTypes = [...new Set(entries.map(e => e.course.classType).filter(Boolean))];
 
                       return (
-                        <tr key={section}>
+                        <tr key={key}>
                           <td>{codes}</td>
                           <td>{names}</td>
                           <td>{section}</td>

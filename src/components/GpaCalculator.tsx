@@ -28,6 +28,16 @@ const GpaCalculator: React.FC = () => {
     getDefaultGradePoints(5)
   );
   const [showAdvanced, setShowAdvanced] = useState(false);
+  // Nothing is saved until stored values have loaded, so the empty defaults
+  // shown on first render never overwrite what the student saved earlier.
+  const [loaded, setLoaded] = useState(false);
+
+  // Use the saved grade points when there are any, otherwise the defaults for the saved scale
+  const applySavedScale = (savedScale?: GPAScale, savedMap?: GradePointMap) => {
+    if (savedScale) setScale(savedScale);
+    if (savedMap) setGradePointMap(savedMap);
+    else if (savedScale) setGradePointMap(getDefaultGradePoints(savedScale));
+  };
 
   // Load saved data on mount
   useEffect(() => {
@@ -41,10 +51,10 @@ const GpaCalculator: React.FC = () => {
               const gpaData = localResult.gpaData;
               if (gpaData.cumulativeGPA !== undefined) setPrevGpa(gpaData.cumulativeGPA);
               if (gpaData.earnedHours !== undefined) setPrevHours(gpaData.earnedHours);
-              if (gpaData.scale) setScale(gpaData.scale);
               if (gpaData.courses && Array.isArray(gpaData.courses)) setCourses(gpaData.courses);
-              if (gpaData.gradePointMap) setGradePointMap(gpaData.gradePointMap);
-              
+              applySavedScale(gpaData.scale, gpaData.gradePointMap);
+              setLoaded(true);
+
               // Clear the data after loading
               chrome.storage.local.remove(['gpaData']);
             } else {
@@ -58,11 +68,11 @@ const GpaCalculator: React.FC = () => {
                   'gpaGradePointMap',
                 ],
                 (result) => {
-                  if (result.gpaScale) setScale(result.gpaScale);
                   if (result.gpaPrevGpa !== undefined) setPrevGpa(result.gpaPrevGpa);
                   if (result.gpaPrevHours !== undefined) setPrevHours(result.gpaPrevHours);
                   if (result.gpaCourses) setCourses(result.gpaCourses);
-                  if (result.gpaGradePointMap) setGradePointMap(result.gpaGradePointMap);
+                  applySavedScale(result.gpaScale, result.gpaGradePointMap);
+                  setLoaded(true);
                 }
               );
             }
@@ -75,27 +85,33 @@ const GpaCalculator: React.FC = () => {
           const savedCourses = localStorage.getItem('gpaCourses');
           const savedGradeMap = localStorage.getItem('gpaGradePointMap');
 
-          if (savedScale) setScale(parseInt(savedScale) as GPAScale);
           if (savedPrevGpa) setPrevGpa(parseFloat(savedPrevGpa));
           if (savedPrevHours) setPrevHours(parseFloat(savedPrevHours));
           if (savedCourses) setCourses(JSON.parse(savedCourses));
-          if (savedGradeMap) setGradePointMap(JSON.parse(savedGradeMap));
+          applySavedScale(
+            savedScale ? (parseInt(savedScale) as GPAScale) : undefined,
+            savedGradeMap ? JSON.parse(savedGradeMap) : undefined
+          );
+          setLoaded(true);
         }
       } catch (error) {
         console.error('Error loading saved GPA data:', error);
+        setLoaded(true);
       }
     };
 
     loadSavedData();
   }, []);
 
-  // Update grade point map when scale changes
-  useEffect(() => {
-    setGradePointMap(getDefaultGradePoints(scale));
-  }, [scale]);
+  // Switching the scale resets grade points to that scale's defaults
+  const handleScaleChange = (nextScale: GPAScale) => {
+    setScale(nextScale);
+    setGradePointMap(getDefaultGradePoints(nextScale));
+  };
 
   // Save data when it changes
   useEffect(() => {
+    if (!loaded) return;
     const saveData = async () => {
       try {
         if (typeof chrome !== 'undefined' && chrome.storage) {
@@ -121,7 +137,7 @@ const GpaCalculator: React.FC = () => {
     };
 
     saveData();
-  }, [scale, prevGpa, prevHours, courses, gradePointMap]);
+  }, [loaded, scale, prevGpa, prevHours, courses, gradePointMap]);
 
   // Calculate results
   const currentHours = useMemo(() => calcTotalHours(courses), [courses]);
@@ -214,7 +230,7 @@ const GpaCalculator: React.FC = () => {
             <select
               id="gpa-scale"
               value={scale}
-              onChange={(e) => setScale(parseInt(e.target.value) as GPAScale)}
+              onChange={(e) => handleScaleChange(parseInt(e.target.value) as GPAScale)}
               className="qs-select"
             >
               <option value={5}>5.0</option>
