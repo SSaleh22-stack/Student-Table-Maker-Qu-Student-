@@ -42,6 +42,10 @@ export interface Translations {
   exportToPDF: string;
   exportToExcel: string;
   exportToCalendar: string;
+  exportToJPG: string;
+  exportJPGTimetable: string;
+  exportJPGSummary: string;
+  exportJPGBoth: string;
   examConflict: string;
   search: string;
   searchPlaceholder: string;
@@ -161,6 +165,10 @@ export const translations: Record<Language, Translations> = {
     exportToPDF: 'Export to PDF',
     exportToExcel: 'Export to Excel',
     exportToCalendar: 'Export to Calendar',
+    exportToJPG: 'Export to JPG',
+    exportJPGTimetable: 'Timetable Only',
+    exportJPGSummary: 'Summary Only',
+    exportJPGBoth: 'Both',
     examConflict: 'Final exam conflict',
     search: 'Search',
     searchPlaceholder: 'Search by course name or section...',
@@ -278,6 +286,10 @@ export const translations: Record<Language, Translations> = {
     exportToPDF: 'تصدير كـ PDF',
     exportToExcel: 'تصدير كـ Excel',
     exportToCalendar: 'تصدير إلى التقويم',
+    exportToJPG: 'تصدير كـ JPG',
+    exportJPGTimetable: 'الجدول فقط',
+    exportJPGSummary: 'الملخص فقط',
+    exportJPGBoth: 'كلاهما',
     examConflict: 'تعارض في الامتحان النهائي',
     search: 'بحث',
     searchPlaceholder: 'بحث باسم المقرر أو الشعبة...',

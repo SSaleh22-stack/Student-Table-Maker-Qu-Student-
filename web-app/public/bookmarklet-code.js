@@ -200,9 +200,9 @@
               status: status,
               classType: classType,
               finalExam: examPeriod ? {
-                day: firstSlot.days[0] || 'Sun',
-                startTime: '08:00',
-                endTime: '10:00',
+                day: '', // the portal only gives the exam period number
+                startTime: '',
+                endTime: '',
                 date: examPeriod
               } : undefined,
               __originalIndex: index // Preserve DOM order (use row index from DOM)
@@ -217,16 +217,16 @@
               code: code,
               name: name,
               section: section,
-              days: ['Sun'],
-              startTime: '08:00',
-              endTime: '09:30',
+              days: [], // no lecture time: listed in the summary only
+              startTime: '',
+              endTime: '',
               instructor: instructor || undefined,
               status: status,
               classType: classType,
               finalExam: examPeriod ? {
-                day: 'Sun',
-                startTime: '08:00',
-                endTime: '10:00',
+                day: '',
+                startTime: '',
+                endTime: '',
                 date: examPeriod
               } : undefined,
               __originalIndex: index // Preserve DOM order (use row index from DOM)
