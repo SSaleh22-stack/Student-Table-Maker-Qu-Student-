@@ -9,6 +9,8 @@ export type IconName =
   | 'help'
   | 'mail'
   | 'send'
+  | 'whatsapp'
+  | 'university'
   | 'download'
   | 'plus'
   | 'list'
@@ -75,6 +77,18 @@ const paths: Record<IconName, React.ReactNode> = {
     </>
   ),
   send: <path d="M22 2L11 13M22 2l-7 20-4-9-9-4z" />,
+  whatsapp: (
+    <>
+      <path d="M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9z" />
+      <path d="M9.2 8.6c-.4 2.6 2.6 5.8 5.2 5.4l.9-1.3-1.8-1-.9.8a3 3 0 0 1-1.8-1.8l.8-.9-1-1.8z" />
+    </>
+  ),
+  university: (
+    <>
+      <path d="M12 2.5l9 5H3z" />
+      <path d="M5 10.5v7M9.7 10.5v7M14.3 10.5v7M19 10.5v7M3 21h18" />
+    </>
+  ),
   download: <path d="M12 3v12M7 10l5 5 5-5M5 21h14" />,
   plus: <path d="M12 5v14M5 12h14" />,
   list: <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />,
