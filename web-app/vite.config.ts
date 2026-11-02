@@ -3,12 +3,9 @@ import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
 
 export default defineConfig({
-  // Base path for GitHub Pages (repository name)
-  // For local development, use './' (relative paths)
-  // For production build, use the repository name as base path
-  base: (process.env.NODE_ENV === 'production' || process.env.CI) 
-    ? '/Student-Table-Maker-Qu-Student-/' 
-    : './',
+  // Relative paths, so the same build works at qustudent.net and at the
+  // github.io/Student-Table-Maker-Qu-Student-/ address (the site has a single page).
+  base: './',
   plugins: [react()],
   build: {
     outDir: 'dist',
