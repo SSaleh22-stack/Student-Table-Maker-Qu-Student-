@@ -256,6 +256,80 @@
   font-weight: 600;
   color: var(--qs-text);
   align-self: flex-start;
+  text-decoration: none;
+}
+
+a.qs-contact-value:hover {
+  color: var(--qs-accent);
+  text-decoration: underline;
+}
+
+.qs-contact-icon-whatsapp {
+  background: #e3f7ea;
+  color: #128c4b;
+}
+
+.qs-contact-icon-telegram {
+  background: #e2f2fb;
+  color: #1d8fcb;
+}
+
+.qs-universities {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.qs-universities-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--qs-text);
+}
+
+.qs-university-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border: 1px solid var(--qs-border);
+  border-radius: var(--qs-radius-md);
+}
+
+.qs-university-name {
+  flex: 1;
+  font-weight: 600;
+  color: var(--qs-text);
+}
+
+.qs-university-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--qs-success-bg);
+  color: var(--qs-success);
+}
+
+.qs-university-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--qs-radius-sm);
+  background: var(--qs-accent-soft);
+  color: var(--qs-text);
+  font-size: 14px;
+}
+
+.qs-university-note svg {
+  color: var(--qs-accent);
+  flex-shrink: 0;
 }
 
 @media (max-width: 900px) {

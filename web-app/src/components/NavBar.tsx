@@ -11,6 +11,45 @@ interface NavBarProps {
   onViewChange: (view: ViewMode) => void;
 }
 
+/** Contact channels (the same ones as the mobile app's تواصل معنا page). */
+const CONTACT_CHANNELS: {
+  id: string;
+  icon: IconName;
+  labelAr: string;
+  labelEn: string;
+  value: string;
+  copy: string;
+  url: string;
+}[] = [
+  {
+    id: 'whatsapp',
+    icon: 'whatsapp',
+    labelAr: 'واتساب',
+    labelEn: 'WhatsApp',
+    value: '+966 56 150 2678',
+    copy: '+966561502678',
+    url: 'https://wa.me/966561502678',
+  },
+  {
+    id: 'telegram',
+    icon: 'send',
+    labelAr: 'تيليجرام',
+    labelEn: 'Telegram',
+    value: '@qu4611',
+    copy: '@qu4611',
+    url: 'https://t.me/qu4611',
+  },
+  {
+    id: 'email',
+    icon: 'mail',
+    labelAr: 'البريد الإلكتروني',
+    labelEn: 'Email',
+    value: 'qu4611@gmail.com',
+    copy: 'qu4611@gmail.com',
+    url: 'mailto:qu4611@gmail.com',
+  },
+];
+
 const NavBar: React.FC<NavBarProps> = ({ currentView, onViewChange }) => {
   // The website is Arabic-only, so there is no language switch here
   const { t, language } = useLanguage();
@@ -284,47 +323,52 @@ const NavBar: React.FC<NavBarProps> = ({ currentView, onViewChange }) => {
             </div>
             <div className="qs-modal-body">
               <p className="qs-modal-intro">
-                {language === 'en'
-                  ? "Get in touch with us! We'd love to hear from you. Use the contact information below to reach out."
-                  : 'تواصل معنا! نحن نحب أن نسمع منك. استخدم معلومات الاتصال أدناه للتواصل.'}
+                {isAr
+                  ? 'في حال وجود استفسارات أو مشاكل تقنية أو اقتراحات، تواصل معنا عبر:'
+                  : 'For questions, technical problems or suggestions, reach us on:'}
               </p>
 
               <div className="qs-contact-list">
-                <div className="qs-contact-item">
-                  <span className="qs-contact-icon">
-                    <Icon name="mail" size={20} />
-                  </span>
-                  <div className="qs-contact-text">
-                    <span className="qs-contact-label">{t.contactEmailLabel}</span>
-                    <span className="qs-contact-value" dir="ltr">qu4611@gmail.com</span>
+                {CONTACT_CHANNELS.map((c) => (
+                  <div className="qs-contact-item" key={c.id}>
+                    <span className={`qs-contact-icon qs-contact-icon-${c.id}`}>
+                      <Icon name={c.icon} size={20} />
+                    </span>
+                    <div className="qs-contact-text">
+                      <span className="qs-contact-label">{isAr ? c.labelAr : c.labelEn}</span>
+                      <a className="qs-contact-value" dir="ltr" href={c.url} target="_blank" rel="noopener noreferrer">
+                        {c.value}
+                      </a>
+                    </div>
+                    <button
+                      type="button"
+                      className={`qs-btn qs-btn-sm ${copiedField === c.id ? 'qs-btn-soft' : 'qs-btn-outline'}`}
+                      onClick={() => handleCopyToClipboard(c.copy, c.id)}
+                      aria-label={`${isAr ? 'نسخ' : 'Copy'} ${isAr ? c.labelAr : c.labelEn}`}
+                    >
+                      <Icon name={copiedField === c.id ? 'check' : 'copy'} size={16} />
+                      {copiedField === c.id ? t.contactCopied : isAr ? 'نسخ' : 'Copy'}
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    className={`qs-btn qs-btn-sm ${copiedField === 'email' ? 'qs-btn-soft' : 'qs-btn-outline'}`}
-                    onClick={() => handleCopyToClipboard('qu4611@gmail.com', 'email')}
-                  >
-                    <Icon name={copiedField === 'email' ? 'check' : 'copy'} size={16} />
-                    {copiedField === 'email' ? t.contactCopied : t.contactCopyEmail}
-                  </button>
-                </div>
+                ))}
+              </div>
 
-                <div className="qs-contact-item">
+              <div className="qs-universities">
+                <h3 className="qs-universities-title">{isAr ? 'الجامعات المدعومة' : 'Supported universities'}</h3>
+                <div className="qs-university-item">
                   <span className="qs-contact-icon">
-                    <Icon name="send" size={20} />
+                    <Icon name="university" size={20} />
                   </span>
-                  <div className="qs-contact-text">
-                    <span className="qs-contact-label">{t.contactTelegramLabel}</span>
-                    <span className="qs-contact-value" dir="ltr">@qu4611</span>
-                  </div>
-                  <button
-                    type="button"
-                    className={`qs-btn qs-btn-sm ${copiedField === 'telegram' ? 'qs-btn-soft' : 'qs-btn-outline'}`}
-                    onClick={() => handleCopyToClipboard('@qu4611', 'telegram')}
-                  >
-                    <Icon name={copiedField === 'telegram' ? 'check' : 'copy'} size={16} />
-                    {copiedField === 'telegram' ? t.contactCopied : t.contactCopyTelegram}
-                  </button>
+                  <span className="qs-university-name">{isAr ? 'جامعة القصيم' : 'Qassim University'}</span>
+                  <span className="qs-university-tag">
+                    <Icon name="check" size={13} />
+                    {isAr ? 'مدعومة' : 'Supported'}
+                  </span>
                 </div>
+                <p className="qs-university-note">
+                  <Icon name="help" size={16} />
+                  {isAr ? 'إذا كنت تريد إضافة جامعتك، يرجى التواصل معنا.' : 'Want your university added? Get in touch with us.'}
+                </p>
               </div>
             </div>
           </div>
