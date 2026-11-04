@@ -1,0 +1,79 @@
+{
+  "expo": {
+    "name": "Qu Student",
+    "slug": "qu-student",
+    "version": "1.0.0",
+    "orientation": "default",
+    "icon": "./assets/images/icon.png",
+    "scheme": "qustudent",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#EEF3F8",
+    "ios": {
+      "bundleIdentifier": "net.qustudent.app",
+      "supportsTablet": true,
+      "infoPlist": {
+        "ExpoLocalization_forcesRTL": true,
+        "CFBundleLocalizations": [
+          "ar"
+        ]
+      }
+    },
+    "android": {
+      "package": "net.qustudent.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#0E7490",
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+      },
+      "permissions": [],
+      "blockedPermissions": [
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.SYSTEM_ALERT_WINDOW"
+      ],
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "output": "single",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#EEF3F8",
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 96
+        }
+      ],
+      [
+        "expo-localization",
+        {
+          "forcesRTL": true,
+          "supportedLocales": [
+            "ar"
+          ]
+        }
+      ],
+      "expo-sharing",
+      "expo-image"
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    },
+    "extra": {
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "forcesRTL": true,
+      "eas": {
+        "projectId": "30a9ef7c-fda2-4f9a-a273-6f809c0ed6c2"
+      }
+    },
+    "owner": "week86874"
+  }
+}
