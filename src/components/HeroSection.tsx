@@ -1,7 +1,8 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useTimetable } from '../contexts/TimetableContext';
 import Icon from './Icon';
+import { GuideVideoModal } from './GuideVideo';
 import './HeroSection.css';
 
 interface HeroSectionProps {
@@ -16,6 +17,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ hasCourses, onOpenOfferedCour
   const { t, language } = useLanguage();
   const { timetable } = useTimetable();
   const isAr = language === 'ar';
+  const [showVideo, setShowVideo] = useState(false);
 
   // Same totals the timetable summary uses
   const stats = useMemo(() => {
@@ -49,6 +51,25 @@ const HeroSection: React.FC<HeroSectionProps> = ({ hasCourses, onOpenOfferedCour
             ? 'افتح صفحة «المقررات المطروحة وفق الخطة» في بوابة الطالب واضغط زر الاستخراج بجانب اختيار الفصل. بعدها اختر شعبة لكل مقرر وستظهر مباشرة في جدولك.'
             : 'Open “Offered Courses According to Plan” on the student portal and press the extract button next to the semester picker. Then pick a section for each course and it appears on your timetable.'}
         </p>
+        {/* The guide video: a bright banner so first-time users notice it */}
+        <button type="button" className="qs-video-banner" onClick={() => setShowVideo(true)}>
+          <span className="qs-video-banner-play" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="22" height="22">
+              <path d="M8 5.5v13l11-6.5z" fill="currentColor" />
+            </svg>
+          </span>
+          <span className="qs-video-banner-text">
+            <strong>{isAr ? 'أول مرة؟ شاهد شرح الاستخدام' : 'New here? Watch how it works'}</strong>
+            <span>
+              {isAr
+                ? 'مقطع قصير يشرح استخراج المقررات وبناء جدولك خطوة بخطوة'
+                : 'A short video on extracting your courses and building your timetable, step by step'}
+            </span>
+          </span>
+          <span className="qs-video-banner-cta" aria-hidden="true">
+            {isAr ? 'شاهد الآن' : 'Watch now'}
+          </span>
+        </button>
         <div className="qs-hero-actions">
           {hasCourses ? (
             <button type="button" className="qs-btn qs-btn-primary qs-btn-lg" onClick={onOpenOfferedCourses}>
@@ -93,6 +114,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ hasCourses, onOpenOfferedCour
           <span className="qs-stat-label">{isAr ? 'تعارضات' : 'clashes'}</span>
         </div>
       </div>
+      {showVideo && <GuideVideoModal onClose={() => setShowVideo(false)} />}
     </section>
   );
 };

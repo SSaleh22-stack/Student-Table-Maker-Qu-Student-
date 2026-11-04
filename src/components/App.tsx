@@ -3,6 +3,7 @@ import { LanguageProvider, useLanguage } from '../contexts/LanguageContext';
 import { TimetableProvider } from '../contexts/TimetableContext';
 import Icon from './Icon';
 import NavBar from './NavBar';
+import Announcements from './Announcements';
 import HeroSection from './HeroSection';
 import CourseList from './CourseList';
 import TimetableGrid from './TimetableGrid';
@@ -222,6 +223,7 @@ const AppContent: React.FC = () => {
               onOpenOfferedCourses={() => setShowOfferedCoursesModal(true)}
               onAddCourse={() => setShowAddCourseModal(true)}
             />
+            <Announcements />
             {successMessage && (
               <div className="qs-alert qs-alert-success" role="status">
                 <Icon name="check" />

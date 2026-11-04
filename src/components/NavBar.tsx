@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import Icon, { IconName } from './Icon';
 import Logo from './Logo';
+import { GuideVideo } from './GuideVideo';
 import './NavBar.css';
 
 type ViewMode = 'timetable' | 'gpa' | 'absence';
@@ -163,6 +164,7 @@ const NavBar: React.FC<NavBarProps> = ({ currentView, onViewChange }) => {
               </button>
             </div>
             <div className="qs-modal-body">
+              <GuideVideo />
               <ol className="qs-steps">
                 {instructionSteps.map((step, index) => (
                   <li key={index} className="qs-step">

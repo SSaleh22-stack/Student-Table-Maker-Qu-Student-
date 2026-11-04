@@ -109,6 +109,117 @@
   color: var(--qs-warning);
 }
 
+/* Guide video banner */
+.qs-video-banner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  max-width: 640px;
+  margin-top: 6px;
+  padding: 14px 16px;
+  border: 0;
+  border-radius: var(--qs-radius-lg);
+  background: linear-gradient(135deg, #0E7490, #08485B);
+  color: #FFFFFF;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  box-shadow: 0 8px 22px rgba(8, 72, 91, 0.28);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.qs-video-banner:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(8, 72, 91, 0.34);
+}
+
+.qs-video-banner:focus-visible {
+  outline: 3px solid #7FD3E3;
+  outline-offset: 3px;
+}
+
+.qs-video-banner-play {
+  position: relative;
+  flex: 0 0 52px;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  color: #0E7490;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Soft ring that pulses around the play button */
+.qs-video-banner-play::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.55);
+  animation: qs-video-pulse 2s ease-out infinite;
+}
+
+.qs-video-banner-play svg {
+  margin-left: 3px; /* play always points right; nudge so it looks centred */
+}
+
+.qs-video-banner-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.qs-video-banner-text strong {
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.qs-video-banner-text span {
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: #D5EEF3;
+}
+
+.qs-video-banner-cta {
+  flex-shrink: 0;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.qs-video-banner:hover .qs-video-banner-cta {
+  background: #FFFFFF;
+  color: #0B5F77;
+}
+
+@keyframes qs-video-pulse {
+  0% { transform: scale(0.92); opacity: 1; }
+  100% { transform: scale(1.25); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qs-video-banner,
+  .qs-video-banner:hover {
+    transition: none;
+    transform: none;
+  }
+
+  .qs-video-banner-play::after {
+    animation: none;
+    opacity: 0.6;
+  }
+}
+
 @media (max-width: 640px) {
   .qs-hero {
     padding: 22px 20px;
@@ -120,6 +231,10 @@
 
   .qs-hero-actions .qs-btn {
     flex: 1 1 100%;
+  }
+
+  .qs-video-banner-cta {
+    display: none;
   }
 
   .qs-stat {

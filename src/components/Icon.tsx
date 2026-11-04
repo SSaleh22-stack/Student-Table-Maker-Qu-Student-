@@ -34,9 +34,20 @@ export type IconName =
   | 'mapPin'
   | 'user'
   | 'clock'
-  | 'sliders';
+  | 'sliders'
+  | 'play'
+  | 'bell'
+  | 'university';
 
 const paths: Record<IconName, React.ReactNode> = {
+  bell: <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0" />,
+  university: <path d="M3 10l9-6 9 6M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 21h18" />,
+  play: (
+    <>
+      <circle cx="12" cy="12" r="10" />
+      <path d="M10 8.5v7l6-3.5z" fill="currentColor" />
+    </>
+  ),
   calendar: (
     <>
       <rect x="3" y="4" width="18" height="18" rx="2" />
