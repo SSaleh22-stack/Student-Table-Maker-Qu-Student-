@@ -1,12 +1,12 @@
 /**
  * Timetable exports with the same look as the Qu Student app:
- *  - PDF: an A4 landscape page with the weekly grid, then the summary page(s), printed from a hidden frame
- *    (the browser's print window offers "Save as PDF").
+ *  - PDF: an A4 landscape page with the weekly grid, then the summary page(s), downloaded as a .pdf file.
  *  - Image: a PNG of the weekly grid in a white card on the teal gradient.
  * Ported from mobile-app/src/lib/export (html.ts, summaryPage.ts). The same file lives in
  * web-app/src/lib/scheduleExport.ts; keep the two in step.
  */
 import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 import type { Course, Language, TimeSlot, TimetableEntry } from '../types';
 import { getCourseTheme } from './courseTheme';
 
@@ -15,8 +15,8 @@ const WEEK_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu'];
 
 /** A4 landscape in PDF points; pages are laid out at this size in CSS pixels. */
 const PAGE = { width: 842, height: 595 };
-/** Browsers print 96 CSS pixels per inch (4/3 of a point): enlarge each page so it fills the sheet. */
-const PAGE_ZOOM = 1.333;
+/** Each PDF page is drawn at this many device pixels per CSS pixel (sharp text, modest file size). */
+const PDF_SCALE = 2.5;
 
 // ---------- Text ----------
 
@@ -429,7 +429,7 @@ const MAX_NOTES = 3;
 const summaryCss = (lang: Language) => {
   const { s, e } = sides(lang);
   return `
-.sum-page { width: ${PAGE.width}px; height: ${PAGE.height}px; position: relative; overflow: hidden; break-before: page; page-break-before: always; background: linear-gradient(160deg, #0E7490, #08485B); padding: 0 24px; display: flex; flex-direction: column; zoom: ${PAGE_ZOOM}; }
+.sum-page { width: ${PAGE.width}px; height: ${PAGE.height}px; position: relative; overflow: hidden; break-before: page; page-break-before: always; background: linear-gradient(160deg, #0E7490, #08485B); padding: 0 24px; display: flex; flex-direction: column; }
 .sum-page.first { break-before: auto; page-break-before: auto; }
 .sum-head { height: 62px; flex: 0 0 62px; display: flex; align-items: center; gap: 12px; color: #fff; padding: 0 4px; }
 .sum-head .logo { flex: 0 0 40px; }
@@ -605,32 +605,64 @@ ${summaryPages(chosen, lang, head)}
 </html>`;
 };
 
-/** Prints the PDF page from a hidden frame; the browser's print window offers "Save as PDF". */
+/**
+ * Draws each page off screen and downloads them as one PDF file (no print window).
+ * Pages are pictures, so Arabic text keeps its shapes and the web font.
+ */
 export const exportSchedulePdf = async (chosen: Course[], lang: Language): Promise<void> => {
   const frame = document.createElement('iframe');
   frame.setAttribute('aria-hidden', 'true');
-  frame.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;opacity:0;';
+  frame.style.cssText = `position:fixed;top:0;left:-${PAGE.width + 200}px;width:${PAGE.width}px;height:${PAGE.height}px;border:0;pointer-events:none;`;
   document.body.appendChild(frame);
-  const doc = frame.contentDocument;
-  const win = frame.contentWindow;
-  if (!doc || !win) {
+  try {
+    const doc = frame.contentDocument;
+    const win = frame.contentWindow;
+    if (!doc || !win) throw new Error('no frame');
+    doc.open();
+    doc.write(buildScheduleHtml(chosen, lang));
+    doc.close();
+    // Let the web font and the logo load first (at most ~3 seconds).
+    await Promise.race([
+      Promise.all([
+        new Promise((resolve) => (doc.readyState === 'complete' ? resolve(null) : win.addEventListener('load', resolve))),
+        doc.fonts?.ready,
+      ]),
+      new Promise((resolve) => setTimeout(resolve, 3000)),
+    ]);
+
+    const pdf = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4', compress: true });
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
+    const pages = Array.from(doc.querySelectorAll<HTMLElement>('.sum-page'));
+    for (let i = 0; i < pages.length; i++) {
+      const canvas = await html2canvas(pages[i], {
+        scale: PDF_SCALE,
+        backgroundColor: '#0B5F77',
+        logging: false,
+        useCORS: true,
+        windowWidth: PAGE.width,
+        windowHeight: PAGE.height,
+      });
+      if (i > 0) pdf.addPage();
+      pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, pageW, pageH, undefined, 'FAST');
+    }
+    pdf.setProperties({ title: TEXT[lang].title, creator: 'Qu Student' });
+    download(pdf.output('blob'), `${FILE_BASE}.pdf`);
+  } finally {
     frame.remove();
-    throw new Error('print unavailable');
   }
-  doc.open();
-  doc.write(buildScheduleHtml(chosen, lang));
-  doc.close();
-  // Let the web font and the logo load first (at most ~2.5 seconds).
-  await Promise.race([
-    Promise.all([
-      new Promise((resolve) => (doc.readyState === 'complete' ? resolve(null) : win.addEventListener('load', resolve))),
-      doc.fonts?.ready,
-    ]),
-    new Promise((resolve) => setTimeout(resolve, 2500)),
-  ]);
-  win.focus();
-  win.print();
-  setTimeout(() => frame.remove(), 60_000);
+};
+
+/** Saves a file to the Downloads folder. */
+const download = (blob: Blob, name: string) => {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
 };
 
 // ---------- Image ----------
@@ -699,14 +731,7 @@ export const exportScheduleImage = async (chosen: Course[], lang: Language): Pro
     });
     const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'));
     if (!blob) throw new Error('no image');
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${FILE_BASE}.png`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 2000);
+    download(blob, `${FILE_BASE}.png`);
   } finally {
     host.remove();
   }
