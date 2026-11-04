@@ -466,6 +466,7 @@ export function extractCoursesFromDom(doc: Document): Course[] {
                 instructor: instructor || undefined,
                 status,
                 classType,
+                activity: activityType || undefined, // النشاط exactly as the portal shows it
                 finalExam: examPeriod ? { day: '', startTime: '', endTime: '', date: examPeriod } : undefined,
                 __originalIndex: domIndex, // Preserve DOM order (use index from form name)
               };
@@ -504,6 +505,7 @@ export function extractCoursesFromDom(doc: Document): Course[] {
                 instructor: instructor || undefined,
                 status,
                 classType,
+                activity: activityType || undefined, // النشاط exactly as the portal shows it
                 // The portal only gives the exam period number (no day or time)
                 finalExam: examPeriod ? { day: '', startTime: '', endTime: '', date: examPeriod } : undefined,
                 __originalIndex: domIndex, // Preserve DOM order (use index from form name)
@@ -524,6 +526,7 @@ export function extractCoursesFromDom(doc: Document): Course[] {
               instructor: instructor || undefined,
               status,
               classType,
+              activity: activityType || undefined, // النشاط exactly as the portal shows it
               finalExam: examPeriod ? { day: '', startTime: '', endTime: '', date: examPeriod } : undefined,
               __originalIndex: domIndex, // Preserve DOM order (use index from form name)
             };
@@ -543,6 +546,7 @@ export function extractCoursesFromDom(doc: Document): Course[] {
             endTime: '',
             status,
             classType,
+            activity: activityType || undefined, // النشاط exactly as the portal shows it
             __originalIndex: domIndex, // Preserve DOM order (use index from form name)
           };
           courses.push(course);

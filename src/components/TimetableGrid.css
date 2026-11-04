@@ -344,6 +344,46 @@
   pointer-events: none;
 }
 
+/* Hovered section that clashes: drawn over the course it clashes with. The stripes are
+   see-through, so the course underneath still shows. */
+.course-block.hover-preview.hover-conflict {
+  z-index: 8;
+  opacity: 1;
+  color: #9a3412;
+  border: 2px dashed #c2410c;
+  background: repeating-linear-gradient(
+    135deg,
+    rgba(255, 237, 213, 0.88) 0 8px,
+    rgba(254, 215, 170, 0.88) 8px 16px
+  );
+  box-shadow: 0 6px 16px rgba(194, 65, 12, 0.25);
+}
+
+.hover-conflict-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  align-self: flex-start;
+  max-width: 100%;
+  margin-top: 2px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: #c2410c;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* The course a hovered section would clash with */
+.course-block.hover-clash-target {
+  z-index: 6;
+  outline: 2px solid #c2410c;
+  outline-offset: 1px;
+}
+
 /* Added sections with no lecture time (kept off the grid) */
 .tt-notime {
   margin-top: 16px;

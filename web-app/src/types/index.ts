@@ -32,6 +32,7 @@ export interface Course {
   finalExam?: Exam;
   status?: ClassStatus;
   classType?: ClassType;
+  activity?: string; // النشاط as shown on the portal, e.g. نظري، عملي، تدريب
 }
 
 export type Language = 'en' | 'ar';

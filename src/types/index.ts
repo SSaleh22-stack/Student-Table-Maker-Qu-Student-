@@ -36,6 +36,7 @@ export interface Course {
   finalExam?: Exam;
   status?: ClassStatus; // 'open' or 'closed'
   classType?: ClassType; // 'practical', 'theoretical', or 'exercise'
+  activity?: string; // النشاط as shown on the portal, e.g. نظري، عملي، تدريب
 }
 
 export type Language = 'en' | 'ar';
