@@ -48,7 +48,6 @@ export const GuideVideo: React.FC = () => {
           src={`${PLAYER_PAGE}?v=${encodeURIComponent(GUIDE_VIDEO_ID)}`}
           title={isAr ? 'شرح استخدام Qu Student' : 'How to use Qu Student'}
           allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-          allowFullScreen
         />
       </div>
       <a
