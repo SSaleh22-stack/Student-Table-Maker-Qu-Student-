@@ -218,12 +218,12 @@ const AppContent: React.FC = () => {
 
         {currentView === 'timetable' ? (
           <>
+            <Announcements />
             <HeroSection
               hasCourses={courses.length > 0}
               onOpenOfferedCourses={() => setShowOfferedCoursesModal(true)}
               onAddCourse={() => setShowAddCourseModal(true)}
             />
-            <Announcements />
             {successMessage && (
               <div className="qs-alert qs-alert-success" role="status">
                 <Icon name="check" />
