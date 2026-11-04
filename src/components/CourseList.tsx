@@ -3,6 +3,8 @@ import { Course } from '../types';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useTimetable } from '../contexts/TimetableContext';
 import ConfirmationModal from './ConfirmationModal';
+import Icon from './Icon';
+import { getCourseTheme, formatDays, sectionsLabel, coursesLabel, hasSchedule, noTimeLabel, formatExam } from '../lib/courseTheme';
 import './CourseList.css';
 
 interface CourseListProps {
@@ -10,6 +12,7 @@ interface CourseListProps {
 }
 
 type ViewMode = 'detailed' | 'compact';
+type CourseFilter = 'all' | 'open' | 'added';
 
 const CourseList: React.FC<CourseListProps> = ({ courses }) => {
   const { t, language } = useLanguage();
@@ -18,6 +21,7 @@ const CourseList: React.FC<CourseListProps> = ({ courses }) => {
   const [viewMode, setViewMode] = useState<ViewMode>('compact');
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [statusFilter, setStatusFilter] = useState<CourseFilter>('all');
   const [confirmationModal, setConfirmationModal] = useState<{ isOpen: boolean; message: string; course: Course | null }>({
     isOpen: false,
     message: '',
@@ -125,20 +129,33 @@ const CourseList: React.FC<CourseListProps> = ({ courses }) => {
     return sorted;
   }, [courses]);
 
-  // Filter courses based on search query
+  // Filter courses by the search box and the All / Open / Added chips
   const filteredCourses = useMemo(() => {
+    let result = coursesInOrder;
+    if (statusFilter === 'open') {
+      result = result.filter(course => course.status !== 'closed');
+    } else if (statusFilter === 'added') {
+      result = result.filter(course => isInTimetable(course.id));
+    }
     if (!searchQuery.trim()) {
-      return coursesInOrder;
+      return result;
     }
     const query = searchQuery.toLowerCase().trim();
-    return coursesInOrder.filter(course => {
+    return result.filter(course => {
       const codeMatch = course.code.toLowerCase().includes(query);
       const nameMatch = course.name.toLowerCase().includes(query);
       const sectionMatch = course.section.toLowerCase().includes(query);
       const instructorMatch = course.instructor?.toLowerCase().includes(query);
       return codeMatch || nameMatch || sectionMatch || instructorMatch;
     });
-  }, [coursesInOrder, searchQuery]);
+  }, [coursesInOrder, searchQuery, statusFilter, isInTimetable]);
+
+  // Numbers shown on the filter chips
+  const filterCounts = useMemo(() => ({
+    all: coursesInOrder.length,
+    open: coursesInOrder.filter(course => course.status !== 'closed').length,
+    added: coursesInOrder.filter(course => isInTimetable(course.id)).length,
+  }), [coursesInOrder, isInTimetable]);
 
   // Group courses by course code and name (for compact view)
   // This must be at component level, not inside renderCompactView
@@ -199,10 +216,15 @@ const CourseList: React.FC<CourseListProps> = ({ courses }) => {
     // No conflicts - add course to timetable
     const added = addCourse(course);
     if (added) {
+      const noTime = !hasSchedule(course) && !(course.timeSlots && course.timeSlots.length > 1);
       setNotification({
-        message: language === 'en'
-          ? `${course.code} added to timetable`
-          : `تم إضافة ${course.code} إلى الجدول`,
+        message: noTime
+          ? (language === 'en'
+              ? `${course.code} has no set time, so it was added to the summary only`
+              : `${course.code} بدون وقت محدد، لذلك أُضيف إلى الملخص فقط`)
+          : (language === 'en'
+              ? `${course.code} added to timetable`
+              : `تم إضافة ${course.code} إلى الجدول`),
         type: 'success'
       });
       setTimeout(() => setNotification(null), 3000);
@@ -237,18 +259,23 @@ const CourseList: React.FC<CourseListProps> = ({ courses }) => {
     setTimeout(() => setNotification(null), 3000);
   };
 
+  const isAr = language === 'ar';
+
   if (courses.length === 0) {
     return (
-      <div className="course-list-empty">
-        <div className="empty-state-icon">📚</div>
-        <h3>{language === 'en' ? 'No Courses Yet' : 'لا توجد مقررات بعد'}</h3>
-        <p>{t.noCourses}</p>
-        <p className="empty-state-hint">
-          {language === 'en' 
-            ? 'Click the "المقررات المطروحة وفق الخطة" button above to view available courses.'
-            : 'انقر على زر "المقررات المطروحة وفق الخطة" أعلاه لعرض المقررات المتاحة.'}
-        </p>
-      </div>
+      <section className="qs-courses qs-card" aria-label={isAr ? 'المقررات المطروحة' : 'Offered courses'}>
+        <div className="qs-courses-empty">
+          <div className="qs-empty-icon">
+            <Icon name="book" size={30} />
+          </div>
+          <h3>{isAr ? 'لا توجد مقررات بعد' : 'No courses yet'}</h3>
+          <p>
+            {isAr
+              ? 'استخرج المقررات من صفحة «المقررات المطروحة وفق الخطة» في بوابة الطالب، أو أضف مقرراً يدوياً.'
+              : 'Extract courses from the “Offered Courses According to Plan” page on the student portal, or add one manually.'}
+          </p>
+        </div>
+      </section>
     );
   }
 
@@ -264,322 +291,373 @@ const CourseList: React.FC<CourseListProps> = ({ courses }) => {
     });
   };
 
+  const groupKeys = Object.keys(groupedCourses);
+  const allExpanded = groupKeys.length > 0 && groupKeys.every(key => expandedGroups.has(key));
+
   const toggleExpandAll = () => {
-    const allKeys = Object.keys(groupedCourses);
-    const allExpanded = allKeys.length > 0 && allKeys.every(key => expandedGroups.has(key));
-    
-    if (allExpanded) {
-      // Collapse all
-      setExpandedGroups(new Set());
-    } else {
-      // Expand all
-      setExpandedGroups(new Set(allKeys));
-    }
+    setExpandedGroups(allExpanded ? new Set() : new Set(groupKeys));
   };
 
-  const renderCompactView = () => {
+  const typeLabel = (course: Course): string | null => {
+    if (course.classType === 'practical') return t.practical;
+    if (course.classType === 'theoretical') return t.theoretical;
+    if (course.classType === 'exercise') return t.exercise;
+    return null;
+  };
+
+  // Hover preview on the timetable (skipped on phones/tablets)
+  const hoverProps = (course: Course) =>
+    isTouchDevice
+      ? {}
+      : {
+          onMouseEnter: () => setHoveredCourse(course),
+          onMouseLeave: () => setHoveredCourse(null),
+        };
+
+  const scheduleConflictWith = (course: Course): string | null => {
+    if (!hasConflict(course)) return null;
+    const info = getConflictInfo(course);
+    return info && info.type === 'schedule' ? info.conflictingCourse.code : null;
+  };
+
+  const days = (list: string[]) => formatDays(list, t, language);
+
+  const getSlots = (course: Course) =>
+    course.timeSlots && course.timeSlots.length > 1
+      ? course.timeSlots
+      : [{ days: course.days, startTime: course.startTime, endTime: course.endTime, location: course.location }];
+
+  const tileTitle = (course: Course, inTimetable: boolean, conflictCode: string | null) => {
+    const slots = hasSchedule(course) || (course.timeSlots && course.timeSlots.length > 1)
+      ? getSlots(course)
+          .map((slot) => `${days(slot.days)} ${slot.startTime}-${slot.endTime}${slot.location ? `\n${slot.location}` : ''}`)
+          .join('\n')
+      : `${noTimeLabel(language)}${isAr ? ' (يُضاف إلى الملخص فقط)' : ' (summary only)'}`;
+    if (inTimetable) return `${isAr ? 'في الجدول — اضغط للإزالة' : 'In timetable — click to remove'}\n${slots}`;
+    if (conflictCode) return `${isAr ? `تتعارض مع ${conflictCode}` : `Clashes with ${conflictCode}`}\n${slots}`;
+    return `${isAr ? 'اضغط للإضافة' : 'Click to add'}\n${slots}`;
+  };
+
+  const renderGroupHeader = (key: string, courseGroup: Course[], isExpanded: boolean) => {
+    const firstCourse = courseGroup[0];
+    const theme = getCourseTheme(firstCourse.code);
+    const added = courseGroup.filter((course) => isInTimetable(course.id));
+    const allClash = added.length === 0 && courseGroup.every((course) => scheduleConflictWith(course));
+
     return (
-      <div className="compact-course-groups">
-        {Object.entries(groupedCourses).map(([key, courseGroup]) => {
-          const firstCourse = courseGroup[0];
-          const isExpanded = expandedGroups.has(key);
-          
-          return (
-            <div key={key} className="compact-course-group">
-              <div 
-                className="compact-group-header"
-                onClick={() => toggleGroup(key)}
-              >
-                <div className="compact-group-title">
-                  <h3 className="course-code">{firstCourse.code}</h3>
-                  <p className="course-name">{firstCourse.name}</p>
-                </div>
-                <div className="compact-group-info">
-                  <span className="section-count">{courseGroup.length} {language === 'en' ? 'sections' : 'شعب'}</span>
-                  <span className={`expand-icon ${isExpanded ? 'expanded' : ''}`}>
-                    {isExpanded ? '▼' : '▶'}
-                  </span>
-                </div>
-              </div>
-              {isExpanded && (
-                <div className="compact-course-grid">
-                  {courseGroup.map((course, index) => {
-                    const inTimetable = isInTimetable(course.id);
-                    const conflict = hasConflict(course) && getConflictInfo(course)?.type === 'schedule';
-                    const isClosed = course.status === 'closed';
-                    
-                    return (
-                      <div
-                        key={`${course.id}-${index}`}
-                        className={`compact-course-box ${inTimetable ? 'in-timetable' : ''} ${conflict ? 'has-conflict' : ''} ${isClosed ? 'closed' : ''}`}
-                        {...(!isTouchDevice && {
-                          onMouseEnter: () => setHoveredCourse(course),
-                          onMouseLeave: () => setHoveredCourse(null)
-                        })}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (!inTimetable) {
-                            handleAddToTimetable(course);
-                          } else if (inTimetable) {
-                            handleRemoveFromTimetable(course);
-                          }
-                        }}
-                        title={inTimetable 
-                          ? (language === 'en' 
-                              ? `✓ In timetable\n${course.days.join(', ')} ${course.startTime}-${course.endTime}\n${course.location || ''}` 
-                              : `✓ في الجدول\n${course.days.join(', ')} ${course.startTime}-${course.endTime}\n${course.location || ''}`)
-                          : conflict
-                          ? (language === 'en' ? 'Schedule conflict' : 'تعارض في الجدول')
-                          : (language === 'en' 
-                              ? `Click to add\n${course.days.join(', ')} ${course.startTime}-${course.endTime}\n${course.location || ''}` 
-                              : `انقر للإضافة\n${course.days.join(', ')} ${course.startTime}-${course.endTime}\n${course.location || ''}`)
-                        }
-                      >
-                        <div className="compact-course-header">
-                          <span className="compact-course-section-number">{course.section}</span>
-                          {isClosed && <span className="compact-lock-icon">🔒</span>}
-                          {inTimetable && <span className="compact-added-badge">✓</span>}
-                          {conflict && <span className="compact-conflict-badge">⚠</span>}
-                        </div>
-                        <div className="compact-course-type">
-                          {course.classType 
-                            ? (course.classType === 'practical' ? t.practical :
-                               course.classType === 'theoretical' ? t.theoretical :
-                               t.exercise)
-                            : '-'}
-                        </div>
-                        <div className="compact-course-instructor">
-                          {course.instructor || '-'}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
+      <button
+        type="button"
+        className="qs-group-header"
+        aria-expanded={isExpanded}
+        onClick={() => toggleGroup(key)}
+      >
+        <span className="qs-code-chip" style={{ background: theme.bg, color: theme.text }}>
+          {firstCourse.code}
+        </span>
+        <span className="qs-group-name">{firstCourse.name}</span>
+        {added.length > 0 ? (
+          <span className="qs-group-tag qs-group-tag-added">
+            <Icon name="check" size={14} />
+            {isAr ? 'شعبة' : 'Sec'} {added.map((course) => course.section).join(isAr ? '، ' : ', ')}
+          </span>
+        ) : allClash ? (
+          <span className="qs-group-tag qs-group-tag-warn">
+            <Icon name="alert" size={14} />
+            {isAr ? 'تعارض' : 'Clash'}
+          </span>
+        ) : (
+          <span className="qs-group-count">{sectionsLabel(courseGroup.length, language)}</span>
+        )}
+        <Icon name={isExpanded ? 'chevronUp' : 'chevronDown'} className="qs-group-chevron" />
+      </button>
     );
   };
 
+  const renderDetailedSection = (course: Course, index: number) => {
+    const inTimetable = isInTimetable(course.id);
+    const conflictCode = inTimetable ? null : scheduleConflictWith(course);
+    const isClosed = course.status === 'closed';
+    const slots = getSlots(course);
+    const type = typeLabel(course);
+
+    return (
+      <li
+        key={`${course.id}-${index}`}
+        className={`qs-section ${inTimetable ? 'is-added' : ''} ${conflictCode ? 'is-conflict' : ''} ${isClosed ? 'is-closed' : ''}`}
+        {...hoverProps(course)}
+      >
+        <div className="qs-section-top">
+          <span className="qs-section-title">
+            {t.section} {course.section}
+          </span>
+          {course.status && (
+            <span className={`status-badge ${course.status}`}>
+              {isClosed && <Icon name="lock" size={12} />}
+              {course.status === 'open' ? t.open : t.closed}
+            </span>
+          )}
+          {type && <span className="class-type-badge">{type}</span>}
+          <span className="qs-section-action">
+            {inTimetable ? (
+              <button
+                type="button"
+                className="qs-btn qs-btn-outline qs-btn-sm"
+                onClick={() => handleRemoveFromTimetable(course)}
+              >
+                <Icon name="x" size={14} />
+                {t.removeFromTimetable}
+              </button>
+            ) : (
+              <button
+                type="button"
+                className={`qs-btn qs-btn-sm ${conflictCode ? 'qs-btn-warning' : 'qs-btn-primary'}`}
+                onClick={() => handleAddToTimetable(course)}
+                title={conflictCode
+                  ? (isAr ? 'إضافة كشعبة متعارضة (تظهر بإطار برتقالي في الجدول)' : 'Add as a clashing section (shown with an orange border)')
+                  : undefined}
+              >
+                <Icon name={conflictCode ? 'alert' : 'plus'} size={14} />
+                {conflictCode ? (isAr ? 'إضافة رغم التعارض' : 'Add anyway') : (isAr ? 'إضافة' : 'Add')}
+              </button>
+            )}
+          </span>
+        </div>
+
+        {conflictCode && (
+          <div className="qs-section-warning">
+            <Icon name="alert" size={14} />
+            {isAr ? `تتعارض مع ${conflictCode}` : `Clashes with ${conflictCode}`}
+          </div>
+        )}
+
+        <dl className="qs-section-details">
+          {slots.length > 1 ? (
+            <div className="qs-detail qs-detail-wide">
+              <dt>{isAr ? 'المواعيد' : 'Schedule'}</dt>
+              <dd>
+                {slots.map((slot, slotIndex) => (
+                  <span key={slotIndex} className="qs-slot-line">
+                    {days(slot.days)} · {slot.startTime} – {slot.endTime}
+                    {slot.location ? ` · ${slot.location}` : ''}
+                  </span>
+                ))}
+              </dd>
+            </div>
+          ) : !hasSchedule(course) ? (
+            <>
+              <div className="qs-detail qs-detail-wide">
+                <dt>{t.time}</dt>
+                <dd>
+                  {noTimeLabel(language)}
+                  <span className="qs-detail-note">
+                    {isAr ? ' — يُضاف إلى الملخص فقط' : ' — added to the summary only'}
+                  </span>
+                </dd>
+              </div>
+              {course.location && (
+                <div className="qs-detail">
+                  <dt>{t.location}</dt>
+                  <dd>{course.location}</dd>
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              <div className="qs-detail">
+                <dt>{t.days}</dt>
+                <dd>{days(course.days)}</dd>
+              </div>
+              <div className="qs-detail">
+                <dt>{t.time}</dt>
+                <dd>{course.startTime} – {course.endTime}</dd>
+              </div>
+              {course.location && (
+                <div className="qs-detail">
+                  <dt>{t.location}</dt>
+                  <dd>{course.location}</dd>
+                </div>
+              )}
+            </>
+          )}
+          {course.instructor && (
+            <div className="qs-detail">
+              <dt>{t.instructor}</dt>
+              <dd>{course.instructor}</dd>
+            </div>
+          )}
+        </dl>
+
+        {formatExam(course.finalExam, t, language) && (
+          <div className="qs-section-exam">
+            <span className="qs-section-exam-label">{t.finalExam}:</span>{' '}
+            {formatExam(course.finalExam, t, language)}
+          </div>
+        )}
+      </li>
+    );
+  };
+
+  const renderCompactTile = (course: Course, index: number) => {
+    const inTimetable = isInTimetable(course.id);
+    const conflictCode = inTimetable ? null : scheduleConflictWith(course);
+    const isClosed = course.status === 'closed';
+
+    return (
+      <button
+        type="button"
+        key={`${course.id}-${index}`}
+        className={`qs-tile ${inTimetable ? 'is-added' : ''} ${conflictCode ? 'is-conflict' : ''} ${isClosed ? 'is-closed' : ''}`}
+        aria-pressed={inTimetable}
+        title={tileTitle(course, inTimetable, conflictCode)}
+        onClick={() => {
+          if (inTimetable) {
+            handleRemoveFromTimetable(course);
+          } else {
+            handleAddToTimetable(course);
+          }
+        }}
+        {...hoverProps(course)}
+      >
+        <span className="qs-tile-top">
+          <span className="qs-tile-num">{course.section}</span>
+          <span className="qs-tile-badge">
+            {inTimetable ? (
+              <Icon name="check" size={12} />
+            ) : isClosed ? (
+              <Icon name="lock" size={14} />
+            ) : conflictCode ? (
+              <Icon name="alert" size={16} />
+            ) : (
+              <Icon name="plus" size={12} />
+            )}
+          </span>
+        </span>
+        <span className="qs-tile-type">
+          {conflictCode
+            ? (isAr ? 'تعارض' : 'Clash')
+            : isClosed
+            ? t.closed
+            : !hasSchedule(course) && !(course.timeSlots && course.timeSlots.length > 1)
+            ? noTimeLabel(language)
+            : (typeLabel(course) || '-')}
+        </span>
+        <span className="qs-tile-instructor">{course.instructor || '-'}</span>
+      </button>
+    );
+  };
+
+  const totalGroups = new Set(coursesInOrder.map((course) => `${course.code}-${course.name}`)).size;
+
+  const filterOptions: { key: CourseFilter; label: string; count: number }[] = [
+    { key: 'all', label: t.all, count: filterCounts.all },
+    { key: 'open', label: isAr ? 'المفتوحة' : 'Open', count: filterCounts.open },
+    { key: 'added', label: isAr ? 'المضافة' : 'Added', count: filterCounts.added },
+  ];
 
   return (
-    <section className="course-list-section">
+    <section className="qs-courses qs-card" aria-label={isAr ? 'المقررات المطروحة' : 'Offered courses'}>
       {notification && (
-        <div className={`notification ${notification.type}`}>
+        <div className={`qs-toast ${notification.type}`} role="status">
+          <Icon name={notification.type === 'success' ? 'check' : 'alert'} />
           {notification.message}
         </div>
       )}
-      <div className="search-bar-container">
+
+      <div className="qs-courses-head">
+        <h2 className="qs-courses-title">{isAr ? 'المقررات المطروحة' : 'Offered courses'}</h2>
+        <span className="qs-courses-count">
+          {coursesLabel(totalGroups, language)} · {sectionsLabel(coursesInOrder.length, language)}
+        </span>
+      </div>
+
+      <div className="qs-search">
+        <Icon name="search" size={20} />
         <input
-          type="text"
-          className="course-search-input"
-          placeholder={language === 'en' ? '🔍 Search courses...' : '🔍 البحث عن المقررات...'}
+          type="search"
+          className="qs-search-input"
+          aria-label={isAr ? 'البحث في المقررات المطروحة' : 'Search offered courses'}
+          placeholder={isAr ? 'ابحث باسم المقرر أو رمزه أو الشعبة أو المحاضر' : 'Search by course, code, section or instructor'}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
       </div>
-      <div className="section-header-with-toggle">
-        <h2 className="section-title">
-          {t.courses} ({filteredCourses.length} {language === 'en' ? 'total' : 'إجمالي'})
-        </h2>
-        {language === 'en' && (
-          <div className="view-controls">
-            <div className="view-select-container">
-              <label htmlFor="view-mode-select" className="view-select-label">
-                {language === 'en' ? 'View:' : 'العرض:'}
-              </label>
-              <select
-                id="view-mode-select"
-                className="view-mode-select"
-                value={viewMode}
-                onChange={(e) => setViewMode(e.target.value as ViewMode)}
-              >
-                <option value="detailed">{language === 'en' ? '📋 Detailed' : '📋 مفصل'}</option>
-                <option value="compact">{language === 'en' ? '🔲 Compact' : '🔲 مضغوط'}</option>
-              </select>
-            </div>
-            {Object.keys(groupedCourses).length > 0 && (() => {
-              const allKeys = Object.keys(groupedCourses);
-              const allExpanded = allKeys.length > 0 && allKeys.every(key => expandedGroups.has(key));
-              return (
-                <button
-                  className={`expand-collapse-btn ${allExpanded ? 'collapse-all-btn' : 'expand-all-btn'}`}
-                  onClick={toggleExpandAll}
-                  title={allExpanded 
-                    ? (language === 'en' ? 'Collapse all' : 'طي الكل')
-                    : (language === 'en' ? 'Expand all' : 'توسيع الكل')}
-                >
-                  {allExpanded 
-                    ? (language === 'en' ? '▼ Collapse All' : '▼ طي الكل')
-                    : (language === 'en' ? '▶ Expand All' : '▶ توسيع الكل')}
-                </button>
-              );
-            })()}
+
+      <div className="qs-filter-chips" role="group" aria-label={isAr ? 'تصفية' : 'Filter'}>
+        {filterOptions.map((option) => (
+          <button
+            key={option.key}
+            type="button"
+            className={`qs-filter-chip ${statusFilter === option.key ? 'active' : ''}`}
+            aria-pressed={statusFilter === option.key}
+            onClick={() => setStatusFilter(option.key)}
+          >
+            {option.label} · {option.count}
+          </button>
+        ))}
+      </div>
+
+      <div className="qs-view-row">
+        <div className="qs-view-switch">
+          <span className="qs-view-label" id="qs-view-label">{isAr ? 'العرض' : 'View'}</span>
+          <div className="qs-segmented" role="group" aria-labelledby="qs-view-label">
+            <button
+              type="button"
+              className={viewMode === 'detailed' ? 'active' : ''}
+              aria-pressed={viewMode === 'detailed'}
+              onClick={() => setViewMode('detailed')}
+            >
+              <Icon name="list" size={16} />
+              {isAr ? 'مفصّل' : 'Detailed'}
+            </button>
+            <button
+              type="button"
+              className={viewMode === 'compact' ? 'active' : ''}
+              aria-pressed={viewMode === 'compact'}
+              onClick={() => setViewMode('compact')}
+            >
+              <Icon name="grid" size={16} />
+              {isAr ? 'مضغوط' : 'Compact'}
+            </button>
           </div>
+        </div>
+        {groupKeys.length > 0 && (
+          <button type="button" className="qs-btn qs-btn-text qs-btn-sm" onClick={toggleExpandAll}>
+            <Icon name={allExpanded ? 'collapse' : 'expand'} size={16} />
+            {allExpanded ? (isAr ? 'طي الكل' : 'Collapse all') : (isAr ? 'توسيع الكل' : 'Expand all')}
+          </button>
         )}
       </div>
-      {language === 'ar' && (
-        <div className="view-controls-arabic">
-          <div className="view-select-container">
-            <label htmlFor="view-mode-select-ar" className="view-select-label">
-              العرض:
-            </label>
-            <select
-              id="view-mode-select-ar"
-              className="view-mode-select"
-              value={viewMode}
-              onChange={(e) => setViewMode(e.target.value as ViewMode)}
-            >
-              <option value="detailed">📋 مفصل</option>
-              <option value="compact">🔲 مضغوط</option>
-            </select>
-          </div>
-          {Object.keys(groupedCourses).length > 0 && (() => {
-            const allKeys = Object.keys(groupedCourses);
-            const allExpanded = allKeys.length > 0 && allKeys.every(key => expandedGroups.has(key));
+
+      {groupKeys.length === 0 ? (
+        <div className="qs-no-results">
+          <Icon name="search" size={22} />
+          <span>{isAr ? 'لا توجد نتائج مطابقة' : 'No matching courses'}</span>
+        </div>
+      ) : (
+        <div className={`qs-groups ${viewMode === 'compact' ? 'is-compact' : 'is-detailed'}`}>
+          {Object.entries(groupedCourses).map(([key, courseGroup]) => {
+            const isExpanded = expandedGroups.has(key);
+            const groupClash = courseGroup.every((course) => !isInTimetable(course.id) && scheduleConflictWith(course));
             return (
-              <button
-                className={`expand-collapse-btn ${allExpanded ? 'collapse-all-btn' : 'expand-all-btn'}`}
-                onClick={toggleExpandAll}
-                title={allExpanded ? 'طي الكل' : 'توسيع الكل'}
-              >
-                {allExpanded ? '▼ طي الكل' : '▶ توسيع الكل'}
-              </button>
+              <div key={key} className={`qs-group ${groupClash ? 'is-warn' : ''}`}>
+                {renderGroupHeader(key, courseGroup, isExpanded)}
+                {isExpanded && (
+                  viewMode === 'compact' ? (
+                    <div className="qs-tiles" role="group" aria-label={courseGroup[0].code}>
+                      {courseGroup.map((course, index) => renderCompactTile(course, index))}
+                    </div>
+                  ) : (
+                    <ul className="qs-sections">
+                      {courseGroup.map((course, index) => renderDetailedSection(course, index))}
+                    </ul>
+                  )
+                )}
+              </div>
             );
-          })()}
+          })}
         </div>
       )}
-      {viewMode === 'compact' ? renderCompactView() : (
-      <div className="course-groups">
-        {Object.entries(groupedCourses).map(([key, courseGroup]) => {
-          const firstCourse = courseGroup[0];
-          const isExpanded = expandedGroups.has(key);
-          
-          return (
-            <div key={key} className="course-group">
-              <div 
-                className="course-group-header"
-                onClick={() => toggleGroup(key)}
-              >
-                <div className="course-group-title">
-                  <h3 className="course-code">{firstCourse.code}</h3>
-                  <p className="course-name">{firstCourse.name}</p>
-                </div>
-                <div className="course-group-info">
-                  <span className="section-count">{courseGroup.length} {language === 'en' ? 'sections' : 'شعب'}</span>
-                  <span className={`expand-icon ${isExpanded ? 'expanded' : ''}`}>
-                    {isExpanded ? '▼' : '▶'}
-                  </span>
-                </div>
-              </div>
-              {isExpanded && (
-              <div className="course-sections">
-                {courseGroup.map((course, index) => (
-                <div key={`${course.id}-${index}`} className="course-section-item">
-                <div className="section-header">
-                  <div className="section-info">
-                    <span className="section-badge">{language === 'en' ? 'Section' : 'الشعبة'}: {course.section}</span>
-                  </div>
-                  <div className="section-actions">
-                    {isInTimetable(course.id) ? (
-                      <button
-                        className="remove-section-btn"
-                        onClick={() => handleRemoveFromTimetable(course)}
-                        title={language === 'en' ? 'Remove from timetable' : 'إزالة من الجدول'}
-                      >
-                        {language === 'en' ? '🗑️ Remove' : '🗑️ إزالة'}
-                      </button>
-                    ) : (
-                      <button
-                        className={`add-section-btn ${hasConflict(course) && getConflictInfo(course)?.type === 'schedule' ? 'conflict-add' : ''}`}
-                        onClick={() => handleAddToTimetable(course)}
-                        title={hasConflict(course) && getConflictInfo(course)?.type === 'schedule' 
-                          ? (language === 'en' ? 'Add as conflict section (smaller, red flashing border)' : 'إضافة كشعبة متعارضة (أصغر، حدود حمراء متوهجة)')
-                          : undefined}
-                      >
-                        {hasConflict(course) && getConflictInfo(course)?.type === 'schedule'
-                          ? (language === 'en' ? '⚠️ Add Conflict' : '⚠️ إضافة تعارض')
-                          : `➕ ${t.addToTimetable}`}
-                      </button>
-                    )}
-                  </div>
-                </div>
-                <div className="section-details">
-                  {/* Display multiple time slots if they exist */}
-                  {course.timeSlots && course.timeSlots.length > 1 ? (
-                    <>
-                      <span className="detail-label">{t.time}:</span>
-                      <div className="time-slots-list">
-                        {course.timeSlots.map((slot, slotIndex) => (
-                          <div key={slotIndex} className="time-slot-item">
-                            <span className="time-slot-days">{slot.days.join(', ')}</span>
-                            <span className="time-slot-time">{slot.startTime} - {slot.endTime}</span>
-                            {slot.location && (
-                              <span className="time-slot-location">{slot.location}</span>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <span className="detail-label">{t.days}:</span>
-                      <span className="detail-value">{course.days.join(', ')}</span>
-                      <span className="detail-label">{t.time}:</span>
-                      <span className="detail-value">{course.startTime} - {course.endTime}</span>
-                      {course.location && (
-                        <>
-                          <span className="detail-label">{t.location}:</span>
-                          <span className="detail-value">{course.location}</span>
-                        </>
-                      )}
-                    </>
-                  )}
-                  {course.instructor && (
-                    <>
-                      <span className="detail-label">{t.instructor}:</span>
-                      <span className="detail-value">{course.instructor}</span>
-                    </>
-                  )}
-                  {course.status && (
-                    <>
-                      <span className="detail-label">{t.status}:</span>
-                      <span className={`status-badge ${course.status}`}>
-                        {course.status === 'open' ? t.open : t.closed}
-                      </span>
-                    </>
-                  )}
-                  {course.classType && (
-                    <>
-                      <span className="detail-label">{t.classType}:</span>
-                      <span className={`class-type-badge ${course.classType}`}>
-                        {course.classType === 'practical' ? t.practical :
-                         course.classType === 'theoretical' ? t.theoretical :
-                         t.exercise}
-                      </span>
-                    </>
-                  )}
-                  {course.finalExam && (
-                    <div className="section-detail-row exam-info">
-                      <span className="detail-label">{t.finalExam}:</span>
-                      <span className="detail-value">
-                        {course.finalExam.date ? `Period ${course.finalExam.date}` : 'N/A'}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-                ))}
-              </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-      )}
-      
+
       <ConfirmationModal
         isOpen={confirmationModal.isOpen}
         message={confirmationModal.message}
@@ -607,4 +685,3 @@ const CourseList: React.FC<CourseListProps> = ({ courses }) => {
 };
 
 export default CourseList;
-

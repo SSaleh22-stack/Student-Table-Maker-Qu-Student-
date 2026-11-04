@@ -2,45 +2,10 @@ import React from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useTimetable } from '../contexts/TimetableContext';
 import { Course } from '../types';
-import html2canvas from 'html2canvas';
+import Icon from './Icon';
+import { getCourseTheme, coursesLabel, sectionsLabel, hasSchedule, noTimeLabel, formatDays, formatExam } from '../lib/courseTheme';
+import { exportScheduleImage, exportSchedulePdf, sectionsFromTimetable } from '../lib/scheduleExport';
 import './TimetableGrid.css';
-
-// Color palette for courses - Darker colors
-const courseColors = [
-  ['#4c63d2', '#5a3d8f'], // Dark purple gradient
-  ['#c41d7a', '#c02d4a'], // Dark pink gradient
-  ['#2d7fc8', '#0085a8'], // Dark blue gradient
-  ['#2db85c', '#1fb8a3'], // Dark green gradient
-  ['#d64a6e', '#d4a01a'], // Dark pink-yellow gradient
-  ['#1fa5a6', '#1f0442'], // Dark cyan-purple gradient
-  ['#6bb3b0', '#c99ba8'], // Dark blue-pink gradient
-  ['#cc5a6e', '#c97ba8'], // Dark coral-pink gradient
-  ['#cc9a6e', '#c97a5f'], // Dark orange gradient
-  ['#cc4a40', '#b84400'], // Dark red-orange gradient
-  ['#4fa870', '#5fa3b4'], // Dark green-blue gradient
-  ['#5a7dbd', '#7ba3cb'], // Dark blue gradient
-  ['#cc9a4b', '#0f2b4b'], // Dark yellow-blue gradient
-  ['#b80559', '#cc4a00'], // Dark pink-orange gradient
-  ['#0d3a5a', '#4fa097'], // Dark blue-teal gradient
-];
-
-// Generate a consistent color for a course based on its code
-const getCourseColor = (courseCode: string): string[] => {
-  // Simple hash function to get consistent color for same course code
-  let hash = 0;
-  for (let i = 0; i < courseCode.length; i++) {
-    hash = courseCode.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const index = Math.abs(hash) % courseColors.length;
-  return courseColors[index];
-};
-
-// Convert hex color to RGB for rgba usage
-const hexToRgb = (hex: string): string => {
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  if (!result) return '102, 126, 234'; // Default purple
-  return `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}`;
-};
 
 const TimetableGrid: React.FC = () => {
   const { t, language } = useLanguage();
@@ -48,6 +13,21 @@ const TimetableGrid: React.FC = () => {
   const [showSummary, setShowSummary] = React.useState(false);
   const [showExportMenu, setShowExportMenu] = React.useState(false);
   const [selectedCourse, setSelectedCourse] = React.useState<Course | null>(null);
+
+  // One summary row per section. A section's separate meeting times share a row,
+  // but different courses that happen to have the same section number stay apart.
+  const groupTimetableBySection = () => {
+    const groups = new Map<string, typeof timetable>();
+    timetable.forEach((entry) => {
+      const key = `${entry.course.code}|${entry.course.section || 'N/A'}`;
+      groups.set(key, [...(groups.get(key) || []), entry]);
+    });
+    return Array.from(groups, ([key, entries]) => ({
+      key,
+      section: entries[0].course.section || 'N/A',
+      entries,
+    }));
+  };
 
   // Generate time slots (7:00 to 20:00 in 1-hour intervals)
   const timeSlots: string[] = [];
@@ -84,575 +64,22 @@ const TimetableGrid: React.FC = () => {
     return hours * 60 + minutes;
   };
 
-  // Export timetable as PDF
-  const exportToPDF = () => {
-    // Generate summary table HTML
-    const generateSummaryTable = () => {
-      // Group courses by section number
-      const groupedBySection: Record<string, typeof timetable> = {};
-      timetable.forEach(entry => {
-        const section = entry.course.section || 'N/A';
-        if (!groupedBySection[section]) {
-          groupedBySection[section] = [];
-        }
-        groupedBySection[section].push(entry);
-      });
-
-      // Generate rows for grouped courses
-      return Object.entries(groupedBySection).map(([section, entries]) => {
-        const codes = [...new Set(entries.map(e => e.course.code))].join(', ');
-        const names = [...new Set(entries.map(e => e.course.name))].join(', ');
-        const days = [...new Set(entries.flatMap(e => e.course.days))].join(', ');
-        const times = [...new Set(entries.map(e => `${e.course.startTime} - ${e.course.endTime}`))].join(', ');
-        const locations = [...new Set(entries.map(e => e.course.location).filter(Boolean))].join(', ');
-        const instructors = [...new Set(entries.map(e => e.course.instructor).filter(Boolean))].join(', ');
-        const finalExams = [...new Set(entries.map(e => e.course.finalExam?.date).filter(Boolean))].map(d => `${language === 'en' ? 'Period' : 'فترة'} ${d}`).join(', ');
-        const statuses = [...new Set(entries.map(e => e.course.status).filter(Boolean))];
-        const classTypes = [...new Set(entries.map(e => e.course.classType).filter(Boolean))];
-
-        const statusText = statuses.length > 0 
-          ? (statuses[0] === 'open' ? t.open : t.closed)
-          : '-';
-        
-        const classTypeText = classTypes.length > 0
-          ? (classTypes[0] === 'practical' ? t.practical :
-             classTypes[0] === 'theoretical' ? t.theoretical :
-             t.exercise)
-          : '-';
-
-        return `
-          <tr>
-            <td>${codes}</td>
-            <td>${names}</td>
-            <td>${section}</td>
-            <td>${days}</td>
-            <td>${times}</td>
-            <td>${locations || '-'}</td>
-            <td>${instructors || '-'}</td>
-            <td>${finalExams || '-'}</td>
-            <td>${statusText}</td>
-            <td>${classTypeText}</td>
-          </tr>
-        `;
-      }).join('');
-    };
-
-    // Generate visual timetable grid HTML with blocks
-    const generateVisualTimetableGrid = () => {
-      // Keep days in normal order - CSS will reverse them visually
-      const pdfDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu'];
-      const pdfDayLabels = [t.sunday, t.monday, t.tuesday, t.wednesday, t.thursday];
-      
-      // Generate time slots HTML
-      const timeSlotsHtml = timeSlots.map(time => 
-        `<div class="pdf-time-slot">${time}</div>`
-      ).join('');
-
-      // Generate day headers in normal order (will be reversed by flex-direction)
-      const dayHeadersHtml = pdfDayLabels.map(label => 
-        `<div class="pdf-day-header">${label}</div>`
-      ).join('');
-
-      // Generate course blocks for each day
-      const generateDayColumn = (day: string) => {
-        const dayCourses = timetable.filter(entry => entry.course.days.includes(day));
-        
-        const blocksHtml = dayCourses.map(entry => {
-          const course = entry.course;
-          const style = getCourseBlockStyle(course.startTime, course.endTime);
-          const [color1, color2] = getCourseColor(course.code);
-          const rgb1 = hexToRgb(color1);
-          const rgb2 = hexToRgb(color2);
-          
-          return `
-            <div class="pdf-course-block ${entry.isConflictSection ? 'pdf-conflict' : ''}" 
-                 style="top: ${style.top}; height: ${style.height}; background: linear-gradient(135deg, rgb(${rgb1}) 0%, rgb(${rgb2}) 100%);">
-              <div class="pdf-course-code">${course.code}</div>
-              ${course.section ? `<div class="pdf-course-section">${language === 'en' ? 'Sec' : 'ش'} ${course.section}</div>` : ''}
-              <div class="pdf-course-time">${course.startTime} - ${course.endTime}</div>
-              ${course.location ? `<div class="pdf-course-location">${course.location}</div>` : ''}
-            </div>
-          `;
-        }).join('');
-
-        return `<div class="pdf-day-column">${blocksHtml}</div>`;
-      };
-
-      // Generate day columns in normal order (will be reversed by flex-direction)
-      const dayColumnsHtml = pdfDays.map(day => generateDayColumn(day)).join('');
-
-      // Apply RTL class only for Arabic
-      const rtlClass = language === 'ar' ? 'pdf-rtl' : '';
-      return `
-        <div class="pdf-timetable-grid ${rtlClass}">
-          <div class="pdf-days-header">${dayHeadersHtml}</div>
-          <div class="pdf-days-container">${dayColumnsHtml}</div>
-          <div class="pdf-time-column">${timeSlotsHtml}</div>
-        </div>
-      `;
-    };
-
-    // Use the same approach as print, but user can save as PDF
-    const htmlContent = `
-<!DOCTYPE html>
-<html lang="${language}">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${t.timetable} - ${t.appTitle}</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      padding: 1rem;
-      color: #333;
-      direction: ${language === 'ar' ? 'rtl' : 'ltr'};
-    }
-    .print-header {
-      text-align: center;
-      margin-bottom: 1rem;
-      padding-bottom: 0.75rem;
-      border-bottom: 2px solid #667eea;
-    }
-    .print-header h1 {
-      font-size: 1.75rem;
-      color: #667eea;
-      margin-bottom: 0.25rem;
-    }
-    .print-header h2 {
-      font-size: 1.25rem;
-      color: #666;
-      font-weight: normal;
-    }
-    .section-title {
-      font-size: 1.2rem;
-      color: #667eea;
-      margin: 1rem 0 0.75rem 0;
-      padding-bottom: 0.5rem;
-      border-bottom: 1px solid #e0e0e0;
-    }
-    .summary-section {
-      margin-bottom: 1rem;
-    }
-    .print-totals {
-      padding: 1rem;
-      margin-bottom: 1rem;
-      border-bottom: 1px solid #e0e0e0;
-      background: #f8f9fa;
-    }
-    .print-totals-container {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.75rem;
-      align-items: center;
-    }
-    .print-total-item {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.5rem 0.75rem;
-      background: white;
-      border-radius: 0.4rem;
-      border: 1px solid #e0e0e0;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-      font-size: 0.85rem;
-    }
-    .print-total-label {
-      font-weight: 600;
-      color: #667eea;
-    }
-    .print-total-value {
-      font-weight: 700;
-      color: #333;
-      background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-      padding: 0.2rem 0.5rem;
-      border-radius: 0.25rem;
-    }
-    .print-total-conflict .print-total-label {
-      color: #e53e3e;
-    }
-    .print-total-conflict .print-total-value {
-      background: linear-gradient(135deg, rgba(229, 62, 62, 0.1) 0%, rgba(197, 48, 48, 0.1) 100%);
-      color: #e53e3e;
-    }
-    .print-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 1rem;
-      font-size: 0.85rem;
-    }
-    .print-table thead {
-      background: #f8f9fa;
-    }
-    .print-table th {
-      padding: 0.5rem;
-      text-align: ${language === 'ar' ? 'right' : 'left'};
-      border: 1px solid #e0e0e0;
-      font-weight: 600;
-      color: #333;
-      font-size: 0.8rem;
-    }
-    .print-table td {
-      padding: 0.5rem;
-      border: 1px solid #e0e0e0;
-      color: #555;
-      font-size: 0.75rem;
-    }
-    .print-table tbody tr:nth-child(even) {
-      background: #fafafa;
-    }
-    .pdf-timetable-grid {
-      display: grid;
-      grid-template-columns: 1fr 70px;
-      grid-template-rows: auto 1fr;
-      min-width: 720px;
-      max-width: 92%;
-      background: white;
-      border: 1px solid #e0e0e0;
-      border-radius: 0.4rem;
-      overflow: hidden;
-      margin-bottom: 1rem;
-      direction: ltr;
-    }
-    .pdf-timetable-grid.pdf-rtl {
-      grid-template-columns: 1fr 70px;
-      direction: ltr;
-    }
-    .pdf-time-column {
-      grid-column: 2;
-      grid-row: 2;
-      width: 70px;
-      border-left: 1px solid #e0e0e0;
-      background: white;
-      display: flex;
-      flex-direction: column;
-    }
-    .pdf-time-slot {
-      height: 48px;
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      font-size: 0.75rem;
-      color: #666;
-      padding-right: 0.45rem;
-      border-bottom: 1px solid #f0f0f0;
-      text-align: right;
-    }
-    .pdf-timetable-grid.pdf-rtl .pdf-time-slot {
-      justify-content: flex-end;
-      padding-right: 0.45rem;
-      padding-left: 0;
-      text-align: right;
-    }
-    .pdf-days-header {
-      grid-column: 1;
-      grid-row: 1;
-      display: flex;
-      flex-direction: row;
-      background: white;
-      border-bottom: 1px solid #e0e0e0;
-      direction: ltr;
-    }
-    .pdf-timetable-grid.pdf-rtl .pdf-days-header {
-      flex-direction: row-reverse;
-    }
-    .pdf-day-header {
-      flex: 1;
-    }
-    .pdf-day-header {
-      flex: 1;
-      padding: 0.5rem;
-      text-align: center;
-      font-weight: 600;
-      font-size: 0.85rem;
-      color: #333;
-      border-right: 1px solid #e0e0e0;
-    }
-    .pdf-day-header:first-child {
-      border-right: none;
-    }
-    .pdf-timetable-grid.pdf-rtl .pdf-day-header:first-child {
-      border-right: 1px solid #e0e0e0;
-    }
-    .pdf-timetable-grid.pdf-rtl .pdf-day-header:last-child {
-      border-right: none;
-    }
-    .pdf-days-container {
-      grid-column: 1;
-      grid-row: 2;
-      display: flex;
-      flex-direction: row;
-      border-top: 1px solid #e0e0e0;
-      background: white;
-      direction: ltr;
-    }
-    .pdf-timetable-grid.pdf-rtl .pdf-days-container {
-      flex-direction: row-reverse;
-    }
-    .pdf-day-column {
-      flex: 1;
-      position: relative;
-      min-height: 620px;
-      border-right: 1px solid #e0e0e0;
-      background: white;
-    }
-    .pdf-day-column:first-child {
-      border-right: none;
-    }
-    .pdf-timetable-grid.pdf-rtl .pdf-day-column:first-child {
-      border-right: 1px solid #e0e0e0;
-    }
-    .pdf-timetable-grid.pdf-rtl .pdf-day-column:last-child {
-      border-right: none;
-    }
-    .pdf-course-block {
-      position: absolute;
-      left: 2.5px;
-      right: 2.5px;
-      color: white;
-      border-radius: 0.3rem;
-      padding: 0.3rem;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      gap: 0.15rem;
-      font-size: 0.65rem;
-      z-index: 5;
-      text-align: left;
-    }
-    .pdf-timetable-grid.pdf-rtl .pdf-course-block {
-      text-align: right;
-    }
-    .pdf-course-block.pdf-conflict {
-      border: 2px solid #e53e3e;
-    }
-    .pdf-course-code {
-      font-weight: 700;
-      font-size: 0.7rem;
-    }
-    .pdf-course-section {
-      font-size: 0.6rem;
-      opacity: 0.95;
-      font-weight: 500;
-    }
-    .pdf-course-time {
-      font-size: 0.6rem;
-      opacity: 0.9;
-    }
-    .pdf-course-location {
-      font-size: 0.55rem;
-      opacity: 0.85;
-      margin-top: 0.06rem;
-    }
-    .print-footer {
-      margin-top: 2rem;
-      padding-top: 1rem;
-      border-top: 1px solid #e0e0e0;
-      text-align: center;
-      color: #666;
-      font-size: 0.9rem;
-    }
-    @media print {
-      body {
-        padding: 0.5rem;
-      }
-      .print-header {
-        margin-bottom: 0.75rem;
-        padding-bottom: 0.5rem;
-      }
-      .print-header h1 {
-        font-size: 1.5rem;
-      }
-      .print-header h2 {
-        font-size: 1.1rem;
-      }
-      .section-title {
-        margin-top: 0.75rem;
-        margin-bottom: 0.5rem;
-        font-size: 1.1rem;
-        page-break-after: avoid;
-      }
-      .summary-section {
-        margin-bottom: 0.75rem;
-      }
-      .print-table {
-        margin-bottom: 0.75rem;
-        page-break-inside: auto;
-      }
-      .pdf-timetable-grid {
-        margin-bottom: 0.75rem;
-        page-break-inside: auto;
-      }
-      .print-footer {
-        position: fixed;
-        bottom: 0;
-        width: 100%;
-        margin-top: 0.5rem;
-        padding-top: 0.5rem;
-      }
-    }
-  </style>
-</head>
-<body>
-  <div class="print-header">
-    <h1>${t.appTitle}</h1>
-    <h2>${t.timetable}</h2>
-  </div>
-  
-  <div class="print-totals">
-    ${(() => {
-      const uniqueCourses = new Set(timetable.map(entry => entry.course.code)).size;
-      const totalSections = timetable.length;
-      const totalConflicts = timetable.filter(entry => entry.isConflictSection).length;
-      // Calculate total hours - sum hours from unique courses only
-      const courseHoursMap = new Map<string, string>();
-      timetable.forEach(entry => {
-        const courseCode = entry.course.code;
-        if (entry.course.hours && !courseHoursMap.has(courseCode)) {
-          courseHoursMap.set(courseCode, entry.course.hours);
-        }
-      });
-      const totalHours = Array.from(courseHoursMap.values()).reduce((sum, hours) => {
-        const hoursNum = parseFloat(hours) || 0;
-        return sum + hoursNum;
-      }, 0);
-      return `
-        <div class="print-totals-container">
-          <div class="print-total-item">
-            <span class="print-total-label">${language === 'en' ? 'Total Courses' : 'إجمالي المقررات'}:</span>
-            <span class="print-total-value">${uniqueCourses}</span>
-          </div>
-          ${totalHours > 0 ? `
-          <div class="print-total-item">
-            <span class="print-total-label">${language === 'en' ? 'Total Hours' : 'إجمالي الساعات'}:</span>
-            <span class="print-total-value">${totalHours}</span>
-          </div>
-          ` : ''}
-          <div class="print-total-item">
-            <span class="print-total-label">${language === 'en' ? 'Total Sections' : 'عدد الشعب'}:</span>
-            <span class="print-total-value">${totalSections}</span>
-          </div>
-          ${totalConflicts > 0 ? `
-          <div class="print-total-item print-total-conflict">
-            <span class="print-total-label">${language === 'en' ? 'Conflicts' : 'التعارضات'}:</span>
-            <span class="print-total-value">${totalConflicts}</span>
-          </div>
-          ` : ''}
-        </div>
-      `;
-    })()}
-  </div>
-  
-  <div class="timetable-section">
-    <h3 class="section-title">${t.timetable}</h3>
-    ${generateVisualTimetableGrid()}
-  </div>
-
-  <div class="summary-section">
-    <h3 class="section-title">${t.summary}</h3>
-    <table class="print-table">
-      <thead>
-        <tr>
-          <th>${t.courseCode}</th>
-          <th>${t.courseName}</th>
-          <th>${t.section}</th>
-          <th>${t.days}</th>
-          <th>${t.time}</th>
-          <th>${t.location}</th>
-          <th>${t.instructor}</th>
-          <th>${t.finalExam}</th>
-          <th>${t.status}</th>
-          <th>${t.classType}</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${generateSummaryTable()}
-      </tbody>
-    </table>
-  </div>
-
-  <div class="print-footer">
-    ${language === 'en' ? `Generated on ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}` : `تم الإنشاء في ${new Date().toLocaleDateString('ar-SA', { year: 'numeric', month: 'long', day: 'numeric' })}`}
-  </div>
-</body>
-</html>
-    `;
-
-    // Use blob URL to avoid CSP issues
-    const blob = new Blob([htmlContent], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    const printWindow = window.open(url, '_blank');
-    
-    if (printWindow) {
-      // Trigger print after content loads
-      printWindow.addEventListener('load', () => {
-        setTimeout(() => {
-          printWindow.print();
-          // Clean up blob URL after a delay
-          setTimeout(() => URL.revokeObjectURL(url), 1000);
-        }, 250);
-      });
-    } else {
-      URL.revokeObjectURL(url);
-    }
-  };
-
-  // Helper function to download canvas as JPG
-  const downloadCanvasAsJPG = (canvas: HTMLCanvasElement, filename: string) => {
-    canvas.toBlob((blob) => {
-      if (!blob) {
-        alert(language === 'en' 
-          ? 'Failed to generate image.' 
-          : 'فشل إنشاء الصورة.');
-        return;
-      }
-
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      setTimeout(() => URL.revokeObjectURL(url), 100);
-    }, 'image/jpeg', 0.95);
-  };
-
-  // Export timetable as JPG image
-  const exportJPGTimetable = async () => {
-    const timetableGridElement = document.querySelector('.timetable-grid') as HTMLElement;
-    
-    if (!timetableGridElement) {
-      alert(language === 'en' 
-        ? 'Timetable not found. Please make sure you have courses in your timetable.' 
-        : 'لم يتم العثور على الجدول. يرجى التأكد من وجود مقررات في جدولك.');
-      return;
-    }
-
+  // PDF and image: the same look as the Qu Student app (see lib/scheduleExport.ts)
+  const [exporting, setExporting] = React.useState<'pdf' | 'image' | null>(null);
+  const runExport = async (kind: 'pdf' | 'image') => {
+    if (exporting) return;
+    setExporting(kind);
     try {
-      const canvas = await html2canvas(timetableGridElement, {
-        backgroundColor: '#ffffff',
-        scale: 2,
-        logging: false,
-        useCORS: true,
-        allowTaint: false,
-      });
-
-      downloadCanvasAsJPG(canvas, `timetable-${new Date().toISOString().split('T')[0]}.jpg`);
+      const sections = sectionsFromTimetable(timetable);
+      if (kind === 'pdf') await exportSchedulePdf(sections, language);
+      else await exportScheduleImage(sections, language);
     } catch (error) {
-      console.error('Error exporting timetable to JPG:', error);
-      alert(language === 'en' 
-        ? 'An error occurred while generating the image.' 
-        : 'حدث خطأ أثناء إنشاء الصورة.');
+      console.error('Export failed:', error);
+      alert(language === 'en' ? 'Export failed. Please try again.' : 'تعذّر التصدير، حاول مرة أخرى.');
+    } finally {
+      setExporting(null);
     }
   };
-
 
   // Export timetable as Excel (CSV format)
   const exportToExcel = () => {
@@ -678,11 +105,11 @@ const TimetableGrid: React.FC = () => {
           `"${course.code}"`,
           `"${course.name}"`,
           `"${course.section}"`,
-          `"${course.days.join(', ')}"`,
-          `"${course.startTime} - ${course.endTime}"`,
+          `"${formatDays(course.days, t, language) || '-'}"`,
+          `"${hasSchedule(course) ? `${course.startTime} - ${course.endTime}` : noTimeLabel(language)}"`,
           `"${course.location || '-'}"`,
           `"${course.instructor || '-'}"`,
-          `"${course.finalExam?.date ? `${language === 'en' ? 'Period' : 'فترة'} ${course.finalExam.date}` : '-'}"`,
+          `"${course.finalExam?.date ? `${language === 'en' ? 'Period' : 'الفترة'} ${course.finalExam.date}` : '-'}"`,
           `"${course.status === 'open' ? t.open : course.status === 'closed' ? t.closed : '-'}"`,
           `"${course.classType === 'practical' ? t.practical : course.classType === 'theoretical' ? t.theoretical : course.classType === 'exercise' ? t.exercise : '-'}"`,
         ];
@@ -751,6 +178,8 @@ const TimetableGrid: React.FC = () => {
 
     timetable.forEach((entry) => {
       const course = entry.course;
+      // Sections without a lecture time have nothing to put on a calendar
+      if (!hasSchedule(course)) return;
       const [startHours, startMinutes] = course.startTime.split(':').map(Number);
       const [endHours, endMinutes] = course.endTime.split(':').map(Number);
 
@@ -795,226 +224,198 @@ const TimetableGrid: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
+  // Totals shown next to the title
+  const ttUniqueCourses = new Set(timetable.map((entry) => entry.course.code)).size;
+  const ttTotalSections = timetable.length;
+  const ttTotalConflicts = timetable.filter((entry) => entry.isConflictSection).length;
+  const ttCourseHours = new Map<string, number>();
+  timetable.forEach((entry) => {
+    if (entry.course.hours && !ttCourseHours.has(entry.course.code)) {
+      ttCourseHours.set(entry.course.code, parseFloat(entry.course.hours) || 0);
+    }
+  });
+  const ttTotalHours = Array.from(ttCourseHours.values()).reduce((sum, hours) => sum + hours, 0);
+  const isAr = language === 'ar';
+  // Added sections that have no lecture time: shown below the grid, not on it
+  const noTimeEntries = timetable.filter((entry) => !hasSchedule(entry.course));
+
+  // Hovered section (from the course list): which timetable entries each of its class times
+  // overlaps. A clashing preview is drawn on top of those courses, and they get an outline.
+  const toMinutes = (time: string) => {
+    const [h, m] = time.split(':').map(Number);
+    return (h || 0) * 60 + (m || 0);
+  };
+  const isHoveredEntry = (entryId: string) =>
+    !!hoveredCourse && (entryId === hoveredCourse.id || entryId.startsWith(`${hoveredCourse.id}-slot-`));
+  const clashesAt = (day: string, startTime: string, endTime: string) =>
+    !startTime || !endTime
+      ? []
+      : timetable.filter(
+          (entry) =>
+            !isHoveredEntry(entry.courseId) &&
+            entry.course.days.includes(day) &&
+            !!entry.course.startTime &&
+            toMinutes(startTime) < toMinutes(entry.course.endTime) &&
+            toMinutes(entry.course.startTime) < toMinutes(endTime)
+        );
+  const hoverSlots: { days: string[]; startTime: string; endTime: string }[] = hoveredCourse
+    ? hoveredCourse.timeSlots && hoveredCourse.timeSlots.length > 1
+      ? hoveredCourse.timeSlots
+      : [{ days: hoveredCourse.days, startTime: hoveredCourse.startTime, endTime: hoveredCourse.endTime }]
+    : [];
+  const hoverClashIds = new Set(
+    hoverSlots.flatMap((slot) =>
+      slot.days.flatMap((day) => clashesAt(day, slot.startTime, slot.endTime).map((entry) => entry.courseId))
+    )
+  );
+
+  /** The hovered section's block for one class time; on a clash it sits over the course it clashes with. */
+  const renderHoverPreview = (key: string, day: string, startTime: string, endTime: string, location?: string) => {
+    if (!hoveredCourse) return null;
+    const style = getCourseBlockStyle(startTime, endTime);
+    const theme = getCourseTheme(hoveredCourse.code);
+    const clashes = clashesAt(day, startTime, endTime);
+    const clashCodes = [...new Set(clashes.map((entry) => entry.course.code))].join(isAr ? '، ' : ', ');
+    return (
+      <div
+        key={key}
+        className={`course-block hover-preview ${clashes.length ? 'hover-conflict' : ''}`}
+        style={{
+          ...style,
+          ...(clashes.length ? {} : { background: theme.bg, color: theme.text, borderColor: theme.text }),
+        }}
+      >
+        <div className="course-block-header">
+          <div>
+            <div className="course-block-code">{hoveredCourse.code}</div>
+            <div className="course-block-time">
+              {startTime} - {endTime}
+            </div>
+          </div>
+        </div>
+        {clashes.length ? (
+          <div className="hover-conflict-label">
+            <Icon name="alert" size={12} />
+            {isAr ? `تعارض مع ${clashCodes}` : `Clashes with ${clashCodes}`}
+          </div>
+        ) : (
+          location && <div className="course-block-location">{location}</div>
+        )}
+      </div>
+    );
+  };
+
   return (
-    <section className="timetable-section" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+    <section className="timetable-section qs-card" dir={isAr ? 'rtl' : 'ltr'}>
       <div className="timetable-header">
-        {language === 'ar' ? (
-          <>
-            <div className="timetable-actions">
-              {timetable.length > 0 && (
-                <>
-                      <button
-                        className="summary-btn"
-                        onClick={() => setShowSummary(true)}
-                      >
-                        📊 {t.summary}
-                      </button>
-              <div className="export-menu-container">
-                <button
-                  className="export-btn"
-                  onClick={() => setShowExportMenu(!showExportMenu)}
-                  title={t.export}
-                >
-                  💾 {t.export}
-                </button>
-                {showExportMenu && (
-                  <div className="export-menu">
-                    <button
-                      className="export-menu-item"
-                      onClick={() => {
-                        exportToPDF();
-                        setShowExportMenu(false);
-                      }}
-                    >
-                      {t.exportToPDF}
-                    </button>
-                    <button
-                      className="export-menu-item"
-                      onClick={() => {
-                        exportJPGTimetable();
-                        setShowExportMenu(false);
-                      }}
-                    >
-                      {t.exportToJPG}
-                    </button>
-                    <button
-                      className="export-menu-item"
-                      onClick={() => {
-                        exportToExcel();
-                        setShowExportMenu(false);
-                      }}
-                    >
-                      {t.exportToExcel}
-                    </button>
-                    <button
-                      className="export-menu-item"
-                      onClick={() => {
-                        exportToCalendar();
-                        setShowExportMenu(false);
-                      }}
-                    >
-                      {t.exportToCalendar}
-                    </button>
-                  </div>
-                )}
-              </div>
-                      <button
-                        className="remove-all-btn"
-                        onClick={() => {
-                          if (window.confirm(language === 'en' 
-                            ? 'Are you sure you want to remove all courses from the timetable?' 
-                            : 'هل أنت متأكد من إزالة جميع المقررات من الجدول؟')) {
-                            removeAllCourses();
-                          }
-                        }}
-                        title={language === 'en' ? 'Remove all courses' : 'إزالة جميع المقررات'}
-                      >
-                        🗑️ {language === 'en' ? 'Remove All' : 'إزالة الكل'}
-                      </button>
-                </>
+        <div className="timetable-heading">
+          <h2 className="timetable-title">{isAr ? 'أسبوعك' : 'Your week'}</h2>
+          {timetable.length > 0 ? (
+            <div className="timetable-stats">
+              <span className="tt-chip">{coursesLabel(ttUniqueCourses, language)}</span>
+              {ttTotalHours > 0 && (
+                <span className="tt-chip">{isAr ? `${ttTotalHours} ساعة` : `${ttTotalHours} credit hours`}</span>
+              )}
+              <span className="tt-chip">{sectionsLabel(ttTotalSections, language)}</span>
+              {ttTotalConflicts > 0 && (
+                <span className="tt-chip tt-chip-warn">
+                  <Icon name="alert" size={14} />
+                  {isAr ? `${ttTotalConflicts} تعارض` : `${ttTotalConflicts} ${ttTotalConflicts === 1 ? 'clash' : 'clashes'}`}
+                </span>
               )}
             </div>
-            <h2 className="timetable-title">
-              الجدول الأسبوعي {timetable.length > 0 && (() => {
-                const uniqueCourses = new Set(timetable.map(entry => entry.course.code)).size;
-                const totalSections = timetable.length;
-                const totalConflicts = timetable.filter(entry => entry.isConflictSection).length;
-                // Calculate total hours - sum hours from unique courses only
-                const courseHoursMap = new Map<string, string>();
-                timetable.forEach(entry => {
-                  const courseCode = entry.course.code;
-                  if (entry.course.hours && !courseHoursMap.has(courseCode)) {
-                    courseHoursMap.set(courseCode, entry.course.hours);
-                  }
-                });
-                const totalHours = Array.from(courseHoursMap.values()).reduce((sum, hours) => {
-                  const hoursNum = parseFloat(hours) || 0;
-                  return sum + hoursNum;
-                }, 0);
-                return (
-                  <>
-                    <span className="total-courses-text">إجمالي المقررات {uniqueCourses}</span>
-                    {totalHours > 0 && (
-                      <span className="total-hours-text">إجمالي الساعات {totalHours}</span>
-                    )}
-                    <span className="total-sections-text">عدد الشعب {totalSections}</span>
-                    {totalConflicts > 0 && (
-                      <span className="total-conflicts-text">التعارضات {totalConflicts}</span>
-                    )}
-                  </>
-                );
-              })()}
-            </h2>
-          </>
-        ) : (
-          <>
-            <h2 className="timetable-title">
-              Weekly Schedule {timetable.length > 0 && (() => {
-                const uniqueCourses = new Set(timetable.map(entry => entry.course.code)).size;
-                const totalSections = timetable.length;
-                const totalConflicts = timetable.filter(entry => entry.isConflictSection).length;
-                // Calculate total hours - sum hours from unique courses only
-                const courseHoursMap = new Map<string, string>();
-                timetable.forEach(entry => {
-                  const courseCode = entry.course.code;
-                  if (entry.course.hours && !courseHoursMap.has(courseCode)) {
-                    courseHoursMap.set(courseCode, entry.course.hours);
-                  }
-                });
-                const totalHours = Array.from(courseHoursMap.values()).reduce((sum, hours) => {
-                  const hoursNum = parseFloat(hours) || 0;
-                  return sum + hoursNum;
-                }, 0);
-                return (
-                  <>
-                    <span className="total-courses-text">total courses {uniqueCourses}</span>
-                    {totalHours > 0 && (
-                      <span className="total-hours-text">total hours {totalHours}</span>
-                    )}
-                    <span className="total-sections-text">sections {totalSections}</span>
-                    {totalConflicts > 0 && (
-                      <span className="total-conflicts-text">conflicts {totalConflicts}</span>
-                    )}
-                  </>
-                );
-              })()}
-            </h2>
-            <div className="timetable-actions">
-          {timetable.length > 0 && (
-            <>
-                      <button
-                        className="summary-btn"
-                        onClick={() => setShowSummary(true)}
-                      >
-                        📊 {t.summary}
-                      </button>
-              <div className="export-menu-container">
-                <button
-                  className="export-btn"
-                  onClick={() => setShowExportMenu(!showExportMenu)}
-                  title={t.export}
-                >
-                  💾 {t.export} <span className="dropdown-arrow">▼</span>
-                </button>
-                {showExportMenu && (
-                  <div className="export-menu">
-                    <button
-                      className="export-menu-item"
-                      onClick={() => {
-                        exportToPDF();
-                        setShowExportMenu(false);
-                      }}
-                    >
-                      {t.exportToPDF}
-                    </button>
-                    <button
-                      className="export-menu-item"
-                      onClick={() => {
-                        exportJPGTimetable();
-                        setShowExportMenu(false);
-                      }}
-                    >
-                      {t.exportToJPG}
-                    </button>
-                    <button
-                      className="export-menu-item"
-                      onClick={() => {
-                        exportToExcel();
-                        setShowExportMenu(false);
-                      }}
-                    >
-                      {t.exportToExcel}
-                    </button>
-                    <button
-                      className="export-menu-item"
-                      onClick={() => {
-                        exportToCalendar();
-                        setShowExportMenu(false);
-                      }}
-                    >
-                      {t.exportToCalendar}
-                    </button>
-                  </div>
-                )}
-              </div>
-                      <button
-                        className="remove-all-btn"
-                        onClick={() => {
-                          if (window.confirm(
-                            language === 'en'
-                              ? 'Are you sure you want to remove all courses from the timetable?'
-                              : 'هل أنت متأكد من إزالة جميع المقررات من الجدول؟'
-                          )) {
-                            removeAllCourses();
-                          }
-                        }}
-                      >
-                        🗑️ {t.removeAll}
-                      </button>
-            </> 
+          ) : (
+            <p className="timetable-subtitle">
+              {isAr ? 'أضف شعبة من قائمة المقررات لتظهر هنا' : 'Add a section from the course list to see it here'}
+            </p>
           )}
         </div>
-          </>
+        {timetable.length > 0 && (
+          <div className="timetable-actions">
+            <button type="button" className="qs-btn qs-btn-ghost" onClick={() => setShowSummary(true)}>
+              <Icon name="fileText" />
+              {t.summary}
+            </button>
+            <div className="export-menu-container">
+              <button
+                type="button"
+                className="qs-btn qs-btn-dark"
+                aria-haspopup="menu"
+                aria-expanded={showExportMenu}
+                onClick={() => setShowExportMenu(!showExportMenu)}
+              >
+                <Icon name="share" />
+                {t.export}
+                <Icon name="chevronDown" size={14} />
+              </button>
+              {showExportMenu && (
+                <div className="export-menu" role="menu">
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="export-menu-item"
+                    onClick={() => {
+                      runExport('pdf');
+                      setShowExportMenu(false);
+                    }}
+                  >
+                    <Icon name="fileText" />
+                    {t.exportToPDF}
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="export-menu-item"
+                    onClick={() => {
+                      runExport('image');
+                      setShowExportMenu(false);
+                    }}
+                  >
+                    <Icon name="image" />
+                    {t.exportToJPG}
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="export-menu-item"
+                    onClick={() => {
+                      exportToExcel();
+                      setShowExportMenu(false);
+                    }}
+                  >
+                    <Icon name="table" />
+                    {t.exportToExcel}
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="export-menu-item"
+                    onClick={() => {
+                      exportToCalendar();
+                      setShowExportMenu(false);
+                    }}
+                  >
+                    <Icon name="calendar" />
+                    {t.exportToCalendar}
+                  </button>
+                </div>
+              )}
+            </div>
+            <button
+              type="button"
+              className="qs-btn qs-btn-danger-text"
+              onClick={() => {
+                if (window.confirm(isAr
+                  ? 'هل أنت متأكد من إزالة جميع المقررات من الجدول؟'
+                  : 'Are you sure you want to remove all courses from the timetable?')) {
+                  removeAllCourses();
+                }
+              }}
+            >
+              <Icon name="trash" />
+              {t.removeAll}
+            </button>
+          </div>
         )}
       </div>
       {/* Close export menu when clicking outside */}
@@ -1095,30 +496,19 @@ const TimetableGrid: React.FC = () => {
                 </thead>
                 <tbody>
                   {(() => {
-                    // Group courses by section number
-                    const groupedBySection: Record<string, typeof timetable> = {};
-                    timetable.forEach(entry => {
-                      const section = entry.course.section || 'N/A';
-                      if (!groupedBySection[section]) {
-                        groupedBySection[section] = [];
-                      }
-                      groupedBySection[section].push(entry);
-                    });
-
-                    // Render grouped courses
-                    return Object.entries(groupedBySection).map(([section, entries]) => {
+                    return groupTimetableBySection().map(({ key, section, entries }) => {
                       const codes = [...new Set(entries.map(e => e.course.code))].join(', ');
                       const names = [...new Set(entries.map(e => e.course.name))].join(', ');
-                      const days = [...new Set(entries.flatMap(e => e.course.days))].join(', ');
-                      const times = [...new Set(entries.map(e => `${e.course.startTime} - ${e.course.endTime}`))].join(', ');
+                      const days = formatDays([...new Set(entries.flatMap(e => e.course.days))], t, language) || '-';
+                      const times = [...new Set(entries.map(e => hasSchedule(e.course) ? `${e.course.startTime} - ${e.course.endTime}` : noTimeLabel(language)))].join(', ');
                       const locations = [...new Set(entries.map(e => e.course.location).filter(Boolean))].join(', ');
                       const instructors = [...new Set(entries.map(e => e.course.instructor).filter(Boolean))].join(', ');
-                      const finalExams = [...new Set(entries.map(e => e.course.finalExam?.date).filter(Boolean))].map(d => `Period ${d}`).join(', ');
+                      const finalExams = [...new Set(entries.map(e => e.course.finalExam?.date).filter(Boolean))].map(d => `${language === 'en' ? 'Period' : 'الفترة'} ${d}`).join(', ');
                       const statuses = [...new Set(entries.map(e => e.course.status).filter(Boolean))];
                       const classTypes = [...new Set(entries.map(e => e.course.classType).filter(Boolean))];
 
                       return (
-                        <tr key={section}>
+                        <tr key={key}>
                           <td>{codes}</td>
                           <td>{names}</td>
                           <td>{section}</td>
@@ -1152,8 +542,9 @@ const TimetableGrid: React.FC = () => {
                                 });
                               }}
                               title={language === 'en' ? 'Remove from timetable' : 'إزالة من الجدول'}
+                              aria-label={language === 'en' ? 'Remove from timetable' : 'إزالة من الجدول'}
                             >
-                              🗑️
+                              <Icon name="trash" size={16} />
                             </button>
                           </td>
                         </tr>
@@ -1202,23 +593,28 @@ const TimetableGrid: React.FC = () => {
                   <div className="course-details-value">
                     {selectedCourse.timeSlots.map((slot, index) => (
                       <div key={index} className="time-slot-detail">
-                        <strong>{slot.days.join(', ')}</strong>: {slot.startTime} - {slot.endTime}
+                        <strong>{formatDays(slot.days, t, language)}</strong>: {slot.startTime} - {slot.endTime}
                         {slot.location && ` (${slot.location})`}
                       </div>
                     ))}
                   </div>
                 </div>
-              ) : (
+              ) : hasSchedule(selectedCourse) ? (
                 <>
                   <div className="course-details-row">
                     <div className="course-details-label">{t.days}:</div>
-                    <div className="course-details-value">{selectedCourse.days.join(', ')}</div>
+                    <div className="course-details-value">{formatDays(selectedCourse.days, t, language)}</div>
                   </div>
                   <div className="course-details-row">
                     <div className="course-details-label">{t.time}:</div>
                     <div className="course-details-value">{selectedCourse.startTime} - {selectedCourse.endTime}</div>
                   </div>
                 </>
+              ) : (
+                <div className="course-details-row">
+                  <div className="course-details-label">{t.time}:</div>
+                  <div className="course-details-value">{noTimeLabel(language)}</div>
+                </div>
               )}
               {selectedCourse.location && (
                 <div className="course-details-row">
@@ -1236,11 +632,7 @@ const TimetableGrid: React.FC = () => {
                 <div className="course-details-row">
                   <div className="course-details-label">{t.finalExam}:</div>
                   <div className="course-details-value">
-                    {selectedCourse.finalExam.date 
-                      ? `${language === 'en' ? 'Period' : 'فترة'} ${selectedCourse.finalExam.date}`
-                      : selectedCourse.finalExam.day
-                    }
-                    {selectedCourse.finalExam.startTime && ` - ${selectedCourse.finalExam.startTime} - ${selectedCourse.finalExam.endTime}`}
+                    {formatExam(selectedCourse.finalExam, t, language) || '-'}
                     {selectedCourse.finalExam.location && ` (${selectedCourse.finalExam.location})`}
                   </div>
                 </div>
@@ -1274,11 +666,13 @@ const TimetableGrid: React.FC = () => {
       <div className="timetable-container">
         {timetable.length === 0 ? (
           <div className="timetable-empty">
-            <div className="empty-state-icon">📅</div>
-            <h3>{language === 'en' ? 'Empty Timetable' : 'جدول فارغ'}</h3>
-            <p>{language === 'en' 
-              ? 'Add courses from the list on the right to build your weekly schedule.'
-              : 'أضف المقررات من القائمة على اليمين لبناء جدولك الأسبوعي.'}</p>
+            <div className="empty-state-icon">
+              <Icon name="calendar" size={32} />
+            </div>
+            <h3>{language === 'en' ? 'Your timetable is empty' : 'جدولك فارغ'}</h3>
+            <p>{language === 'en'
+              ? 'Pick a section from the offered courses list and it will appear here.'
+              : 'اختر شعبة من قائمة المقررات المطروحة وستظهر هنا مباشرة.'}</p>
           </div>
         ) : (
           <div className="timetable-grid">
@@ -1293,7 +687,8 @@ const TimetableGrid: React.FC = () => {
             
             {/* Time column */}
             <div className="time-column">
-              {timeSlots.map((time) => (
+              {/* One label per hour row (07:00 – 19:00); the grid ends at 20:00 */}
+              {timeSlots.slice(0, -1).map((time) => (
                 <div key={time} className="time-slot">
                   {time}
                 </div>
@@ -1334,22 +729,35 @@ const TimetableGrid: React.FC = () => {
                         const course = entry.course;
                         const isConflictSection = entry.isConflictSection;
                         const style = getCourseBlockStyle(course.startTime, course.endTime);
-                        const [color1, color2] = getCourseColor(course.code);
+                        const theme = getCourseTheme(course.code);
 
                         // Make conflict sections smaller (reduce height by 30%)
-                        const adjustedStyle = isConflictSection 
+                        const adjustedStyle = isConflictSection
                           ? { ...style, height: `calc(${style.height} * 0.7)` }
                           : style;
 
                         return (
                           <div
                             key={entry.courseId}
-                            className={`course-block ${isConflictSection ? 'conflict-section' : ''}`}
+                            className={`course-block ${isConflictSection ? 'conflict-section' : ''} ${
+                              hoverClashIds.has(entry.courseId) ? 'hover-clash-target' : ''
+                            }`}
                             style={{
                               ...adjustedStyle,
-                              background: `linear-gradient(135deg, ${color1} 0%, ${color2} 100%)`,
+                              background: theme.bg,
+                              color: theme.text,
+                              borderColor: isConflictSection ? undefined : theme.border,
                             }}
+                            role="button"
+                            tabIndex={0}
+                            aria-label={`${course.code} ${course.section ? `(${language === 'en' ? 'Section' : 'الشعبة'} ${course.section})` : ''} ${course.startTime} - ${course.endTime}`}
                             onClick={() => setSelectedCourse(course)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                setSelectedCourse(course);
+                              }
+                            }}
                           >
                             <div className="course-block-header">
                               <div>
@@ -1371,9 +779,11 @@ const TimetableGrid: React.FC = () => {
                                   removeCourse(entry.courseId);
                                 }}
                                 onMouseDown={(e) => e.stopPropagation()}
+                                onKeyDown={(e) => e.stopPropagation()}
                                 title={language === 'en' ? 'Remove course' : 'إزالة المقرر'}
+                                aria-label={language === 'en' ? `Remove ${course.code}` : `إزالة ${course.code}`}
                               >
-                                ×
+                                <Icon name="x" size={14} />
                               </button>
                             </div>
                             {course.location && (
@@ -1391,60 +801,24 @@ const TimetableGrid: React.FC = () => {
                               if (!slot.days.includes(day)) return null;
                               const slotId = `${hoveredCourse.id}-slot-${slotIndex}`;
                               if (dayCourses.some(entry => entry.courseId === slotId)) return null;
-                              
-                              const style = getCourseBlockStyle(slot.startTime, slot.endTime);
-                              const [color1, color2] = getCourseColor(hoveredCourse.code);
-                              return (
-                                <div
-                                  key={`hovered-${slotId}`}
-                                  className="course-block hover-preview"
-                                  style={{
-                                    ...style,
-                                    background: `linear-gradient(135deg, rgba(${hexToRgb(color1)}, 0.6) 0%, rgba(${hexToRgb(color2)}, 0.6) 100%)`,
-                                  }}
-                                >
-                                  <div className="course-block-header">
-                                    <div>
-                                      <div className="course-block-code">{hoveredCourse.code}</div>
-                                      <div className="course-block-time">
-                                        {slot.startTime} - {slot.endTime}
-                                      </div>
-                                    </div>
-                                  </div>
-                                  {(slot.location || hoveredCourse.location) && (
-                                    <div className="course-block-location">{slot.location || hoveredCourse.location}</div>
-                                  )}
-                                </div>
+                              return renderHoverPreview(
+                                `hovered-${slotId}`,
+                                day,
+                                slot.startTime,
+                                slot.endTime,
+                                slot.location || hoveredCourse.location
                               );
                             })
                             .filter(Boolean);
-                        } else {
-                          // Single time slot course
-                          const style = getCourseBlockStyle(hoveredCourse.startTime, hoveredCourse.endTime);
-                          const [color1, color2] = getCourseColor(hoveredCourse.code);
-                          return (
-                            <div
-                              key={`hovered-${hoveredCourse.id}`}
-                              className="course-block hover-preview"
-                              style={{
-                                ...style,
-                                background: `linear-gradient(135deg, rgba(${hexToRgb(color1)}, 0.6) 0%, rgba(${hexToRgb(color2)}, 0.6) 100%)`,
-                              }}
-                            >
-                              <div className="course-block-header">
-                                <div>
-                                  <div className="course-block-code">{hoveredCourse.code}</div>
-                                  <div className="course-block-time">
-                                    {hoveredCourse.startTime} - {hoveredCourse.endTime}
-                                  </div>
-                                </div>
-                              </div>
-                              {hoveredCourse.location && (
-                                <div className="course-block-location">{hoveredCourse.location}</div>
-                              )}
-                            </div>
-                          );
                         }
+                        // Single time slot course
+                        return renderHoverPreview(
+                          `hovered-${hoveredCourse.id}`,
+                          day,
+                          hoveredCourse.startTime,
+                          hoveredCourse.endTime,
+                          hoveredCourse.location
+                        );
                       })()}
                     </div>
                   </div>
@@ -1454,6 +828,47 @@ const TimetableGrid: React.FC = () => {
           </div>
         )}
       </div>
+      {noTimeEntries.length > 0 && (
+        <div className="tt-notime">
+          <div className="tt-notime-head">
+            <Icon name="clock" size={16} />
+            <span className="tt-notime-title">
+              {isAr ? 'مقررات بدون وقت محدد' : 'Courses without a set time'}
+            </span>
+            <span className="tt-notime-hint">
+              {isAr ? 'لا تظهر في الجدول، وتُحسب في الملخص' : 'Not placed on the grid; included in the summary'}
+            </span>
+          </div>
+          <ul className="tt-notime-list">
+            {noTimeEntries.map((entry) => {
+              const theme = getCourseTheme(entry.course.code);
+              return (
+                <li key={entry.courseId} className="tt-notime-chip" style={{ background: theme.bg, color: theme.text }}>
+                  <button
+                    type="button"
+                    className="tt-notime-open"
+                    onClick={() => setSelectedCourse(entry.course)}
+                    title={entry.course.name}
+                  >
+                    <span dir="ltr">{entry.course.code}</span>
+                    {entry.course.section && (
+                      <span>· {isAr ? 'شعبة' : 'Sec'} {entry.course.section}</span>
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    className="tt-notime-remove"
+                    onClick={() => removeCourse(entry.courseId)}
+                    aria-label={isAr ? `إزالة ${entry.course.code}` : `Remove ${entry.course.code}`}
+                  >
+                    <Icon name="x" size={14} />
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
     </section>
   );
 };

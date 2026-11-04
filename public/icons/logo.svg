@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <title>Qu Student</title>
+  <rect width="128" height="128" rx="30" fill="#0E7490"/>
+  <rect x="26" y="34" width="72" height="62" rx="14" fill="none" stroke="#FFFFFF" stroke-width="9"/>
+  <path d="M46 24v16M78 24v16" fill="none" stroke="#FFFFFF" stroke-width="9" stroke-linecap="round"/>
+  <path d="M26 56h72" fill="none" stroke="#FFFFFF" stroke-width="7"/>
+  <rect x="37" y="66" width="22" height="18" rx="5" fill="#7FD3E3"/>
+  <path d="M80 78l24 24" fill="none" stroke="#0E7490" stroke-width="21" stroke-linecap="round"/>
+  <path d="M80 78l24 24" fill="none" stroke="#FFFFFF" stroke-width="11" stroke-linecap="round"/>
+</svg>

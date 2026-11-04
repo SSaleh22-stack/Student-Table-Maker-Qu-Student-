@@ -5,6 +5,7 @@ import {
   calculateAbsence,
   validateAbsenceInput,
 } from '../lib/absence';
+import Icon from './Icon';
 import './AbsenceCalculator.css';
 
 const AbsenceCalculator: React.FC = () => {
@@ -97,21 +98,6 @@ const AbsenceCalculator: React.FC = () => {
     return calculateAbsence(input);
   }, [input, validation.valid]);
 
-  const getStatusColor = (warningLevel: string) => {
-    switch (warningLevel) {
-      case 'safe':
-        return '#48bb78'; // Green
-      case 'warning':
-        return '#ed8936'; // Orange
-      case 'danger':
-        return '#e53e3e'; // Red
-      case 'exceeded':
-        return '#742a2a'; // Dark red
-      default:
-        return '#667eea';
-    }
-  };
-
   const getStatusText = (warningLevel: string) => {
     switch (warningLevel) {
       case 'safe':
@@ -127,19 +113,31 @@ const AbsenceCalculator: React.FC = () => {
     }
   };
 
+  const isAr = language === 'ar';
+  // How much of the allowed absence is used (0–100%)
+  const usedOfLimit = result
+    ? Math.min(100, Math.max(0, (result.absencePercent / maxAbsencePercent) * 100))
+    : 0;
+
   return (
-    <div className="absence-calculator" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+    <div className="absence-calculator" dir={isAr ? 'rtl' : 'ltr'}>
       <div className="absence-header">
         <h1 className="absence-title">{t.absenceCalculator || 'Absence Calculator'}</h1>
+        <p className="absence-subtitle">
+          {isAr
+            ? 'اعرف نسبة غيابك وكم ساعة تبقّى لك قبل الوصول إلى الحد المسموح.'
+            : 'See your absence percentage and how many hours you have left before the limit.'}
+        </p>
       </div>
 
       {/* Input Card */}
       <div className="absence-card">
-        <h2 className="absence-card-title">{language === 'en' ? 'Course Information' : 'معلومات المقرر'}</h2>
+        <h2 className="absence-card-title">{isAr ? 'معلومات المقرر' : 'Course Information'}</h2>
         <div className="absence-input-grid">
-          <div className="absence-input-item">
-            <label>{t.absenceStudyWeeks || 'Study Weeks'}</label>
+          <div className="qs-field">
+            <label className="qs-label" htmlFor="abs-weeks">{t.absenceStudyWeeks || 'Study Weeks'}</label>
             <input
+              id="abs-weeks"
               type="number"
               min="1"
               max="20"
@@ -150,12 +148,13 @@ const AbsenceCalculator: React.FC = () => {
                   setStudyWeeks(value);
                 }
               }}
-              className="absence-input"
+              className="qs-input"
             />
           </div>
-          <div className="absence-input-item">
-            <label>{t.absenceHoursPerWeek || 'Hours Per Week'}</label>
+          <div className="qs-field">
+            <label className="qs-label" htmlFor="abs-hours-week">{t.absenceHoursPerWeek || 'Hours Per Week'}</label>
             <input
+              id="abs-hours-week"
               type="number"
               min="1"
               max="20"
@@ -167,12 +166,13 @@ const AbsenceCalculator: React.FC = () => {
                   setHoursPerWeek(value);
                 }
               }}
-              className="absence-input"
+              className="qs-input"
             />
           </div>
-          <div className="absence-input-item">
-            <label>{t.absenceHoursAbsent || 'Hours Absent'}</label>
+          <div className="qs-field">
+            <label className="qs-label" htmlFor="abs-absent">{t.absenceHoursAbsent || 'Hours Absent'}</label>
             <input
+              id="abs-absent"
               type="number"
               min="0"
               step="0.5"
@@ -183,15 +183,16 @@ const AbsenceCalculator: React.FC = () => {
                   setHoursAbsent(value);
                 }
               }}
-              className="absence-input"
+              className="qs-input"
             />
           </div>
-          <div className="absence-input-item">
-            <label>{t.absenceMaxPercent || 'Max Absence Percent'}</label>
+          <div className="qs-field">
+            <label className="qs-label" htmlFor="abs-max">{t.absenceMaxPercent || 'Max Absence Percent'}</label>
             <select
+              id="abs-max"
               value={maxAbsencePercent}
               onChange={(e) => setMaxAbsencePercent(parseInt(e.target.value))}
-              className="absence-select"
+              className="qs-select"
             >
               {[15, 20, 25, 30, 35, 40, 45, 50].map((percent) => (
                 <option key={percent} value={percent}>
@@ -202,8 +203,9 @@ const AbsenceCalculator: React.FC = () => {
           </div>
         </div>
         {!validation.valid && validation.error && (
-          <div className="absence-error">
-            ⚠️ {validation.error}
+          <div className="qs-alert qs-alert-error absence-error" role="alert">
+            <Icon name="alert" />
+            <span>{validation.error}</span>
           </div>
         )}
       </div>
@@ -211,80 +213,57 @@ const AbsenceCalculator: React.FC = () => {
       {/* Results Card */}
       {result && (
         <div className="absence-card">
-          <h2 className="absence-card-title">{t.absenceResults || 'Results'}</h2>
+          <div className="absence-results-head">
+            <h2 className="absence-card-title">{t.absenceResults || 'Results'}</h2>
+            <span className={`absence-badge is-${result.warningLevel}`}>
+              {getStatusText(result.warningLevel)}
+            </span>
+          </div>
+
+          <div className="absence-meter" aria-hidden="true">
+            <div className={`absence-meter-fill is-${result.warningLevel}`} style={{ width: `${usedOfLimit}%` }} />
+          </div>
+          <p className="absence-meter-text">
+            {isAr
+              ? `استخدمت ${usedOfLimit.toFixed(0)}% من الغياب المسموح (${maxAbsencePercent}%)`
+              : `You have used ${usedOfLimit.toFixed(0)}% of the allowed absence (${maxAbsencePercent}%)`}
+          </p>
+
           <div className="absence-results-grid">
-            <div className="absence-result-item">
-              <span className="absence-result-label">{t.absenceTotalHours || 'Total Hours'}</span>
-              <span className="absence-result-value">{result.totalHours.toFixed(1)}</span>
+            <div className="absence-stat">
+              <span className="absence-stat-label">{t.absenceTotalHours || 'Total Hours'}</span>
+              <span className="absence-stat-value">{result.totalHours.toFixed(1)}</span>
             </div>
-            <div className="absence-result-item">
-              <span className="absence-result-label">{t.absencePercent || 'Absence Percent'}</span>
-              <span 
-                className="absence-result-value absence-result-percent"
-                style={{ color: getStatusColor(result.warningLevel) }}
-              >
-                {result.absencePercent.toFixed(2)}%
-              </span>
+            <div className={`absence-stat is-${result.warningLevel}`}>
+              <span className="absence-stat-label">{t.absencePercent || 'Absence Percent'}</span>
+              <span className="absence-stat-value">{result.absencePercent.toFixed(2)}%</span>
             </div>
-            <div className="absence-result-item">
-              <span className="absence-result-label">{t.absenceHoursRemaining || 'Hours Remaining'}</span>
-              <span 
-                className="absence-result-value"
-                style={{ 
-                  color: result.hoursRemaining > 0 ? '#48bb78' : '#e53e3e',
-                  fontWeight: 700 
-                }}
-              >
-                {result.hoursRemaining.toFixed(1)}
-              </span>
-            </div>
-            <div className="absence-result-item absence-result-status">
-              <span className="absence-result-label">{t.absenceStatus || 'Status'}</span>
-              <span 
-                className="absence-result-badge"
-                style={{ 
-                  backgroundColor: getStatusColor(result.warningLevel),
-                  color: 'white'
-                }}
-              >
-                {getStatusText(result.warningLevel)}
-              </span>
+            <div className={`absence-stat ${result.hoursRemaining > 0 ? 'is-safe' : 'is-exceeded'}`}>
+              <span className="absence-stat-label">{t.absenceHoursRemaining || 'Hours Remaining'}</span>
+              <span className="absence-stat-value">{result.hoursRemaining.toFixed(1)}</span>
             </div>
           </div>
-          
-          <div 
-            className="absence-status-message"
-            style={{ 
-              backgroundColor: result.warningLevel === 'exceeded' ? '#fee' : 
-                              result.warningLevel === 'danger' ? '#fff3cd' :
-                              result.warningLevel === 'warning' ? '#fff8e1' : '#e6ffed',
-              borderColor: getStatusColor(result.warningLevel),
-              color: result.warningLevel === 'exceeded' ? '#742a2a' :
-                     result.warningLevel === 'danger' ? '#856404' :
-                     result.warningLevel === 'warning' ? '#f57c00' : '#22543d'
-            }}
-          >
-            {result.canStillAttend ? (
-              <div>
-                <strong>✅ {t.absenceCanStillAttend || 'You can still attend'}</strong>
-                <p>
-                  {language === 'en' 
-                    ? `You have ${result.hoursRemaining.toFixed(1)} hours remaining before reaching the ${maxAbsencePercent}% limit.`
-                    : `لديك ${result.hoursRemaining.toFixed(1)} ساعة متبقية قبل الوصول إلى حد ${maxAbsencePercent}%.`
-                  }
-                </p>
-              </div>
-            ) : (
-              <div>
-                <strong>❌ {t.absenceCannotAttend || 'You cannot attend (exceeded limit)'}</strong>
-                <p>
-                  {language === 'en'
-                    ? `You have exceeded the ${maxAbsencePercent}% absence limit by ${Math.abs(result.hoursRemaining).toFixed(1)} hours.`
-                    : `لقد تجاوزت حد الغياب ${maxAbsencePercent}% بمقدار ${Math.abs(result.hoursRemaining).toFixed(1)} ساعة.`
-                  }
-                </p>
-              </div>
-            )}
+
+          <div className={`absence-status-message is-${result.warningLevel}`} role="status">
+            <span className="absence-status-icon">
+              <Icon name={result.canStillAttend ? 'check' : 'x'} size={18} />
+            </span>
+            <div>
+              <strong>
+                {result.canStillAttend
+                  ? (t.absenceCanStillAttend || 'You can still attend')
+                  : (t.absenceCannotAttend || 'You cannot attend (exceeded limit)')}
+              </strong>
+              <p>
+                {result.canStillAttend
+                  ? (isAr
+                      ? `لديك ${result.hoursRemaining.toFixed(1)} ساعة متبقية قبل الوصول إلى حد ${maxAbsencePercent}%.`
+                      : `You have ${result.hoursRemaining.toFixed(1)} hours remaining before reaching the ${maxAbsencePercent}% limit.`)
+                  : (isAr
+                      ? `لقد تجاوزت حد الغياب ${maxAbsencePercent}% بمقدار ${Math.abs(result.hoursRemaining).toFixed(1)} ساعة.`
+                      : `You have exceeded the ${maxAbsencePercent}% absence limit by ${Math.abs(result.hoursRemaining).toFixed(1)} hours.`)}
+              </p>
+            </div>
           </div>
         </div>
       )}
@@ -293,4 +272,3 @@ const AbsenceCalculator: React.FC = () => {
 };
 
 export default AbsenceCalculator;
-

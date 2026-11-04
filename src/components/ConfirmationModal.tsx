@@ -1,6 +1,7 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { useLanguage } from '../contexts/LanguageContext';
+import Icon from './Icon';
 import './ConfirmationModal.css';
 
 interface ConfirmationModalProps {
@@ -12,32 +13,36 @@ interface ConfirmationModalProps {
 
 const ConfirmationModal: React.FC<ConfirmationModalProps> = ({ isOpen, message, onConfirm, onCancel }) => {
   const { language } = useLanguage();
+  const isAr = language === 'ar';
 
   if (!isOpen) return null;
 
   const modalContent = (
-    <div className="confirmation-modal-overlay" onClick={onCancel}>
-      <div className="confirmation-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="confirmation-modal-header">
-          <h3 className="confirmation-modal-title">
-            {language === 'en' ? '⚠️ Confirmation' : '⚠️ تأكيد'}
+    <div className="qs-modal-overlay confirm-overlay" onClick={onCancel}>
+      <div
+        className="qs-modal confirm-modal"
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="confirm-title"
+        aria-describedby="confirm-message"
+        dir={isAr ? 'rtl' : 'ltr'}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="confirm-body">
+          <span className="confirm-icon">
+            <Icon name="alert" size={26} />
+          </span>
+          <h3 id="confirm-title" className="confirm-title">
+            {isAr ? 'تأكيد' : 'Please confirm'}
           </h3>
+          <p id="confirm-message" className="confirm-message">{message}</p>
         </div>
-        <div className="confirmation-modal-body">
-          <p className="confirmation-modal-message">{message}</p>
-        </div>
-        <div className="confirmation-modal-footer">
-          <button 
-            className="confirmation-modal-btn confirmation-modal-btn-cancel"
-            onClick={onCancel}
-          >
-            {language === 'en' ? 'Cancel' : 'إلغاء'}
+        <div className="confirm-footer">
+          <button type="button" className="qs-btn qs-btn-ghost" onClick={onCancel}>
+            {isAr ? 'إلغاء' : 'Cancel'}
           </button>
-          <button 
-            className="confirmation-modal-btn confirmation-modal-btn-confirm"
-            onClick={onConfirm}
-          >
-            {language === 'en' ? 'Confirm' : 'تأكيد'}
+          <button type="button" className="qs-btn qs-btn-primary" onClick={onConfirm} autoFocus>
+            {isAr ? 'تأكيد' : 'Confirm'}
           </button>
         </div>
       </div>

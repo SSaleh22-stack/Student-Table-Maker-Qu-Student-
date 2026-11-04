@@ -156,9 +156,9 @@ function parseTimeSlot(slotText: string): {
   location?: string;
 } {
   const result = {
-    days: ['Sun'],
-    startTime: '08:00',
-    endTime: '09:30',
+    days: [] as string[],
+    startTime: '',
+    endTime: '',
     location: undefined as string | undefined,
   };
 
@@ -460,13 +460,14 @@ export function extractCoursesFromDom(doc: Document): Course[] {
                 section: sectionNumber,
                 campus,
                 hours,
-                days: ['Sun'],
-                startTime: '08:00',
-                endTime: '09:30',
+                days: [], // no lecture time on the portal: listed in the summary only
+                startTime: '',
+                endTime: '',
                 instructor: instructor || undefined,
                 status,
                 classType,
-                finalExam: examPeriod ? { day: 'Sun', startTime: '08:00', endTime: '10:00' } : undefined,
+                activity: activityType || undefined, // النشاط exactly as the portal shows it
+                finalExam: examPeriod ? { day: '', startTime: '', endTime: '', date: examPeriod } : undefined,
                 __originalIndex: domIndex, // Preserve DOM order (use index from form name)
               };
               courses.push(course);
@@ -504,12 +505,9 @@ export function extractCoursesFromDom(doc: Document): Course[] {
                 instructor: instructor || undefined,
                 status,
                 classType,
-                finalExam: examPeriod ? { 
-                  day: firstSlot.days[0] || 'Sun', // Use first day for exam day
-                  startTime: '08:00', 
-                  endTime: '10:00',
-                  date: examPeriod // Store exam period as date for now
-                } : undefined,
+                activity: activityType || undefined, // النشاط exactly as the portal shows it
+                // The portal only gives the exam period number (no day or time)
+                finalExam: examPeriod ? { day: '', startTime: '', endTime: '', date: examPeriod } : undefined,
                 __originalIndex: domIndex, // Preserve DOM order (use index from form name)
               };
               console.log(`Extracted course with ${timeSlots.length} time slot(s):`, course);
@@ -522,13 +520,14 @@ export function extractCoursesFromDom(doc: Document): Course[] {
               code,
               name,
               section: sectionNumber,
-              days: ['Sun'],
-              startTime: '08:00',
-              endTime: '09:30',
+              days: [], // no lecture time on the portal: listed in the summary only
+              startTime: '',
+              endTime: '',
               instructor: instructor || undefined,
               status,
               classType,
-              finalExam: examPeriod ? { day: 'Sun', startTime: '08:00', endTime: '10:00' } : undefined,
+              activity: activityType || undefined, // النشاط exactly as the portal shows it
+              finalExam: examPeriod ? { day: '', startTime: '', endTime: '', date: examPeriod } : undefined,
               __originalIndex: domIndex, // Preserve DOM order (use index from form name)
             };
             courses.push(course);
@@ -542,11 +541,12 @@ export function extractCoursesFromDom(doc: Document): Course[] {
             section: sectionNumber,
             campus,
             hours,
-            days: ['Sun'],
-            startTime: '08:00',
-            endTime: '09:30',
+            days: [], // no lecture time on the portal: listed in the summary only
+            startTime: '',
+            endTime: '',
             status,
             classType,
+            activity: activityType || undefined, // النشاط exactly as the portal shows it
             __originalIndex: domIndex, // Preserve DOM order (use index from form name)
           };
           courses.push(course);

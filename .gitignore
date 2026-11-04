@@ -5,3 +5,7 @@ dist/
 .vscode/
 .idea/
 
+
+# Build outputs (extension packages and Android app bundles)
+*.zip
+*.aab

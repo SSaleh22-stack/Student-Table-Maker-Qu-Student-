@@ -28,6 +28,7 @@ const copyManifest = () => {
           htmlContent = htmlContent.replace(/'\/assets\//g, "'./assets/");
           // Also fix any relative paths: ../../assets/ -> ./assets/
           htmlContent = htmlContent.replace(/\.\.\/\.\.\/assets\//g, './assets/');
+          htmlContent = htmlContent.replace(/\.\.\/\.\.\/icons\//g, './icons/');
           writeFileSync(htmlDest, htmlContent);
         }
         // Inline imports in content scripts and ensure they have a newline at the end

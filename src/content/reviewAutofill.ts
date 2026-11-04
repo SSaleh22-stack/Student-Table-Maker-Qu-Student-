@@ -385,6 +385,13 @@ function createWidget(): HTMLElement {
   widget.id = 'qu-review-autofill-widget';
   widget.innerHTML = `
     <div class="qu-review-widget-header">
+      <svg class="qu-review-widget-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="30" height="30" aria-hidden="true">
+        <rect width="128" height="128" rx="30" fill="#FFFFFF"/>
+        <rect x="26" y="34" width="72" height="62" rx="14" fill="none" stroke="#0E7490" stroke-width="10"/>
+        <path d="M46 24v16M78 24v16" fill="none" stroke="#0E7490" stroke-width="10" stroke-linecap="round"/>
+        <path d="M80 78l24 24" fill="none" stroke="#FFFFFF" stroke-width="22" stroke-linecap="round"/>
+        <path d="M80 78l24 24" fill="none" stroke="#0E7490" stroke-width="12" stroke-linecap="round"/>
+      </svg>
       <span class="qu-review-widget-title">${t('title')}</span>
     </div>
     <div class="qu-review-widget-body">
@@ -417,73 +424,98 @@ function createWidget(): HTMLElement {
       position: fixed !important;
       bottom: 20px !important;
       right: 20px !important;
-      width: 280px !important;
-      background: #ffffff !important;
-      border: 1px solid #e2e8f0 !important;
-      border-radius: 12px !important;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
+      width: 300px !important;
+      background: #FFFFFF !important;
+      border: 1px solid #E3E9F0 !important;
+      border-radius: 18px !important;
+      box-shadow: 0 16px 40px rgba(27, 37, 51, 0.18) !important;
+      overflow: hidden !important;
       z-index: 999999 !important;
-      font-family: 'Segoe UI', Tahoma, Arial, sans-serif !important;
+      font-family: 'IBM Plex Sans Arabic', 'Segoe UI', Tahoma, Arial, sans-serif !important;
       font-size: 14px !important;
+      color: #1B2533 !important;
       direction: ${getLanguage() === 'ar' ? 'rtl' : 'ltr'} !important;
     }
     .qu-review-widget-header {
+      display: flex !important;
+      align-items: center !important;
+      gap: 10px !important;
       padding: 12px 16px !important;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-      border-radius: 12px 12px 0 0 !important;
-      color: white !important;
+      background: #0E7490 !important;
+      color: #FFFFFF !important;
+      font-size: 15px !important;
       font-weight: 600 !important;
+    }
+    .qu-review-widget-logo {
+      flex-shrink: 0 !important;
+      display: block !important;
     }
     .qu-review-widget-body {
       padding: 16px !important;
     }
     .qu-review-widget-control {
-      margin-bottom: 12px !important;
+      margin-bottom: 14px !important;
     }
     .qu-review-widget-control label {
       display: block !important;
       margin-bottom: 6px !important;
-      color: #4a5568 !important;
+      color: #3C4A5C !important;
+      font-size: 13px !important;
       font-weight: 500 !important;
     }
     #qu-review-target-choice {
       width: 100% !important;
-      padding: 8px 12px !important;
-      border: 1px solid #cbd5e0 !important;
-      border-radius: 6px !important;
+      min-height: 42px !important;
+      padding: 0 12px !important;
+      border: 1px solid #CBD5E1 !important;
+      border-radius: 12px !important;
+      font-family: inherit !important;
       font-size: 14px !important;
-      background: white !important;
-      color: #2d3748 !important;
+      background: #FFFFFF !important;
+      color: #1B2533 !important;
+      cursor: pointer !important;
+    }
+    #qu-review-target-choice:focus {
+      outline: none !important;
+      border-color: #0E7490 !important;
+      box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.15) !important;
     }
     .qu-review-widget-actions {
       display: flex !important;
       gap: 8px !important;
-      margin-bottom: 12px !important;
+      margin-bottom: 10px !important;
     }
     .qu-review-btn {
       flex: 1 !important;
-      padding: 10px 16px !important;
+      min-height: 42px !important;
+      padding: 0 16px !important;
       border: none !important;
-      border-radius: 6px !important;
+      border-radius: 999px !important;
+      font-family: inherit !important;
       font-size: 14px !important;
-      font-weight: 500 !important;
+      font-weight: 600 !important;
       cursor: pointer !important;
-      transition: all 0.2s !important;
+      transition: background-color 0.15s ease, box-shadow 0.15s ease !important;
     }
     .qu-review-btn-primary {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-      color: white !important;
+      background: #0E7490 !important;
+      color: #FFFFFF !important;
     }
-    .qu-review-btn-primary:hover {
-      transform: translateY(-1px) !important;
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4) !important;
+    .qu-review-btn-primary:hover:not(:disabled) {
+      background: #155E75 !important;
+      box-shadow: 0 4px 12px rgba(14, 116, 144, 0.3) !important;
     }
     .qu-review-btn-secondary {
-      background: #e2e8f0 !important;
-      color: #4a5568 !important;
+      background: #F1F4F8 !important;
+      color: #1B2533 !important;
     }
-    .qu-review-btn-secondary:hover {
-      background: #cbd5e0 !important;
+    .qu-review-btn-secondary:hover:not(:disabled) {
+      background: #E4E9F0 !important;
+    }
+    .qu-review-btn:focus-visible,
+    #qu-review-target-choice:focus-visible {
+      outline: 3px solid rgba(14, 116, 144, 0.45) !important;
+      outline-offset: 2px !important;
     }
     .qu-review-btn:disabled {
       opacity: 0.5 !important;
@@ -491,15 +523,15 @@ function createWidget(): HTMLElement {
     }
     .qu-review-status {
       min-height: 20px !important;
-      font-size: 12px !important;
-      color: #718096 !important;
+      font-size: 13px !important;
+      color: #4A5668 !important;
       text-align: center !important;
     }
     .qu-review-status.success {
-      color: #38a169 !important;
+      color: #14612F !important;
     }
     .qu-review-status.error {
-      color: #e53e3e !important;
+      color: #B42318 !important;
     }
   `;
   document.head.appendChild(style);
@@ -685,13 +717,13 @@ function injectButtonBeforeRow(row: HTMLTableRowElement) {
     flex-direction: column !important;
     gap: 10px !important;
     margin: 15px 0 !important;
-    padding: 12px !important;
-    background: #f8f9fa !important;
-    border: 1px solid #e0e0e0 !important;
-    border-radius: 6px !important;
+    padding: 14px 16px !important;
+    background: #F7F9FC !important;
+    border: 1px solid #E3E9F0 !important;
+    border-radius: 14px !important;
     text-align: ${getLanguage() === 'ar' ? 'right' : 'left'} !important;
     direction: ${getLanguage() === 'ar' ? 'rtl' : 'ltr'} !important;
-    font-family: 'Segoe UI', Tahoma, Arial, sans-serif !important;
+    font-family: 'IBM Plex Sans Arabic', 'Segoe UI', Tahoma, Arial, sans-serif !important;
   `;
 
   // Create select dropdown for target choice
@@ -802,8 +834,8 @@ function injectButtonBeforeRow(row: HTMLTableRowElement) {
     min-width: ${calculatedWidth}px !important;
     width: auto !important;
     padding: ${isArabic ? '8px 12px 8px 35px' : '8px 35px 8px 12px'} !important;
-    border: 1px solid #999 !important;
-    border-radius: 2px !important;
+    border: 1px solid #CBD5E1 !important;
+    border-radius: 10px !important;
     font-size: ${largerFontSize} !important;
     font-weight: normal !important;
     background-color: #ffffff !important;
@@ -829,9 +861,9 @@ function injectButtonBeforeRow(row: HTMLTableRowElement) {
     margin-top: 4px !important;
     min-width: ${calculatedWidth}px !important;
     background-color: #ffffff !important;
-    border: 1px solid #999 !important;
-    border-radius: 2px !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+    border: 1px solid #CBD5E1 !important;
+    border-radius: 10px !important;
+    box-shadow: 0 12px 32px rgba(27, 37, 51, 0.16) !important;
     z-index: 10000 !important;
     max-height: 300px !important;
     overflow-y: auto !important;
@@ -850,20 +882,20 @@ function injectButtonBeforeRow(row: HTMLTableRowElement) {
       font-family: ${defaultFontFamily} !important;
       text-align: ${isArabic ? 'right' : 'left'} !important;
       direction: ${isArabic ? 'rtl' : 'ltr'} !important;
-      border-bottom: 1px solid #f0f0f0 !important;
+      border-bottom: 1px solid #EDF1F5 !important;
     `;
     
     // Highlight current selection
     if (opt.value === targetChoice) {
-      menuItem.style.backgroundColor = '#f0f0f0';
+      menuItem.style.backgroundColor = '#E3F2F6';
     }
     
     // Hover effect
     menuItem.addEventListener('mouseenter', () => {
-      menuItem.style.backgroundColor = '#f5f5f5';
+      menuItem.style.backgroundColor = '#F1F4F8';
     });
     menuItem.addEventListener('mouseleave', () => {
-      menuItem.style.backgroundColor = opt.value === targetChoice ? '#f0f0f0' : '#ffffff';
+      menuItem.style.backgroundColor = opt.value === targetChoice ? '#E3F2F6' : '#ffffff';
     });
     
     // Click handler
@@ -875,7 +907,7 @@ function injectButtonBeforeRow(row: HTMLTableRowElement) {
       // Update all menu items to show current selection
       dropdownMenu.querySelectorAll('div').forEach((item, idx) => {
         if (optionTexts[idx].value === targetChoice) {
-          (item as HTMLElement).style.backgroundColor = '#f0f0f0';
+          (item as HTMLElement).style.backgroundColor = '#E3F2F6';
         } else {
           (item as HTMLElement).style.backgroundColor = '#ffffff';
         }
@@ -906,7 +938,7 @@ function injectButtonBeforeRow(row: HTMLTableRowElement) {
   
   // Add dropdown arrow to button
   const arrow = document.createElement('span');
-  arrow.textContent = isArabic ? '◄' : '▼';
+  arrow.textContent = '▾';
   arrow.style.cssText = `
     position: absolute !important;
     ${isArabic ? 'left: 8px' : 'right: 8px'} !important;
@@ -936,13 +968,11 @@ function injectButtonBeforeRow(row: HTMLTableRowElement) {
   
   // Create logo/icon (using checkmark emoji/icon)
   const logo = document.createElement('span');
-  logo.innerHTML = '✓';
+  logo.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:block"><path d="M20 6L9 17l-5-5"/></svg>';
   logo.style.cssText = `
-    display: inline-block !important;
-    font-size: 16px !important;
-    margin-${getLanguage() === 'ar' ? 'left' : 'right'}: 8px !important;
-    vertical-align: middle !important;
-    font-weight: bold !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    margin: 0 !important;
   `;
 
   const buttonText = document.createElement('span');
@@ -958,33 +988,35 @@ function injectButtonBeforeRow(row: HTMLTableRowElement) {
   }
   
   button.style.cssText = `
-    padding: 10px 20px !important;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    min-height: 44px !important;
+    padding: 0 22px !important;
+    background: #0E7490 !important;
     color: white !important;
     border: none !important;
-    border-radius: 6px !important;
+    border-radius: 999px !important;
     font-size: 14px !important;
     font-weight: 600 !important;
     cursor: pointer !important;
     transition: all 0.2s !important;
-    font-family: 'Segoe UI', Tahoma, Arial, sans-serif !important;
+    font-family: 'IBM Plex Sans Arabic', 'Segoe UI', Tahoma, Arial, sans-serif !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
+    gap: 8px !important;
     width: 100% !important;
-    box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3) !important;
+    box-shadow: 0 2px 6px rgba(14, 116, 144, 0.3) !important;
     direction: ${getLanguage() === 'ar' ? 'rtl' : 'ltr'} !important;
     text-align: ${getLanguage() === 'ar' ? 'right' : 'left'} !important;
   `;
 
   // Add hover effect
   button.addEventListener('mouseenter', () => {
-    button.style.transform = 'translateY(-2px)';
-    button.style.boxShadow = '0 6px 16px rgba(102, 126, 234, 0.5)';
+    button.style.transform = 'translateY(-1px)';
+    button.style.boxShadow = '0 6px 16px rgba(14, 116, 144, 0.5)';
   });
   button.addEventListener('mouseleave', () => {
     button.style.transform = 'translateY(0)';
-    button.style.boxShadow = '0 2px 8px rgba(102, 126, 234, 0.3)';
+    button.style.boxShadow = '0 2px 8px rgba(14, 116, 144, 0.3)';
   });
 
   // Add click handler
@@ -1026,19 +1058,19 @@ function injectButtonBeforeRow(row: HTMLTableRowElement) {
       buttonText.textContent = getLanguage() === 'ar' 
         ? `تم ملء ${result.count} سؤال` 
         : `Filled ${result.count} questions`;
-      button.style.background = '#38a169';
+      button.style.background = '#15803D';
       setTimeout(() => {
         buttonText.textContent = getLanguage() === 'ar' ? 'ملء التقييم تلقائياً' : 'Review Auto Fill';
-        button.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+        button.style.background = '#0E7490';
         button.disabled = false;
         choiceButton.disabled = false;
       }, 3000);
     } else {
       buttonText.textContent = result.error || t('noQuestions');
-      button.style.background = '#e53e3e';
+      button.style.background = '#B42318';
       setTimeout(() => {
         buttonText.textContent = getLanguage() === 'ar' ? 'ملء التقييم تلقائياً' : 'Review Auto Fill';
-        button.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+        button.style.background = '#0E7490';
         button.disabled = false;
         choiceButton.disabled = false;
       }, 3000);
@@ -1232,22 +1264,23 @@ function injectButtonAfterTable(table: HTMLTableElement) {
   button.id = 'qu-review-table-autofill-btn';
   button.textContent = getLanguage() === 'ar' ? 'ملء التقييم تلقائياً' : 'Review Auto Fill';
   button.style.cssText = `
-    padding: 10px 20px !important;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    min-height: 42px !important;
+    padding: 0 22px !important;
+    background: #0E7490 !important;
     color: white !important;
     border: none !important;
-    border-radius: 6px !important;
+    border-radius: 999px !important;
     font-size: 14px !important;
     font-weight: 500 !important;
     cursor: pointer !important;
     transition: all 0.2s !important;
-    font-family: 'Segoe UI', Tahoma, Arial, sans-serif !important;
+    font-family: 'IBM Plex Sans Arabic', 'Segoe UI', Tahoma, Arial, sans-serif !important;
   `;
 
   // Add hover effect
   button.addEventListener('mouseenter', () => {
     button.style.transform = 'translateY(-1px)';
-    button.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.4)';
+    button.style.boxShadow = '0 4px 12px rgba(14, 116, 144, 0.4)';
   });
   button.addEventListener('mouseleave', () => {
     button.style.transform = 'translateY(0)';
@@ -1292,18 +1325,18 @@ function injectButtonAfterTable(table: HTMLTableElement) {
       button.textContent = getLanguage() === 'ar' 
         ? `✓ تم ملء ${result.count} سؤال` 
         : `✓ Filled ${result.count} questions`;
-      button.style.background = '#38a169';
+      button.style.background = '#15803D';
       setTimeout(() => {
         button.textContent = getLanguage() === 'ar' ? 'ملء التقييم تلقائياً' : 'Review Auto Fill';
-        button.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+        button.style.background = '#0E7490';
         button.disabled = false;
       }, 3000);
     } else {
       button.textContent = result.error || t('noQuestions');
-      button.style.background = '#e53e3e';
+      button.style.background = '#B42318';
       setTimeout(() => {
         button.textContent = getLanguage() === 'ar' ? 'ملء التقييم تلقائياً' : 'Review Auto Fill';
-        button.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+        button.style.background = '#0E7490';
         button.disabled = false;
       }, 3000);
     }
@@ -1392,8 +1425,7 @@ function init() {
             const arrow = choiceButton.querySelector('span');
             if (arrow && !arrow.textContent) {
               // Arrow exists, restore it
-              const isArabic = getLanguage() === 'ar';
-              arrow.textContent = isArabic ? '◄' : '▼';
+              arrow.textContent = '▾';
             }
           }
         }
