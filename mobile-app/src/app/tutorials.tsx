@@ -33,12 +33,24 @@ const platforms = (): { key: Platform; label: string }[] => [
 const tutorials = (): Record<Platform, Tutorial[]> => ({
   phone: [
     {
-      title: tr('شرح استخدام التطبيق على الجوال', 'Using the app on a phone'),
-      youtubeId: 'EIm0nSZxu2I',
-      aspectRatio: 9 / 16,
+      title: tr(
+        'استخراج المقررات المطروحة من MyQU وإنشاء الجدول على الجوال',
+        'Importing offered courses from MyQU and building a timetable on a phone',
+      ),
+      youtubeId: '4dWYP8we7x8',
+      aspectRatio: 16 / 9,
     },
   ],
-  ipad: [],
+  ipad: [
+    {
+      title: tr(
+        'استخراج المقررات المطروحة من MyQU وإنشاء الجدول على الآيباد',
+        'Importing offered courses from MyQU and building a timetable on iPad',
+      ),
+      youtubeId: 'udSLFZlG0t8',
+      aspectRatio: 16 / 9,
+    },
+  ],
 });
 
 /** "مقاطع شرح الاستخدام": short videos on how to use the app, played inside the app. */

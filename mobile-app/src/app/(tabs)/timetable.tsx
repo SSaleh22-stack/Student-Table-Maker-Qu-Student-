@@ -205,7 +205,10 @@ export default function TimetableScreen() {
             </Card>
           </View>
         </View>
-        {toast ? <Toast toast={toast} onDismiss={dismissToast} inset={Math.max(16, (winW - 560) / 2)} /> : null}
+        {/* At the top on iPad too, so the message is seen where the eye already is. */}
+        {toast ? (
+          <Toast toast={toast} onDismiss={dismissToast} inset={Math.max(16, (winW - 560) / 2)} position="top" />
+        ) : null}
         {details}
       </SafeAreaView>
     );
