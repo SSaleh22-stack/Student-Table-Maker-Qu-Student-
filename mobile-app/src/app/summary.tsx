@@ -7,7 +7,7 @@ import { SectionClashNotes } from '@/components/ClashNotes';
 import { SafeAreaView } from '@/components/SafeAreaView';
 import { Button, Card, IconButton, ScreenHeader } from '@/components/ui';
 import { tr } from '@/lib/i18n';
-import { activityLabel, courseHours, formatExam, formatSchedule, getCourseTheme, groupCourses } from '@/lib/courses';
+import { activityLabel, courseHours, creditHours, formatExam, formatSchedule, getCourseTheme, groupCourses, hoursLabel } from '@/lib/courses';
 import { row } from '@/lib/rtl';
 import { clashingCodes, clashPairs, examClashes } from '@/lib/schedule';
 import { goBack } from '@/lib/nav';
@@ -50,7 +50,8 @@ export default function SummaryScreen() {
                     </AppText>
                     <AppText size={11.5} color={colors.muted}>
                       {tr('الشعبة', 'Section')} {c.section}
-                      {activityLabel(c) ? ` (${activityLabel(c)})` : ''} · {formatSchedule(c)}
+                      {activityLabel(c) ? ` (${activityLabel(c)})` : ''}
+                      {creditHours(c) ? ` · ${hoursLabel(creditHours(c))}` : ''} · {formatSchedule(c)}
                     </AppText>
                     {c.location || c.instructor ? (
                       <AppText size={11.5} color={colors.muted} numberOfLines={1}>
