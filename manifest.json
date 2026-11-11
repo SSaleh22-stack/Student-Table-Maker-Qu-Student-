@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Qu Student",
-  "version": "4.0.1",
+  "version": "4.0.2",
   "description": "يساعد طلاب جامعة القصيم على استخراج المقررات وبناء جدول دراسي مرئي وتعبئة تقييم المقررات بسهولة",
   "permissions": [
     "activeTab",
