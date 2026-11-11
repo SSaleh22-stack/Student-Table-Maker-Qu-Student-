@@ -21,7 +21,7 @@ import { gridHours, layoutDay, markedBlocks } from '@/lib/schedule';
 import type { Course } from '@/lib/types';
 
 import { arabicDate } from './dates';
-import { buildSummaryPages, SUMMARY_CSS } from './summaryPage';
+import { buildSummaryPages, FIT_SCRIPT, SUMMARY_CSS } from './summaryPage';
 
 /** A4 landscape in PDF points; the layout is drawn at this size in CSS pixels. */
 export const PAGE = { width: 842, height: 595 };
@@ -142,6 +142,7 @@ ${SUMMARY_CSS}
   <div class="sum-foot"><span>${tr('الجدول الأسبوعي', 'Weekly timetable')}</span><span>qustudent.net</span></div>
 </div>
 ${buildSummaryPages(chosen, { logo: LOGO_WHITE, date, subtitle })}
+${FIT_SCRIPT}
 </body>
 </html>`;
 };

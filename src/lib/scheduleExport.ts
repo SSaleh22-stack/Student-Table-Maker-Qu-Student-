@@ -1,6 +1,6 @@
 /**
  * Timetable exports with the same look as the Qu Student app:
- *  - PDF: an A4 landscape page with the weekly grid, then the summary page(s), downloaded as a .pdf file.
+ *  - PDF: an A4 landscape page with the weekly grid, then the summary on one page, downloaded as a .pdf file.
  *  - Image: a PNG of the weekly grid in a white card on the teal gradient.
  * Ported from mobile-app/src/lib/export (html.ts, summaryPage.ts). The same file lives in
  * web-app/src/lib/scheduleExport.ts; keep the two in step.
@@ -15,8 +15,18 @@ const WEEK_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu'];
 
 /** A4 landscape in PDF points; pages are laid out at this size in CSS pixels. */
 const PAGE = { width: 842, height: 595 };
-/** Each PDF page is drawn at this many device pixels per CSS pixel (sharp text, modest file size). */
-const PDF_SCALE = 2.5;
+/**
+ * Each PDF page is a picture drawn at this many device pixels per CSS pixel (about 290 dpi on A4).
+ * A summary shrunk to fit its page gets more pixels, up to PDF_MAX_SCALE, so small text stays sharp.
+ */
+const PDF_SCALE = 4;
+const PDF_MAX_SCALE = 7;
+
+/** How much FIT_SCRIPT shrank a page's summary (1 when it did not). */
+const fitScaleOf = (page: HTMLElement) => {
+  const m = /scale\(([\d.]+)\)/.exec(page.querySelector<HTMLElement>('.sum-fit')?.style.transform ?? '');
+  return m ? Math.max(0.1, parseFloat(m[1])) : 1;
+};
 
 // ---------- Text ----------
 
@@ -24,9 +34,7 @@ const TEXT = {
   ar: {
     title: 'جدولي الدراسي',
     summary: 'ملخص الجدول',
-    continued: ' (تابع)',
     weekly: 'الجدول الأسبوعي',
-    of: 'من',
     courses: 'مقررات',
     credit: 'ساعة معتمدة',
     weeklyHours: 'ساعة أسبوعياً',
@@ -50,9 +58,7 @@ const TEXT = {
   en: {
     title: 'My timetable',
     summary: 'Timetable summary',
-    continued: ' (continued)',
     weekly: 'Weekly timetable',
-    of: 'of',
     courses: 'Courses',
     credit: 'Credit hours',
     weeklyHours: 'Hours a week',
@@ -457,30 +463,48 @@ h1 { font-size: 22px; margin: 0; line-height: 1.25; }
 .note { margin-top: 10px; border-radius: 8px; padding: 6px 10px; font-size: 10.5px; line-height: 1.6; }
 .note.ok { background: #E8F7EE; color: #166534; }
 .note.bad { background: #FFF1E2; color: #9A4A0A; border: 1px dashed #E07B1F; }
+.sum-fit { transform-origin: top ${s}; }
 `;
 };
 
 const groupHeight = (g: CourseGroup) =>
   COURSE_ROW + g.sections.reduce((n, s) => n + SECTION_ROW + Math.max(0, slotsOf(s).length - 1) * EXTRA_LINE, 0);
 
-/** Splits the courses into page-sized runs (a course is never split across pages). */
-const paginate = (groups: CourseGroup[], noteLines: number): CourseGroup[][] => {
-  const firstSpace = CARD_SPACE - TABLE_HEAD - STATS - (NOTE_BASE + noteLines * NOTE_LINE);
-  const nextSpace = CARD_SPACE - TABLE_HEAD;
-  const pages: CourseGroup[][] = [[]];
-  let used = 0;
-  for (const g of groups) {
-    const h = groupHeight(g);
-    const space = pages.length === 1 ? firstSpace : nextSpace;
-    if (used + h > space && pages[pages.length - 1].length > 0) {
-      pages.push([]);
-      used = 0;
-    }
-    pages[pages.length - 1].push(g);
-    used += h;
-  }
-  return pages;
+/**
+ * The summary always fits on one page: when the rows need more room than the card has, the
+ * card's content is drawn smaller. This is a first guess from estimated row heights;
+ * FIT_SCRIPT then measures the real heights and corrects it.
+ */
+const estimatedScale = (groups: CourseGroup[], noteLines: number) => {
+  const need =
+    TABLE_HEAD + STATS + NOTE_BASE + noteLines * NOTE_LINE + groups.reduce((n, g) => n + groupHeight(g), 0);
+  return Math.min(1, CARD_SPACE / need);
 };
+
+/**
+ * Shrinks each `.sum-fit` until it fits its card. The content is laid out wider (so fewer lines
+ * wrap) and scaled down by the same amount, so it still fills the card's width.
+ */
+const FIT_SCRIPT = `<script>
+window.__qsFit = function () {
+  document.querySelectorAll('.sum-fit').forEach(function (el) {
+    var card = el.parentElement, cs = getComputedStyle(card);
+    var room = card.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+    var set = function (k, s) { el.style.width = (100 / k) + '%'; el.style.transform = s < 1 ? 'scale(' + s + ')' : 'none'; };
+    var k = 1;
+    for (var i = 0; i < 6; i++) {
+      set(k, 1);
+      var next = Math.min(1, room / el.scrollHeight);
+      if (Math.abs(next - k) < 0.003) break;
+      k = next;
+    }
+    set(k, 1);
+    set(k, Math.min(k, room / el.scrollHeight));
+  });
+};
+window.__qsFit();
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(window.__qsFit);
+</script>`;
 
 const summaryPages = (chosen: Course[], lang: Language, head: (title: string) => string) => {
   const T = TEXT[lang];
@@ -549,26 +573,23 @@ const summaryPages = (chosen: Course[], lang: Language, head: (title: string) =>
   };
 
   const thead =
-    `<thead><tr><th style="width:62px" class="c">${T.section}</th><th style="width:70px" class="c">${T.activity}</th>` +
-    `<th>${T.times}</th><th style="width:104px">${T.room}</th><th style="width:116px">${T.instructor}</th>` +
-    `<th style="width:78px" class="c">${T.exam}</th><th style="width:52px" class="c">${T.hours}</th></tr></thead>`;
+    `<thead><tr><th style="width:8%" class="c">${T.section}</th><th style="width:9%" class="c">${T.activity}</th>` +
+    `<th>${T.times}</th><th style="width:13.5%">${T.room}</th><th style="width:15%">${T.instructor}</th>` +
+    `<th style="width:10%" class="c">${T.exam}</th><th style="width:7%" class="c">${T.hours}</th></tr></thead>`;
 
-  const pages = paginate(groups, Math.max(1, shown.length));
-  return pages
-    .map((run, i) => {
-      const table = `<table class="sum-table">${thead}<tbody>${run.map(rows).join('')}</tbody></table>`;
-      return (
-        '<div class="sum-page">' +
-        head(T.summary + (i > 0 ? T.continued : '')) +
-        `<div class="sum-card">${i === 0 ? stats : ''}${table}${i === 0 ? note : ''}</div>` +
-        `<div class="sum-foot"><span>${T.summary}${pages.length > 1 ? ` · ${i + 1} ${T.of} ${pages.length}` : ''}</span><span>qustudent.net</span></div>` +
-        '</div>'
-      );
-    })
-    .join('\n');
+  // Always one page: the content shrinks to fit when there are many courses.
+  const k = estimatedScale(groups, Math.max(1, shown.length));
+  const table = `<table class="sum-table">${thead}<tbody>${groups.map(rows).join('')}</tbody></table>`;
+  return (
+    '<div class="sum-page">' +
+    head(T.summary) +
+    `<div class="sum-card"><div class="sum-fit" style="width:${100 / k}%;transform:${k < 1 ? `scale(${k})` : 'none'}">${stats}${table}${note}</div></div>` +
+    `<div class="sum-foot"><span>${T.summary}</span><span>qustudent.net</span></div>` +
+    '</div>'
+  );
 };
 
-/** The whole PDF as one HTML page: the weekly grid, then the summary page(s). A4 landscape. */
+/** The whole PDF as one HTML page: the weekly grid, then the one-page summary. A4 landscape. */
 export const buildScheduleHtml = (chosen: Course[], lang: Language): string => {
   const T = TEXT[lang];
   const { from, to } = gridHours(chosen);
@@ -601,6 +622,7 @@ ${summaryCss(lang)}
   <div class="sum-foot"><span>${T.weekly}</span><span>qustudent.net</span></div>
 </div>
 ${summaryPages(chosen, lang, head)}
+${FIT_SCRIPT}
 </body>
 </html>`;
 };
@@ -610,6 +632,11 @@ ${summaryPages(chosen, lang, head)}
  * Pages are pictures, so Arabic text keeps its shapes and the web font.
  */
 export const exportSchedulePdf = async (chosen: Course[], lang: Language): Promise<void> => {
+  download(await buildSchedulePdf(chosen, lang), `${FILE_BASE}.pdf`);
+};
+
+/** The PDF file itself: one picture per page, drawn off screen. */
+export const buildSchedulePdf = async (chosen: Course[], lang: Language): Promise<Blob> => {
   const frame = document.createElement('iframe');
   frame.setAttribute('aria-hidden', 'true');
   frame.style.cssText = `position:fixed;top:0;left:-${PAGE.width + 200}px;width:${PAGE.width}px;height:${PAGE.height}px;border:0;pointer-events:none;`;
@@ -629,6 +656,8 @@ export const exportSchedulePdf = async (chosen: Course[], lang: Language): Promi
       ]),
       new Promise((resolve) => setTimeout(resolve, 3000)),
     ]);
+    // Fit the summary to its page again now that the font is in.
+    (win as Window & { __qsFit?: () => void }).__qsFit?.();
 
     const pdf = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4', compress: true });
     const pageW = pdf.internal.pageSize.getWidth();
@@ -636,7 +665,7 @@ export const exportSchedulePdf = async (chosen: Course[], lang: Language): Promi
     const pages = Array.from(doc.querySelectorAll<HTMLElement>('.sum-page'));
     for (let i = 0; i < pages.length; i++) {
       const canvas = await html2canvas(pages[i], {
-        scale: PDF_SCALE,
+        scale: Math.min(PDF_MAX_SCALE, PDF_SCALE / fitScaleOf(pages[i])),
         backgroundColor: '#0B5F77',
         logging: false,
         useCORS: true,
@@ -644,10 +673,11 @@ export const exportSchedulePdf = async (chosen: Course[], lang: Language): Promi
         windowHeight: PAGE.height,
       });
       if (i > 0) pdf.addPage();
-      pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, pageW, pageH, undefined, 'FAST');
+      // PNG keeps text edges crisp (JPEG blurs them)
+      pdf.addImage(canvas, 'PNG', 0, 0, pageW, pageH, undefined, 'FAST');
     }
     pdf.setProperties({ title: TEXT[lang].title, creator: 'Qu Student' });
-    download(pdf.output('blob'), `${FILE_BASE}.pdf`);
+    return pdf.output('blob');
   } finally {
     frame.remove();
   }
