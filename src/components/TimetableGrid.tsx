@@ -1,7 +1,7 @@
 import React from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useTimetable } from '../contexts/TimetableContext';
-import { Course } from '../types';
+import { Course, TimetableEntry } from '../types';
 import Icon from './Icon';
 import { getCourseTheme, coursesLabel, sectionsLabel, hasSchedule, noTimeLabel, formatDays, formatExam } from '../lib/courseTheme';
 import { exportScheduleImage, exportSchedulePdf, sectionsFromTimetable } from '../lib/scheduleExport';
@@ -226,8 +226,10 @@ const TimetableGrid: React.FC = () => {
 
   // Totals shown next to the title
   const ttUniqueCourses = new Set(timetable.map((entry) => entry.course.code)).size;
-  const ttTotalSections = timetable.length;
-  const ttTotalConflicts = timetable.filter((entry) => entry.isConflictSection).length;
+  // A section with several lecture times is stored once per time (id-slot-N): count it once
+  const sectionId = (entry: TimetableEntry) => entry.courseId.split('-slot-')[0];
+  const ttTotalSections = new Set(timetable.map(sectionId)).size;
+  const ttTotalConflicts = new Set(timetable.filter((entry) => entry.isConflictSection).map(sectionId)).size;
   const ttCourseHours = new Map<string, number>();
   timetable.forEach((entry) => {
     if (entry.course.hours && !ttCourseHours.has(entry.course.code)) {
@@ -437,8 +439,8 @@ const TimetableGrid: React.FC = () => {
             <div className="summary-totals">
               {(() => {
                 const uniqueCourses = new Set(timetable.map(entry => entry.course.code)).size;
-                const totalSections = timetable.length;
-                const totalConflicts = timetable.filter(entry => entry.isConflictSection).length;
+                const totalSections = ttTotalSections;
+                const totalConflicts = ttTotalConflicts;
                 // Calculate total hours - sum hours from unique courses only
                 const courseHoursMap = new Map<string, string>();
                 timetable.forEach(entry => {
@@ -484,6 +486,7 @@ const TimetableGrid: React.FC = () => {
                     <th>{t.courseCode}</th>
                     <th>{t.courseName}</th>
                     <th>{t.section}</th>
+                    <th>{language === 'en' ? 'Hours' : 'الساعات'}</th>
                     <th>{t.days}</th>
                     <th>{t.time}</th>
                     <th>{t.location}</th>
@@ -499,6 +502,7 @@ const TimetableGrid: React.FC = () => {
                     return groupTimetableBySection().map(({ key, section, entries }) => {
                       const codes = [...new Set(entries.map(e => e.course.code))].join(', ');
                       const names = [...new Set(entries.map(e => e.course.name))].join(', ');
+                      const hours = entries.find(e => e.course.hours)?.course.hours;
                       const days = formatDays([...new Set(entries.flatMap(e => e.course.days))], t, language) || '-';
                       const times = [...new Set(entries.map(e => hasSchedule(e.course) ? `${e.course.startTime} - ${e.course.endTime}` : noTimeLabel(language)))].join(', ');
                       const locations = [...new Set(entries.map(e => e.course.location).filter(Boolean))].join(', ');
@@ -512,6 +516,7 @@ const TimetableGrid: React.FC = () => {
                           <td>{codes}</td>
                           <td>{names}</td>
                           <td>{section}</td>
+                          <td>{hours || '-'}</td>
                           <td>{days}</td>
                           <td>{times}</td>
                           <td>{locations || '-'}</td>

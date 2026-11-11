@@ -514,12 +514,14 @@ export function extractCoursesFromDom(doc: Document): Course[] {
               courses.push(course);
             }
           } else {
-            // No section input found, create a default course
+            // No lecture time (e.g. an online course): keep its credit hours so they still count
             const course: Course & { __originalIndex?: number } = {
               id: `${code}-${sectionNumber}-${domIndex}`,
               code,
               name,
               section: sectionNumber,
+              campus,
+              hours,
               days: [], // no lecture time on the portal: listed in the summary only
               startTime: '',
               endTime: '',

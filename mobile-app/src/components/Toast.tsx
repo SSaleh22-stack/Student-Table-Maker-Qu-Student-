@@ -31,7 +31,7 @@ export interface ToastData {
 /**
  * A short message with an undo button. Swipe it sideways, or toward its edge (up at the top,
  * down at the bottom), to dismiss it.
- * - `position`: "top" on phones, so it never covers the course cards being tapped; it is
+ * - `position`: "top" on phones and iPad, so it never covers the course cards being tapped; it is
  *   placed from the top of the screen, so render it outside any safe-area padding.
  * - `inset`: gap to each side (bigger on iPad, so the message stays a readable width).
  */

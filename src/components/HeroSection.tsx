@@ -22,7 +22,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({ hasCourses, onOpenOfferedCour
   // Same totals the timetable summary uses
   const stats = useMemo(() => {
     const uniqueCourses = new Set(timetable.map((entry) => entry.course.code)).size;
-    const conflicts = timetable.filter((entry) => entry.isConflictSection).length;
+    // A section with several lecture times is stored once per time (id-slot-N): count it once
+    const conflicts = new Set(timetable.filter((entry) => entry.isConflictSection).map((entry) => entry.courseId.split('-slot-')[0])).size;
     const courseHours = new Map<string, number>();
     timetable.forEach((entry) => {
       const code = entry.course.code;

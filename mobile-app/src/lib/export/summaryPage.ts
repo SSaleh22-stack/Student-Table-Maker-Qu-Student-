@@ -1,7 +1,8 @@
 /**
- * The PDF's summary page(s): a white card on the teal gradient (same look as the exported image).
+ * The PDF's summary page: a white card on the teal gradient (same look as the exported image).
  * Totals on top, then one table grouped by course: a title row per course (credit hours)
- * and a row per section (activity, times, room, teacher, exam period, hours). A long table continues on more pages.
+ * and a row per section (activity, times, room, teacher, exam period, hours). It always fits on one
+ * page: with many courses the card's content is drawn smaller.
  */
 import { tr } from '@/lib/i18n';
 import {
@@ -61,6 +62,8 @@ export const SUMMARY_CSS = `
 .note { margin-top: 10px; border-radius: 8px; padding: 6px 10px; font-size: 10.5px; line-height: 1.6; }
 .note.ok { background: #E8F7EE; color: #166534; }
 .note.bad { background: #FFF1E2; color: #9A4A0A; border: 1px dashed #E07B1F; }
+.sum-fit { transform-origin: top left; }
+[dir="rtl"] .sum-fit { transform-origin: top right; }
 `;
 
 const roomsOf = (s: Course) => {
@@ -107,27 +110,40 @@ const courseRows = (g: CourseGroup) => {
   );
 };
 
-/**
- * Splits the courses into page-sized runs (a course is never split). The first page also holds
- * the totals and the clash note (`noteLines` lines), so it has less room for rows.
- */
-const paginate = (groups: CourseGroup[], noteLines: number): CourseGroup[][] => {
-  const firstSpace = CARD_SPACE - TABLE_HEAD - STATS - (NOTE_BASE + noteLines * NOTE_LINE);
-  const nextSpace = CARD_SPACE - TABLE_HEAD;
-  const pages: CourseGroup[][] = [[]];
-  let used = 0;
-  for (const g of groups) {
-    const h = groupHeight(g);
-    const space = pages.length === 1 ? firstSpace : nextSpace;
-    if (used + h > space && pages[pages.length - 1].length > 0) {
-      pages.push([]);
-      used = 0;
-    }
-    pages[pages.length - 1].push(g);
-    used += h;
-  }
-  return pages;
+/** First guess at how much to shrink the summary so it fits one page (from estimated row heights). */
+const estimatedScale = (groups: CourseGroup[], noteLines: number) => {
+  const need =
+    TABLE_HEAD + STATS + NOTE_BASE + noteLines * NOTE_LINE + groups.reduce((n, g) => n + groupHeight(g), 0);
+  return Math.min(1, CARD_SPACE / need);
 };
+
+/**
+ * Measures the real heights and shrinks each `.sum-fit` until it fits its card. The content is
+ * laid out wider (so fewer lines wrap) and scaled down by the same amount, so it still fills the
+ * card's width. Where the print view runs no scripts, the estimated scale stays.
+ */
+export const FIT_SCRIPT = `<script>
+(function () {
+  var fit = function () {
+    document.querySelectorAll('.sum-fit').forEach(function (el) {
+      var card = el.parentElement, cs = getComputedStyle(card);
+      var room = card.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+      var set = function (k, s) { el.style.width = (100 / k) + '%'; el.style.transform = s < 1 ? 'scale(' + s + ')' : 'none'; };
+      var k = 1;
+      for (var i = 0; i < 6; i++) {
+        set(k, 1);
+        var next = Math.min(1, room / el.scrollHeight);
+        if (Math.abs(next - k) < 0.003) break;
+        k = next;
+      }
+      set(k, 1);
+      set(k, Math.min(k, room / el.scrollHeight));
+    });
+  };
+  fit();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
+})();
+</script>`;
 
 export interface SummaryOptions {
   /** White Qu Student mark (SVG) */
@@ -171,23 +187,19 @@ export const buildSummaryPages = (chosen: Course[], { logo, date, subtitle }: Su
     : `<div class="note ok">✓ ${tr('لا يوجد تعارض في المحاضرات أو الاختبارات', 'No class or exam clashes')}</div>`;
 
   const head =
-    `<thead><tr><th style="width:62px" class="c">${tr('الشعبة', 'Section')}</th><th style="width:70px" class="c">${tr('النشاط', 'Type')}</th>` +
-    `<th>${tr('المواعيد', 'Times')}</th><th style="width:104px">${tr('القاعة', 'Room')}</th><th style="width:116px">${tr('المدرّس', 'Instructor')}</th>` +
-    `<th style="width:78px" class="c">${tr('فترة الاختبار', 'Exam period')}</th><th style="width:52px" class="c">${tr('الساعات', 'Hours')}</th></tr></thead>`;
+    `<thead><tr><th style="width:8%" class="c">${tr('الشعبة', 'Section')}</th><th style="width:9%" class="c">${tr('النشاط', 'Type')}</th>` +
+    `<th>${tr('المواعيد', 'Times')}</th><th style="width:13.5%">${tr('القاعة', 'Room')}</th><th style="width:15%">${tr('المدرّس', 'Instructor')}</th>` +
+    `<th style="width:10%" class="c">${tr('فترة الاختبار', 'Exam period')}</th><th style="width:7%" class="c">${tr('الساعات', 'Hours')}</th></tr></thead>`;
 
-  const pages = paginate(groups, Math.max(1, shown.length));
-  return pages
-    .map((run, i) => {
-      const more = i > 0 ? tr(' (تابع)', ' (continued)') : '';
-      const table = `<table class="sum-table">${head}<tbody>${run.map(courseRows).join('')}</tbody></table>`;
-      return (
-        '<div class="sum-page">' +
-        `<div class="sum-head">${logo}<div><h1>${tr('ملخص الجدول', 'Timetable summary')}${more}</h1><div class="sub">${subtitle}</div></div>` +
-        `<div class="date">${date}<br>Qu Student</div></div>` +
-        `<div class="sum-card">${i === 0 ? stats : ''}${table}${i === 0 ? note : ''}</div>` +
-        `<div class="sum-foot"><span>${tr('ملخص الجدول', 'Timetable summary')}${pages.length > 1 ? ` · ${i + 1} ${tr('من', 'of')} ${pages.length}` : ''}</span><span>qustudent.net</span></div>` +
-        '</div>'
-      );
-    })
-    .join('\n');
+  // Always one page: the content shrinks to fit when there are many courses.
+  const k = estimatedScale(groups, Math.max(1, shown.length));
+  const table = `<table class="sum-table">${head}<tbody>${groups.map(courseRows).join('')}</tbody></table>`;
+  return (
+    '<div class="sum-page">' +
+    `<div class="sum-head">${logo}<div><h1>${tr('ملخص الجدول', 'Timetable summary')}</h1><div class="sub">${subtitle}</div></div>` +
+    `<div class="date">${date}<br>Qu Student</div></div>` +
+    `<div class="sum-card"><div class="sum-fit" style="width:${100 / k}%;transform:${k < 1 ? `scale(${k})` : 'none'}">${stats}${table}${note}</div></div>` +
+    `<div class="sum-foot"><span>${tr('ملخص الجدول', 'Timetable summary')}</span><span>qustudent.net</span></div>` +
+    '</div>'
+  );
 };
