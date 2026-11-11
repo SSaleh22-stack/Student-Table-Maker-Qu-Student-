@@ -138,6 +138,8 @@
           const code = (cells[0]?.textContent?.trim()) || `COURSE-${index}`;
           const name = (cells[1]?.textContent?.trim()) || 'Unknown Course';
           const section = (cells[3]?.textContent?.trim()) || '01';
+          const campus = (cells[2]?.textContent?.trim()) || '';
+          const hours = (cells[5]?.textContent?.trim()) || ''; // credit hours, also for online courses with no lecture time
           const classTypeText = (cells[4]?.textContent?.trim()) || '';
           let classType;
           if (classTypeText.includes('نظري') || classTypeText.toLowerCase().includes('theoretical')) {
@@ -186,6 +188,9 @@
               code: code,
               name: name,
               section: section,
+              campus: campus || undefined,
+              hours: hours || undefined,
+              activity: classTypeText || undefined,
               days: Array.from(allDays),
               startTime: firstSlot.startTime,
               endTime: firstSlot.endTime,
@@ -217,6 +222,9 @@
               code: code,
               name: name,
               section: section,
+              campus: campus || undefined,
+              hours: hours || undefined,
+              activity: classTypeText || undefined,
               days: [], // no lecture time: listed in the summary only
               startTime: '',
               endTime: '',
