@@ -10,12 +10,24 @@ chrome.action.onClicked.addListener((tab) => {
   });
 });
 
-// Inject content script on QU pages when they load
+// The offered-courses page lives only on the student portal (stu-gate). Other QU sites
+// such as Blackboard (lms.qu.edu.sa) must never get the extract button.
+const PORTAL_HOST = 'stu-gate.qu.edu.sa';
+const isStudentPortal = (url: string | undefined): boolean => {
+  if (!url) return false;
+  try {
+    const u = new URL(url);
+    return u.protocol === 'https:' && u.hostname === PORTAL_HOST;
+  } catch {
+    return false;
+  }
+};
+
+// Inject the content script on student portal pages when they load.
+// The script itself only shows the button when the offered-courses table is on the page.
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (changeInfo.status === 'complete' && tab.url) {
-    const url = tab.url;
-    if ((url.includes('qu.edu.sa') || url.includes('stu-gate.qu.edu.sa')) && 
-        (url.includes('offeredCourses') || url.includes('student'))) {
+    if (isStudentPortal(tab.url)) {
       // Inject content script programmatically
       chrome.scripting.executeScript({
         target: { tabId },
@@ -79,13 +91,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       const tabId = tabs[0].id;
       const tabUrl = tabs[0].url || '';
 
-      // Check if the tab is a QU student page
-      const isQUPage = tabUrl.includes('qu.edu.sa') || 
-                       tabUrl.includes('stu-gate.qu.edu.sa') ||
-                       tabUrl.includes('offeredCourses') ||
-                       tabUrl.includes('student');
-      
-      if (!isQUPage) {
+      if (!isStudentPortal(tabUrl)) {
         sendResponse({
           type: 'EXTRACTION_FAILED',
           error: 'Please navigate to the QU student portal course page first. Make sure you are logged in and viewing your available courses.',

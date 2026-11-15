@@ -866,24 +866,47 @@ function injectExtractButton() {
   }
 }
 
-// Inject button when page loads - wrap in try-catch to handle context invalidated errors
-try {
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-      try {
-        injectExtractButton();
-      } catch (error) {
-        console.error('Error injecting extract button:', error);
-        // Don't throw - script should continue
-      }
-    });
-  } else {
+// The button belongs only on the student portal's offered-courses page.
+// Other QU sites (Blackboard on lms.qu.edu.sa, etc.) and other portal pages never get it.
+const PORTAL_HOST = 'stu-gate.qu.edu.sa';
+
+function isOfferedCoursesPage(): boolean {
+  if (location.hostname !== PORTAL_HOST) return false;
+  return !!document.querySelector(
+    '#myForm\\:semesterSelect, select[name="myForm:semesterSelect"], [name*="offeredCoursesTable"], [id*="offeredCoursesTable"]'
+  );
+}
+
+// Show the button once the page is the offered-courses page. The portal can render the
+// form a little after load, so watch for it briefly instead of checking only once.
+function injectWhenOfferedCoursesPage() {
+  if (location.hostname !== PORTAL_HOST) return;
+
+  const tryInject = (): boolean => {
+    if (!isOfferedCoursesPage()) return false;
     try {
       injectExtractButton();
     } catch (error) {
       console.error('Error injecting extract button:', error);
-      // Don't throw - script should continue
     }
+    return true;
+  };
+
+  if (tryInject()) return;
+
+  const observer = new MutationObserver(() => {
+    if (tryInject()) observer.disconnect();
+  });
+  observer.observe(document.documentElement, { childList: true, subtree: true });
+  setTimeout(() => observer.disconnect(), 15000);
+}
+
+// Inject button when page loads - wrap in try-catch to handle context invalidated errors
+try {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', injectWhenOfferedCoursesPage);
+  } else {
+    injectWhenOfferedCoursesPage();
   }
 } catch (error) {
   console.error('Error setting up button injection:', error);
