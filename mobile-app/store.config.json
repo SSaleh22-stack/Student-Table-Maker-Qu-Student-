@@ -1,0 +1,91 @@
+{
+  "configVersion": 0,
+  "apple": {
+    "version": "1.0",
+    "copyright": "2026 Saleh Alsulami",
+    "categories": [
+      "EDUCATION",
+      "PRODUCTIVITY"
+    ],
+    "release": {
+      "automaticRelease": true
+    },
+    "advisory": {
+      "alcoholTobaccoOrDrugUseOrReferences": "NONE",
+      "contests": "NONE",
+      "gamblingSimulated": "NONE",
+      "horrorOrFearThemes": "NONE",
+      "matureOrSuggestiveThemes": "NONE",
+      "medicalOrTreatmentInformation": "NONE",
+      "profanityOrCrudeHumor": "NONE",
+      "sexualContentGraphicAndNudity": "NONE",
+      "sexualContentOrNudity": "NONE",
+      "violenceCartoonOrFantasy": "NONE",
+      "violenceRealistic": "NONE",
+      "violenceRealisticProlongedGraphicOrSadistic": "NONE",
+      "gambling": false,
+      "unrestrictedWebAccess": false,
+      "kidsAgeBand": null,
+      "ageRatingOverride": "NONE",
+      "koreaAgeRatingOverride": "NONE"
+    },
+    "review": {
+      "firstName": "Saleh",
+      "lastName": "Alsulami",
+      "email": "qu4611@gmail.com",
+      "phone": "+966553468687",
+      "demoRequired": false,
+      "notes": "No account is needed to review this app. On first launch, open the Import screen (Home > الاستيراد من البوابة) and tap \"تجربة التطبيق ببيانات تجريبية (بدون تسجيل دخول)\" / \"Try the app with sample data (no sign-in)\". This loads made-up course sections so every feature can be tried: timetable, summary, export, GPA calculator, absence calculator and academic calendar.\n\nReal students sign in on the university's official portal page inside a web view to import their offered courses; the app never reads or stores the password. All data stays on the device: no accounts, no ads, no tracking, no analytics.\n\nThe app is independent and not affiliated with Qassim University. The interface is in Arabic (right-to-left), with an English option on the Home screen."
+    },
+    "info": {
+      "ar-SA": {
+        "title": "Qu Student",
+        "subtitle": "جدولك ومعدلك وغيابك بسهولة",
+        "promoText": "ابنِ جدولك الدراسي في دقائق، واحسب معدلك وغيابك. لطلاب جامعة القصيم.",
+        "description": "تطبيق مستقل لطلاب جامعة القصيم، وغير تابع رسمياً للجامعة.\n\nQu Student يجمع كل ما يحتاجه طالب جامعة القصيم لفصله الدراسي في تطبيق واحد بسيط.\n\nابنِ جدولك في دقائق\n• استورد المقررات المطروحة من بوابة الجامعة مباشرة بعد تسجيل دخولك.\n• اختر الشعب وشاهد جدولك الأسبوعي يتشكّل أمامك.\n• أضف أكثر من شعبة للمقرر نفسه (نظري، عملي، تدريب).\n• تنبيه فوري عند تعارض المواعيد أو تشابه فترة الاختبار النهائي.\n• تراجع عن أي إضافة بلمسة واحدة.\n\nملخص الجدول وفترات الاختبارات\n• الشعب والقاعات والمحاضرون في صفحة واحدة.\n• فترة الاختبار النهائي لكل مقرر.\n\nصدّر جدولك وشاركه\n• صورة، أو PDF، أو ملف Excel، أو طباعة مباشرة.\n• رسالة جاهزة لواتساب أو تيليجرام.\n• نسخ أرقام الشعب لتسجيلها في البوابة بسرعة.\n• أضف محاضراتك إلى تقويم جوالك.\n\nحاسبة المعدل\n• معدلك الفصلي والتراكمي على نظام 5 أو 4.\n• مقررات جدولك تظهر تلقائياً، وما عليك إلا اختيار التقدير.\n\nحاسبة الغياب\n• اعرف نسبة غيابك وكم ساعة بقيت لك قبل الحرمان في كل مقرر.\n• تنبيهات واضحة: آمن، تحذير، خطر.\n• أضف أي مقرر يدوياً لمتابعة غيابه.\n\nالتقويم الأكاديمي\n• بداية الفصل والإجازات والاختبارات، مع ما يجري الآن وما هو قادم.\n\nقيم\n• تصفّح تقييمات أعضاء هيئة التدريس، وابحث عن محاضر شعبتك مباشرة.\n\nالصفحة الرئيسية\n• محاضرتك القادمة وموعدها وقاعتها، وآخر الإعلانات.\n\nخصوصيتك أولاً\n• لا حسابات ولا إعلانات تجارية ولا تتبع.\n• جدولك ودرجاتك وغيابك تبقى على جهازك فقط.\n• تسجيل الدخول يتم في صفحة الجامعة الرسمية، والتطبيق لا يقرأ كلمة المرور ولا يحفظها.\n\nللاقتراحات والملاحظات: qu4611@gmail.com",
+        "keywords": [
+          "جدول",
+          "جامعة القصيم",
+          "معدل",
+          "حاسبة المعدل",
+          "غياب",
+          "حرمان",
+          "شعب",
+          "اختبارات",
+          "طالب",
+          "بوابة",
+          "تقويم أكاديمي",
+          "قيم",
+          "Qassim",
+          "QU"
+        ],
+        "marketingUrl": "https://qustudent.net",
+        "supportUrl": "https://qustudent.net",
+        "privacyPolicyUrl": "https://qustudent.net/privacy.html"
+      },
+      "en-US": {
+        "title": "Qu Student",
+        "subtitle": "Timetable, GPA and absences",
+        "promoText": "Build your timetable in minutes and track your GPA and absences. For Qassim University students.",
+        "description": "An independent app for Qassim University students, not affiliated with the university. The app is in Arabic, with an English option.\n\nQu Student brings everything a Qassim University student needs for the semester into one simple app.\n\nBuild your timetable in minutes\n• Import the offered courses straight from the university portal after you sign in.\n• Pick sections and watch your weekly timetable take shape.\n• Add more than one section of the same course (lecture, lab, tutorial).\n• Instant warnings for time clashes and shared final-exam periods.\n• Undo any change with one tap.\n\nTimetable summary and exam periods\n• Sections, rooms and lecturers on one page.\n• The final-exam period of every course.\n\nExport and share\n• Image, PDF, Excel file, or print directly.\n• A ready-made message for WhatsApp or Telegram.\n• Copy section numbers to register them quickly in the portal.\n• Add your lectures to your phone's calendar.\n\nGPA calculator\n• Semester and cumulative GPA on the 5-point or 4-point scale.\n• Your timetable courses appear automatically; just pick the grades.\n\nAbsence calculator\n• See your absence percentage and how many hours you have left in each course.\n• Clear levels: safe, warning, danger.\n• Add any course by hand to track its absences.\n\nAcademic calendar\n• Semester start, holidays and exams, with what's happening now and what's next.\n\nQeeem\n• Browse lecturer reviews and search for your section's lecturer directly.\n\nHome\n• Your next lecture, its time and room, and the latest announcements.\n\nPrivacy first\n• No accounts, no ads, no tracking.\n• Your timetable, grades and absences stay on your device.\n• You sign in on the university's official page; the app never reads or stores your password.\n\nSuggestions and feedback: qu4611@gmail.com",
+        "keywords": [
+          "timetable",
+          "schedule",
+          "Qassim",
+          "university",
+          "GPA",
+          "calculator",
+          "absence",
+          "student",
+          "QU",
+          "sections",
+          "exams",
+          "calendar"
+        ],
+        "marketingUrl": "https://qustudent.net",
+        "supportUrl": "https://qustudent.net",
+        "privacyPolicyUrl": "https://qustudent.net/privacy.html"
+      }
+    }
+  }
+}
