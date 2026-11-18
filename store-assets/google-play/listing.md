@@ -1,4 +1,4 @@
-# Google Play listing — Qu Student
+# Google Play listing — QU Student
 
 Copy each block into Play Console → Grow → Store presence → Main store listing.
 
@@ -13,7 +13,7 @@ Copy each block into Play Console → Grow → Store presence → Main store lis
 ## App name (max 30 characters)
 
 ```
-Qu Student
+QU Student
 ```
 
 ## Short description (max 80 characters)
@@ -27,7 +27,7 @@ Qu Student
 ```
 تطبيق مستقل لطلاب جامعة القصيم، وغير تابع رسمياً للجامعة.
 
-Qu Student يجمع كل ما يحتاجه طالب جامعة القصيم لفصله الدراسي في تطبيق واحد بسيط.
+QU Student يجمع كل ما يحتاجه طالب جامعة القصيم لفصله الدراسي في تطبيق واحد بسيط.
 
 📅 ابنِ جدولك في دقائق
 • استورد المقررات المطروحة من بوابة الجامعة مباشرة بعد تسجيل دخولك.
@@ -87,7 +87,7 @@ Build your timetable in minutes and track your GPA and absences. For QU students
 ```
 An independent app for Qassim University students, not affiliated with the university.
 
-Qu Student brings everything a Qassim University student needs for the semester into one simple app.
+QU Student brings everything a Qassim University student needs for the semester into one simple app.
 
 📅 Build your timetable in minutes
 • Import the offered courses straight from the university portal after you sign in.

@@ -1,12 +1,12 @@
 import Svg, { Path, Rect } from 'react-native-svg';
 
 /**
- * Qu Student "Calendar Q" mark (same artwork as the extension's Logo.tsx).
+ * QU Student "Calendar Q" mark (same artwork as the extension's Logo.tsx).
  * `onDark` draws it in white on a see-through tile, for teal or dark backgrounds.
  */
 export function Logo({ size = 40, onDark = false }: { size?: number; onDark?: boolean }) {
   return (
-    <Svg width={size} height={size} viewBox="0 0 128 128" accessibilityLabel="Qu Student">
+    <Svg width={size} height={size} viewBox="0 0 128 128" accessibilityLabel="QU Student">
       <Rect width={128} height={128} rx={30} fill={onDark ? '#FFFFFF' : '#0E7490'} fillOpacity={onDark ? 0.14 : 1} />
       <Rect x={26} y={34} width={72} height={62} rx={14} fill="none" stroke="#FFFFFF" strokeWidth={9} />
       <Path d="M46 24v16M78 24v16" fill="none" stroke="#FFFFFF" strokeWidth={9} strokeLinecap="round" />

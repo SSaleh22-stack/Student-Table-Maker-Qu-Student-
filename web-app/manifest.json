@@ -1,6 +1,6 @@
 {
-  "name": "Qu Student",
-  "short_name": "Qu Student",
+  "name": "QU Student",
+  "short_name": "QU Student",
   "description": "Help Qassim University students extract courses and build visual timetables",
   "start_url": "/",
   "display": "standalone",

@@ -24,6 +24,6 @@ export const buildScheduleText = (chosen: Course[]): string => {
     lines.push('');
   }
 
-  lines.push(tr('أرقام الشعب:', 'Section numbers:'), buildSectionNumbers(chosen), '', '— Qu Student');
+  lines.push(tr('أرقام الشعب:', 'Section numbers:'), buildSectionNumbers(chosen), '', '— QU Student');
   return lines.join('\n');
 };

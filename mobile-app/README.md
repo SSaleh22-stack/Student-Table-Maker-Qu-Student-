@@ -1,6 +1,6 @@
-# Qu Student — mobile app (Expo)
+# QU Student — mobile app (Expo)
 
-The iOS / Android version of Qu Student, in the "Teal Planner" design.
+The iOS / Android version of QU Student, in the "Teal Planner" design.
 Arabic only, right-to-left. Built with Expo SDK 58 and Expo Router.
 
 ## Run it

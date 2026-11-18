@@ -215,7 +215,7 @@ export default function ExportScreen() {
         <WeekGrid chosen={chosen} hourHeight={largeGrid ? 58 : 46} compact={gridW < 420} large={largeGrid} />
       </View>
       <AppText size={11} color="#CFEAF0" align="center">
-        Qu Student · qustudent.net
+        QU Student · qustudent.net
       </AppText>
     </View>
   );

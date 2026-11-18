@@ -139,7 +139,7 @@ export default function MoreScreen() {
             title={tr('شارك التطبيق مع زملائك', 'Share the app with classmates')}
             onPress={() =>
               Share.share({
-                message: `Qu Student — ${tr('ابنِ جدولك الدراسي في دقائق', 'Build your class timetable in minutes')}\n${SITE_URL}`,
+                message: `QU Student — ${tr('ابنِ جدولك الدراسي في دقائق', 'Build your class timetable in minutes')}\n${SITE_URL}`,
               }).catch(() => {})
             }
           />
@@ -156,7 +156,7 @@ export default function MoreScreen() {
         </Group>
 
         <AppText size={12} color={colors.faint} align="center">
-          Qu Student · v{Constants.expoConfig?.version ?? '1.0.0'}
+          QU Student · v{Constants.expoConfig?.version ?? '1.0.0'}
         </AppText>
       </ScrollView>
     </SafeAreaView>

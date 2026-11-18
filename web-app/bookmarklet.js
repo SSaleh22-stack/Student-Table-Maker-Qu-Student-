@@ -1,5 +1,5 @@
 /**
- * Bookmarklet for Qu Student Web App
+ * Bookmarklet for QU Student Web App
  * Extracts courses from QU portal and saves to localStorage
  * 
  * To use: Copy the minified version and create a bookmark with it as the URL

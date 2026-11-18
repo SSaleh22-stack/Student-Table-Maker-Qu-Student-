@@ -8,7 +8,7 @@ interface LogoProps {
 }
 
 /**
- * Qu Student logo ("Calendar Q"): a calendar whose corner turns into the tail of a Q.
+ * QU Student logo ("Calendar Q"): a calendar whose corner turns into the tail of a Q.
  * The same artwork lives in public/icons/logo.svg (used for the Chrome icons).
  */
 const Logo: React.FC<LogoProps> = ({ size = 44, className, label }) => (

@@ -58,7 +58,7 @@ After deployment completes:
 
 1. Open a new incognito/private browser window
 2. Go to: `https://ssaleh22-stack.github.io/Student-Table-Maker-Qu-Student-/`
-3. You should see the "Qu Student" web app
+3. You should see the "QU Student" web app
 
 ## Common Issues
 

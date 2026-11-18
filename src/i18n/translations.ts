@@ -130,7 +130,7 @@ export interface Translations {
 
 export const translations: Record<Language, Translations> = {
   en: {
-    appTitle: 'Qu Student',
+    appTitle: 'QU Student',
     appSubtitle: 'صانع الجدول الدراسي',
     welcome: 'Welcome! Build your weekly timetable from the offered courses according to the plan.',
     extractCourses: 'Extract Courses According to Plan',
@@ -183,7 +183,7 @@ export const translations: Record<Language, Translations> = {
     filterByType: 'Filter by Type',
     all: 'All',
     instructions: 'Instructions',
-    instructionsTitle: 'How to Use Qu Student',
+    instructionsTitle: 'How to Use QU Student',
     instructionsContent: '1. Navigate to the QU student portal and log in\n2. Go to the "Offered Courses" page\n3. Click "المقررات المطروحة" button to view all available courses\n4. Use the search and filter options to find courses\n5. Click "Add to Timetable" to add courses to your schedule\n6. Manage your timetable and view conflicts\n7. Export or print your timetable when ready',
     courseReviewHelper: 'Course Review Helper',
     qeeemSite: 'Qeeem Site (Instructor Ratings)',
@@ -251,7 +251,7 @@ export const translations: Record<Language, Translations> = {
     contactCopied: 'Copied!',
   },
   ar: {
-    appTitle: 'Qu Student',
+    appTitle: 'QU Student',
     appSubtitle: 'صانع الجدول الدراسي',
     welcome: 'مرحباً! أنشئ جدولك الأسبوعي من المقررات المطروحة وفق الخطة.',
     extractCourses: 'استخراج المقررات من جامعة القصيم',

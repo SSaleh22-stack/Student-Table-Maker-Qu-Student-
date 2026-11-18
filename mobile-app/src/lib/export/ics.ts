@@ -63,7 +63,7 @@ export const buildIcs = (chosen: Course[], { start, weeks, reminderMinutes }: Ic
   const lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//Qu Student//Timetable//AR',
+    'PRODID:-//QU Student//Timetable//AR',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
     `X-WR-CALNAME:${tr('جدولي الدراسي', 'My class timetable')}`,

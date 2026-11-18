@@ -1,6 +1,6 @@
 # Deploying the Web App to GitHub Pages
 
-This guide will help you deploy the Qu Student web app to GitHub Pages.
+This guide will help you deploy the QU Student web app to GitHub Pages.
 
 ## Prerequisites
 

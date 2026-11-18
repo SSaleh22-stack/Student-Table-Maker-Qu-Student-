@@ -64,7 +64,7 @@ const TimetableGrid: React.FC = () => {
     return hours * 60 + minutes;
   };
 
-  // PDF and image: the same look as the Qu Student app (see lib/scheduleExport.ts)
+  // PDF and image: the same look as the QU Student app (see lib/scheduleExport.ts)
   const [exporting, setExporting] = React.useState<'pdf' | 'image' | null>(null);
   const runExport = async (kind: 'pdf' | 'image') => {
     if (exporting) return;

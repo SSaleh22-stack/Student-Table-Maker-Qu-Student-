@@ -44,8 +44,8 @@ const Announcements: React.FC = () => {
       icon: 'send',
       title: isAr ? 'أضف جامعتك أو كليتك' : 'Add your university or college',
       text: isAr
-        ? 'تريد إضافة جامعتك أو كليتك إلى Qu Student؟ تواصل معنا عبر تيليجرام أو البريد.'
-        : 'Want your university or college in Qu Student? Message us on Telegram or by email.',
+        ? 'تريد إضافة جامعتك أو كليتك إلى QU Student؟ تواصل معنا عبر تيليجرام أو البريد.'
+        : 'Want your university or college in QU Student? Message us on Telegram or by email.',
       contact: true,
     },
   ];

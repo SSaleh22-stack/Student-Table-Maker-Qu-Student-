@@ -59,7 +59,7 @@ The Chrome Web Store requires exactly **ONE** `manifest.json` file at the root o
 - ✅ DO ensure `manifest.json` is at the root of the ZIP file
 
 ## Current Extension Info:
-- **Name**: Qu Student
+- **Name**: QU Student
 - **Version**: 3.0.0
 - **Manifest Version**: 3
 

@@ -1,4 +1,4 @@
-# Qu Student - Web App for iPad
+# QU Student - Web App for iPad
 
 This is a standalone web application version of the Chrome extension that works on iPad Safari and other browsers.
 

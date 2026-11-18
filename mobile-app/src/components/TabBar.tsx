@@ -58,7 +58,7 @@ export function TabBar({ state, descriptors, emitter, navigateToTab }: BottomTab
             accessibilityLabel={label}
             style={[styles.tab, slim && [styles.tabSlim, { flexDirection: row }]]}>
             {route.name === 'index' ? (
-              // Home shows the Qu Student logo (same as the website); dimmed while another tab is open
+              // Home shows the QU Student logo (same as the website); dimmed while another tab is open
               <View style={{ opacity: focused ? 1 : 0.55 }}>
                 <Logo size={slim ? 20 : 24} />
               </View>

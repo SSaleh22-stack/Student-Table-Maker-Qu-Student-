@@ -1,5 +1,5 @@
 /**
- * Timetable exports with the same look as the Qu Student app:
+ * Timetable exports with the same look as the QU Student app:
  *  - PDF: an A4 landscape page with the weekly grid, then the summary on one page, downloaded as a .pdf file.
  *  - Image: a PNG of the weekly grid in a white card on the teal gradient.
  * Ported from mobile-app/src/lib/export (html.ts, summaryPage.ts). The same file lives in
@@ -321,7 +321,7 @@ const gridHours = (chosen: Course[]) => {
 
 // ---------- Shared pieces ----------
 
-/** The Qu Student mark in white, for the teal header. */
+/** The QU Student mark in white, for the teal header. */
 const LOGO_WHITE =
   '<rect width="128" height="128" rx="30" fill="#FFFFFF" fill-opacity=".14"/>' +
   '<rect x="26" y="34" width="72" height="62" rx="14" fill="none" stroke="#fff" stroke-width="9"/>' +
@@ -598,7 +598,7 @@ export const buildScheduleHtml = (chosen: Course[], lang: Language): string => {
   const date = formatDate(new Date(), lang);
   const head = (title: string) =>
     `<div class="sum-head">${logoImg(40)}<div><h1>${esc(title)}</h1><div class="sub">${subtitle}</div></div>` +
-    `<div class="date">${date}<br>Qu Student</div></div>`;
+    `<div class="date">${date}<br>QU Student</div></div>`;
 
   return `<!doctype html>
 <html lang="${lang}" dir="${lang === 'ar' ? 'rtl' : 'ltr'}">
@@ -676,7 +676,7 @@ export const buildSchedulePdf = async (chosen: Course[], lang: Language): Promis
       // PNG keeps text edges crisp (JPEG blurs them)
       pdf.addImage(canvas, 'PNG', 0, 0, pageW, pageH, undefined, 'FAST');
     }
-    pdf.setProperties({ title: TEXT[lang].title, creator: 'Qu Student' });
+    pdf.setProperties({ title: TEXT[lang].title, creator: 'QU Student' });
     return pdf.output('blob');
   } finally {
     frame.remove();
@@ -730,7 +730,7 @@ const imageHtml = (chosen: Course[], lang: Language) => {
     `<div class="top">${logoImg(48)}<div><h1>${TEXT[lang].title}</h1><div class="sub">${subtitleOf(chosen, lang)}</div></div>` +
     `<div class="date">${formatDate(new Date(), lang)}</div></div>` +
     `<div class="card">${gridHtml(chosen, lang, hourH)}</div>` +
-    '<div class="foot">Qu Student · qustudent.net</div>' +
+    '<div class="foot">QU Student · qustudent.net</div>' +
     '</div>'
   );
 };

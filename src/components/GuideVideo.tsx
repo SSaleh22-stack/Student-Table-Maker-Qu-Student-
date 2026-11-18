@@ -46,7 +46,7 @@ export const GuideVideo: React.FC = () => {
       >
         <iframe
           src={`${PLAYER_PAGE}?v=${encodeURIComponent(GUIDE_VIDEO_ID)}`}
-          title={isAr ? 'شرح استخدام Qu Student' : 'How to use Qu Student'}
+          title={isAr ? 'شرح استخدام QU Student' : 'How to use QU Student'}
           allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
         />
       </div>
@@ -85,7 +85,7 @@ export const GuideVideoModal: React.FC<{ onClose: () => void }> = ({ onClose }) 
         dir={isAr ? 'rtl' : 'ltr'}
       >
         <div className="qs-modal-header">
-          <h2 id="qs-video-title">{isAr ? 'شرح الاستخدام' : 'How to use Qu Student'}</h2>
+          <h2 id="qs-video-title">{isAr ? 'شرح الاستخدام' : 'How to use QU Student'}</h2>
           <button type="button" className="qs-btn qs-btn-ghost qs-btn-sm" onClick={onClose}>
             {t.close}
           </button>

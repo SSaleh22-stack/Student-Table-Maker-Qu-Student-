@@ -146,7 +146,7 @@ export const FIT_SCRIPT = `<script>
 </script>`;
 
 export interface SummaryOptions {
-  /** White Qu Student mark (SVG) */
+  /** White QU Student mark (SVG) */
   logo: string;
   date: string;
   subtitle: string;
@@ -197,7 +197,7 @@ export const buildSummaryPages = (chosen: Course[], { logo, date, subtitle }: Su
   return (
     '<div class="sum-page">' +
     `<div class="sum-head">${logo}<div><h1>${tr('ملخص الجدول', 'Timetable summary')}</h1><div class="sub">${subtitle}</div></div>` +
-    `<div class="date">${date}<br>Qu Student</div></div>` +
+    `<div class="date">${date}<br>QU Student</div></div>` +
     `<div class="sum-card"><div class="sum-fit" style="width:${100 / k}%;transform:${k < 1 ? `scale(${k})` : 'none'}">${stats}${table}${note}</div></div>` +
     `<div class="sum-foot"><span>${tr('ملخص الجدول', 'Timetable summary')}</span><span>qustudent.net</span></div>` +
     '</div>'

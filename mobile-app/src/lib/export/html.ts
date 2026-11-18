@@ -39,7 +39,7 @@ const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replac
 /** 810 → "1:30" */
 const clock = (minutes: number) => `${hour12(Math.floor(minutes / 60))}:${String(minutes % 60).padStart(2, '0')}`;
 
-/** The Qu Student mark in white, for the teal page header. */
+/** The QU Student mark in white, for the teal page header. */
 const LOGO_WHITE =
   '<svg width="40" height="40" viewBox="0 0 128 128"><rect width="128" height="128" rx="30" fill="#FFFFFF" fill-opacity=".14"/>' +
   '<rect x="26" y="34" width="72" height="62" rx="14" fill="none" stroke="#fff" stroke-width="9"/>' +
@@ -131,7 +131,7 @@ ${SUMMARY_CSS}
 </head>
 <body>
 <div class="sum-page first">
-  <div class="sum-head">${LOGO_WHITE}<div><h1>${tr('جدولي الدراسي', 'My class timetable')}</h1><div class="sub">${subtitle}</div></div><div class="date">${date}<br>Qu Student</div></div>
+  <div class="sum-head">${LOGO_WHITE}<div><h1>${tr('جدولي الدراسي', 'My class timetable')}</h1><div class="sub">${subtitle}</div></div><div class="date">${date}<br>QU Student</div></div>
   <div class="sum-card grid-card">
     <div class="head"><div class="tc"></div>${WEEK_DAYS.map((d) => `<div>${dayName(d)}</div>`).join('')}</div>
     <div class="body" style="height:${hourCount * hourH}px">
