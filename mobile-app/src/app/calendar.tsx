@@ -88,13 +88,6 @@ const daysNoun = (n: number) => {
   return 'يوم';
 };
 
-/** "21 نوفمبر" */
-const dayMonth = (iso: string) => {
-  const d = dateOf(iso);
-  return `${d.getDate()} ${arabicMonth(d)}`;
-};
-
-const dateRange = (e: CalendarEvent) => (e.end ? `${dayMonth(e.start.iso)} – ${dayMonth(e.end.iso)}` : `${wd(e.start.weekday)} ${dayMonth(e.start.iso)}`);
 
 /** "2026-11-29" (the calendar's own date format) */
 const isoOf = (d: Date) =>
@@ -158,7 +151,8 @@ export default function CalendarScreen() {
     .sort((a, b) => a.end!.iso.localeCompare(b.end!.iso));
   // The hero counts down to going back after a break, otherwise to the next event.
   const next = onBreak ? undefined : upcoming[0];
-  const comingUp = upcoming.filter((e) => e !== next && e.start.iso !== onBreak?.backIso).slice(0, 4);
+  // Everything not yet over: events going on now first, then upcoming ones (sorted by start, so "now" comes first).
+  const notPast = sorted.filter((e) => timingOf(e.start.iso, e.end?.iso) !== 'past');
 
   const updated =
     calendar.source === 'bundled'
@@ -209,12 +203,12 @@ export default function CalendarScreen() {
           </>
         ) : null}
 
-        {comingUp.length > 0 ? (
+        {notPast.length > 0 ? (
           <>
-            <SectionTitle title={tr('قادم', 'Coming up')} />
-            <View style={[styles.tiles, { flexDirection: row }]}>
-              {comingUp.map((e) => (
-                <Tile key={`${e.title}-${e.start.iso}`} event={e} wide={wide} />
+            <SectionTitle title={tr('القادمة', 'Upcoming')} />
+            <View style={styles.list}>
+              {notPast.map((e) => (
+                <EventRow key={`${e.title}-${e.start.iso}`} event={e} />
               ))}
             </View>
           </>
@@ -401,33 +395,6 @@ function Meter({ used, color, track }: { used: number; color: string; track: str
   );
 }
 
-/** A coming-up event: days away, short title, and its date or range. */
-function Tile({ event, wide }: { event: CalendarEvent; wide: boolean }) {
-  const left = daysFromToday(event.start.iso);
-  const k = KIND[kindOf(event)];
-  return (
-    <View
-      style={[styles.tile, { flexBasis: wide ? '23%' : '46%' }]}
-      accessible
-      accessibilityLabel={`${event.title}${tr('، ', ', ')}${dateRange(event)}${tr('، ', ', ')}${inDaysLabel(left)}`}>
-      <View style={[styles.tileNum, { flexDirection: row }]}>
-        <AppText size={24} weight="bold" color={k.fg} style={{ lineHeight: 30 }}>
-          {left}
-        </AppText>
-        <AppText size={11.5} weight="semibold" color={k.fg}>
-          {daysNoun(left)}
-        </AppText>
-      </View>
-      <AppText size={13} weight="semibold" numberOfLines={2}>
-        {shortTitle(event.title)}
-      </AppText>
-      <AppText size={11} color={colors.muted}>
-        {dateRange(event)}
-      </AppText>
-    </View>
-  );
-}
-
 function EventRow({ event }: { event: CalendarEvent }) {
   const timing = timingOf(event.start.iso, event.end?.iso);
   const start = dateOf(event.start.iso);
@@ -488,9 +455,6 @@ const styles = StyleSheet.create({
   window: { gap: 8, padding: 12, borderRadius: 16, backgroundColor: colors.surface },
   windowTop: { alignItems: 'flex-start', gap: 8 },
   meter: { height: 6, borderRadius: 3, overflow: 'hidden' },
-  tiles: { flexWrap: 'wrap', gap: 8 },
-  tile: { flexGrow: 1, gap: 2, padding: 12, borderRadius: 16, backgroundColor: colors.surface },
-  tileNum: { alignItems: 'baseline', gap: 4 },
   allToggle: {
     alignItems: 'center',
     justifyContent: 'space-between',
