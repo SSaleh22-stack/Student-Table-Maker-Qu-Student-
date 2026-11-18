@@ -13,6 +13,7 @@ import { View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { UpdateGate } from '@/components/UpdateGate';
 import { useLang, useLanguageBoot } from '@/lib/i18n';
 import { colors } from '@/lib/theme';
 import { AppDataProvider } from '@/store/AppData';
@@ -55,6 +56,7 @@ export default function RootLayout() {
             <Stack.Screen name="reviews" />
           </Stack>
           </View>
+          <UpdateGate />
         </AppDataProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
