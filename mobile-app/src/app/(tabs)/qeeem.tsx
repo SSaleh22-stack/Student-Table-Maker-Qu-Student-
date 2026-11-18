@@ -95,7 +95,7 @@ export default function QeeemScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.screen} edges={['top']}>
+    <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
       <View style={styles.top}>
         <View style={{ flexDirection: row, alignItems: 'center', gap: 10 }}>
           <View style={styles.titleIcon}>

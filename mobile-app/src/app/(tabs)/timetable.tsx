@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { KeyboardAvoidingView, Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
@@ -28,6 +28,8 @@ const MAX_HOUR = 64;
 /** iPad (or any screen at least this big): course list and timetable side by side. */
 const WIDE_MIN_W = 700;
 const WIDE_MIN_H = 500;
+/** Any window held sideways at least this wide is too short for the stacked phone layout. */
+const WIDE_MIN_W_SIDEWAYS = 640;
 /** Day names row above the large timetable. */
 const WIDE_GRID_HEAD = 26;
 /** High enough that the timetable reaches the bottom of the card on a tall iPad held upright. */
@@ -57,9 +59,10 @@ export default function TimetableScreen() {
   const toastId = useRef(0);
   const { width: winW, height: winH } = useWindowDimensions();
   // Side by side on iPad, and on a phone held sideways (too short for the timetable above the
-  // course cards). Only a real tablet gets the bigger header.
+  // course cards, e.g. iPhone Duo folded and turned: about 678x466). Only a real tablet gets the
+  // bigger header.
   const landscape = winW > winH;
-  const wide = winW >= WIDE_MIN_W && (winH >= WIDE_MIN_H || landscape);
+  const wide = landscape ? winW >= WIDE_MIN_W_SIDEWAYS : winW >= WIDE_MIN_W && winH >= WIDE_MIN_H;
   const tablet = Math.min(winW, winH) >= 600;
   const [wideGrid, setWideGrid] = useState({ w: 0, h: 0 });
 
@@ -168,14 +171,18 @@ export default function TimetableScreen() {
       </View>
     ) : null;
 
+  // Both layouts share one outer tree (the body, then the toast and the details card), so folding,
+  // unfolding or resizing a split only swaps the body: an open details card stays open.
+  let body: ReactNode;
   if (wide) {
     // iPad: the course list on the start side (right in Arabic), the timetable fills the rest.
-    const panelW = Math.round(clamp(winW * (tablet ? 0.36 : 0.4), 300, 400));
+    // A phone held sideways gets a narrower list, so the 5-day timetable keeps its room.
+    const panelW = Math.round(clamp(winW * (tablet ? 0.36 : 0.4), tablet ? 300 : 260, 400));
     const wideHour = wideGrid.h
       ? clamp(Math.floor((wideGrid.h - WIDE_GRID_HEAD) / hourCount), MIN_HOUR, WIDE_MAX_HOUR)
       : 40;
-    return (
-      <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
+    body = (
+      <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
         <View style={[styles.wide, { flexDirection: row }, !tablet && styles.wideShort]}>
           <View
             style={[styles.widePanel, shadow, { width: panelW }, !tablet && { paddingTop: 10, paddingHorizontal: 12 }]}>
@@ -205,21 +212,13 @@ export default function TimetableScreen() {
             </Card>
           </View>
         </View>
-        {/* At the top on iPad too, so the message is seen where the eye already is. */}
-        {toast ? (
-          <Toast toast={toast} onDismiss={dismissToast} inset={Math.max(16, (winW - 560) / 2)} position="top" />
-        ) : null}
-        {details}
       </SafeAreaView>
     );
-  }
-
-  // Phone: the timetable fills the space above the course chips and section cards.
-  const phoneHour = phoneGridH ? clamp(Math.floor((phoneGridH - GRID_HEAD) / hourCount), MIN_HOUR, MAX_HOUR) : 30;
-
-  return (
-    <View style={styles.screen}>
-      <SafeAreaView style={{ flex: 1 }} edges={['top']}>
+  } else {
+    // Phone: the timetable fills the space above the course chips and section cards.
+    const phoneHour = phoneGridH ? clamp(Math.floor((phoneGridH - GRID_HEAD) / hourCount), MIN_HOUR, MAX_HOUR) : 30;
+    body = (
+      <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <View style={styles.top}>
             <TimetableHeader {...totals} />
@@ -269,9 +268,17 @@ export default function TimetableScreen() {
           </View>
         </KeyboardAvoidingView>
       </SafeAreaView>
+    );
+  }
 
-      {/* At the top, over the header, so it never covers the section cards. */}
-      {toast ? <Toast toast={toast} onDismiss={dismissToast} position="top" /> : null}
+  return (
+    <View style={styles.screen}>
+      {body}
+      {/* At the top, over the header, so it never covers the section cards (on iPad too, where
+          the eye already is). Kept to a readable width on big screens. */}
+      {toast ? (
+        <Toast toast={toast} onDismiss={dismissToast} inset={wide ? Math.max(16, (winW - 560) / 2) : 16} position="top" />
+      ) : null}
       {details}
     </View>
   );
@@ -306,7 +313,8 @@ function TimetableHeader({
         <AppText weight="bold" size={large ? 24 : slim ? 18 : 20} style={{ lineHeight: large ? 30 : slim ? 24 : 25 }}>
           {tr('جدولي', 'My timetable')}
         </AppText>
-        <View style={[{ flexDirection: row, gap: 5, alignItems: 'center' }]}>
+        {/* The totals drop to a second line on a narrow window (e.g. half of iPhone Duo unfolded). */}
+        <View style={[{ flexDirection: row, flexWrap: 'wrap', columnGap: 5, rowGap: 3, alignItems: 'center' }]}>
           <Total
             value={courses}
             unit={isEnglish() ? (courses === 1 ? 'course' : 'courses') : unit(courses, 'مقرر', 'مقررات')}
@@ -365,7 +373,7 @@ function Total({ value, unit, a11y, large }: { value: number; unit: string; a11y
 
 function EmptyTimetable() {
   return (
-    <SafeAreaView style={styles.screen} edges={['top']}>
+    <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
       <View style={[styles.top, { gap: 12 }]}>
         <View style={[styles.header, { flexDirection: row }]}>
           <Logo size={38} />

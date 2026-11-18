@@ -1,5 +1,5 @@
 import { router, useFocusEffect, type Href } from 'expo-router';
-import { setStatusBarStyle } from 'expo-status-bar';
+import { setStatusBarStyle, useVerticalBarEdgeIOS } from 'expo-status-bar';
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -30,6 +30,10 @@ import type { Course } from '@/lib/types';
 import { useAppData } from '@/store/AppData';
 
 const DAY_KEYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+/** Icon card width from which all 8 services fit in one row (about 70pt each, tablet text). */
+const ROW_OF_8_MIN = 560;
+/** Border of the white services card (its cells are sized from the width inside it). */
+const CARD_BORDER = 1;
 
 /** Light text and see-through white boxes on the teal header. */
 const ON_TEAL = { title: '#FFFFFF', text: '#CFEAF0', soft: '#E6F6FA', glass: 'rgba(255,255,255,0.16)' };
@@ -136,21 +140,27 @@ export default function HomeScreen() {
   // Tablets get bigger icons and text, so the page uses the screen
   const tablet = useIsTablet();
   const t = (phone: number, tab: number) => (tablet ? tab : phone);
-  // 4 icons a row on phones (two full rows); all 8 in one row from tablet width
-  const columns = width >= 600 ? 8 : 4;
-  // Cells get an exact width from the card's measured width, so the rows line up on every screen.
-  const [gridW, setGridW] = useState(0);
-  const cellW = gridW ? Math.floor(gridW / columns) : undefined;
   const cardPad = tablet ? 14 : 6;
   // Side margins; the content stays 1100 wide at most on big screens
   const sidePad = Math.max(tablet ? 24 : 16, (width - 1100) / 2);
+  // Cells get an exact width from the card's measured width, so the rows line up on every screen.
+  const [gridW, setGridW] = useState(0);
+  // 4 icons a row (two full rows); all 8 in one row once the card has room for them. Decided by
+  // the card's own width, not the screen's: iPhone Duo's unfolded screen is tablet-sized but
+  // narrower than an iPad, and its side bar takes part of the width.
+  const roomW = gridW || width - 2 * sidePad - 2 * cardPad - 2 * CARD_BORDER;
+  const columns = roomW >= ROW_OF_8_MIN ? 8 : 4;
+  const cellW = gridW ? Math.floor(gridW / columns) : undefined;
 
-  // White status bar text over the teal header, dark again on the other tabs and pages.
+  // White status bar text over the teal header, dark again on the other tabs and pages. When the
+  // status bar sits in a side bar next to the page instead (iPhone Duo unfolded), it is over the
+  // light background, so it stays dark.
+  const verticalBar = useVerticalBarEdgeIOS();
   useFocusEffect(
     useCallback(() => {
-      setStatusBarStyle('light');
+      setStatusBarStyle(verticalBar ? 'dark' : 'light');
       return () => setStatusBarStyle('dark');
-    }, []),
+    }, [verticalBar]),
   );
 
   // Refresh "now" every minute, so the next class moves on by itself.
@@ -325,7 +335,7 @@ export default function HomeScreen() {
           <View
             style={[styles.services, tablet && styles.servicesTablet, { flexDirection: row, paddingHorizontal: cardPad }]}
             onLayout={(e) => {
-              const w = e.nativeEvent.layout.width - 2 * cardPad;
+              const w = e.nativeEvent.layout.width - 2 * cardPad - 2 * CARD_BORDER;
               setGridW((old) => (Math.abs(old - w) < 1 ? old : w));
             }}>
             {features().map((f) => (
@@ -384,7 +394,7 @@ const styles = StyleSheet.create({
     paddingVertical: 18,
     borderRadius: 22,
     backgroundColor: colors.surface,
-    borderWidth: 1,
+    borderWidth: CARD_BORDER,
     borderColor: colors.border,
   },
   servicesTablet: { rowGap: 22, paddingVertical: 26, borderRadius: 28 },

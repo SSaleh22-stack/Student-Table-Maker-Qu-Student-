@@ -6,6 +6,7 @@ import { AppText } from '@/components/AppText';
 import { Icon, type IconName } from '@/components/Icon';
 import { Button, CodeBadge, IconButton, Tag } from '@/components/ui';
 import { tr } from '@/lib/i18n';
+import { padSides } from '@/lib/insets';
 import {
   activityLabel,
   creditHours,
@@ -36,7 +37,7 @@ export function SectionDetails({ section, visible, chosen, onClose, onRemove }: 
   const insets = useSafeAreaInsets();
   return (
     <Modal visible={visible && !!section} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
-      <View style={styles.backdrop}>
+      <View style={[styles.backdrop, padSides(insets.left, insets.right)]}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityRole="button" accessibilityLabel={tr('إغلاق التفاصيل', 'Close the details')} />
         {section ? (
           <View style={[styles.card, shadow, { paddingBottom: Math.max(16, insets.bottom + 8) }]} accessibilityViewIsModal>

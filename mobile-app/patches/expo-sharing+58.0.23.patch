@@ -1,0 +1,38 @@
+diff --git a/node_modules/expo-sharing/ios/SharingModule.swift b/node_modules/expo-sharing/ios/SharingModule.swift
+index eb952f1..04a01c5 100644
+--- a/node_modules/expo-sharing/ios/SharingModule.swift
++++ b/node_modules/expo-sharing/ios/SharingModule.swift
+@@ -100,22 +100,25 @@ public final class SharingModule: Module {
+     from viewController: UIViewController,
+     anchor: SharingOptions.Rect?
+   ) {
+-    // Popovers are a regular-width behavior, not an iPad one.
+-    guard viewController.traitCollection.horizontalSizeClass == .regular else {
+-      return
+-    }
+-
+-    let viewFrame = viewController.view.frame
++    // Anchor whatever the size class (compact ignores it): a sheet opened while compact (iPhone Duo
++    // folded, or half of a split) turns into a popover if the window becomes regular width while it
++    // is still open (unfolding, widening the split), and a popover without an anchor crashes.
++    let viewBounds = viewController.view.bounds
+     SceneGeometry.anchorPopover(
+       of: activityController,
+       to: viewController.view,
+       rect: CGRect(
+-        x: anchor?.x ?? viewFrame.midX,
+-        y: anchor?.y ?? viewFrame.maxY,
++        x: anchor?.x ?? viewBounds.midX,
++        y: anchor?.y ?? viewBounds.maxY,
+         width: anchor?.width ?? 0,
+         height: anchor?.height ?? 0
+       )
+     )
++
++    // Popovers are a regular-width behavior, not an iPad one.
++    guard viewController.traitCollection.horizontalSizeClass == .regular else {
++      return
++    }
+     activityController.modalPresentationStyle = .pageSheet
+   }
+ 

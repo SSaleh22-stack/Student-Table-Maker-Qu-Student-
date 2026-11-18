@@ -84,7 +84,7 @@ export default function ImportScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
+    <SafeAreaView style={styles.screen} edges={['top', 'bottom', 'left', 'right']}>
       <View style={styles.top}>
         <IconButton icon="x" label={tr('إغلاق', 'Close')} tone="muted" onPress={goBack} />
         <View style={{ flex: 1, alignItems: 'center' }}>

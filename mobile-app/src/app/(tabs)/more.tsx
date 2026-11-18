@@ -2,7 +2,9 @@ import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import type { ReactNode } from 'react';
-import { Alert, Platform, Pressable, ScrollView, Share, StyleSheet, Switch, View } from 'react-native';
+import { Alert, Platform, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
+
+import { shareText } from '../../../modules/text-share';
 
 import { AppText } from '@/components/AppText';
 import { Icon, type IconName } from '@/components/Icon';
@@ -56,7 +58,7 @@ export default function MoreScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.screen} edges={['top']}>
+    <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
       <ScrollView contentContainerStyle={styles.content}>
         <ScreenHeader title={tr('المزيد', 'More')} />
 
@@ -138,9 +140,9 @@ export default function MoreScreen() {
             icon="share"
             title={tr('شارك التطبيق مع زملائك', 'Share the app with classmates')}
             onPress={() =>
-              Share.share({
-                message: `QU Student — ${tr('ابنِ جدولك الدراسي في دقائق', 'Build your class timetable in minutes')}\n${SITE_URL}`,
-              }).catch(() => {})
+              shareText(
+                `QU Student — ${tr('ابنِ جدولك الدراسي في دقائق', 'Build your class timetable in minutes')}\n${SITE_URL}`,
+              ).catch(() => {})
             }
           />
           <Item

@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '@/components/AppText';
 import { Icon, type IconName } from '@/components/Icon';
 import { Logo } from '@/components/Logo';
+import { padSides } from '@/lib/insets';
 import { row } from '@/lib/rtl';
 import { colors } from '@/lib/theme';
 
@@ -34,8 +35,8 @@ export function TabBar({ state, descriptors, emitter, navigateToTab }: BottomTab
         slim && styles.barSlim,
         {
           paddingBottom: slim ? Math.max(insets.bottom, 4) : Math.max(insets.bottom, 10),
-          paddingLeft: Math.max(insets.left, 6),
-          paddingRight: Math.max(insets.right, 6),
+          // Each inset on its own side: on iPhone Duo the status bar's side bar is on one side only.
+          ...padSides(Math.max(insets.left, 6), Math.max(insets.right, 6)),
         },
       ]}>
       {state.routes.map((route, index) => {

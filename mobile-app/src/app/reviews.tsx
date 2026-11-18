@@ -135,7 +135,7 @@ function PortalView({ onClose }: { onClose: () => void }) {
   }, [url]);
 
   return (
-    <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
+    <SafeAreaView style={styles.screen} edges={['top', 'bottom', 'left', 'right']}>
       <View style={[styles.top, { flexDirection: row }]}>
         <IconButton icon="back" label={tr('رجوع إلى الشرح', 'Back to the guide')} tone="muted" onPress={onClose} />
         <View style={{ flex: 1, alignItems: 'center' }}>

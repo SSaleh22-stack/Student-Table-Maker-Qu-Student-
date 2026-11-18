@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/AppText';
 import { Icon } from '@/components/Icon';
@@ -17,6 +18,7 @@ import {
   type GPAScale,
   type GradeLetter,
 } from '@/lib/gpa';
+import { padSides } from '@/lib/insets';
 import { useIsTablet } from '@/lib/layout';
 import { goBack } from '@/lib/nav';
 import { inputDir, ltr, row } from '@/lib/rtl';
@@ -43,6 +45,7 @@ const toNumber = (s: string) => {
 export default function GpaScreen() {
   const { chosen, gpa, setGpa, setGrade } = useAppData();
   const [picking, setPicking] = useState<string | null>(null);
+  const insets = useSafeAreaInsets();
   // Tablets get bigger numbers, rows and text, so the page uses the screen
   const tablet = useIsTablet();
   const t = (phone: number, tab: number) => (tablet ? tab : phone);
@@ -202,7 +205,13 @@ export default function GpaScreen() {
 
       <Modal visible={picking !== null} transparent animationType="fade" onRequestClose={() => setPicking(null)}>
         <Pressable style={styles.dim} onPress={() => setPicking(null)} accessibilityLabel={tr('إغلاق', 'Close')}>
-          <Pressable style={styles.picker} onPress={() => {}}>
+          <Pressable
+            style={[
+              styles.picker,
+              { paddingBottom: Math.max(34, insets.bottom + 16) },
+              padSides(18 + insets.left, 18 + insets.right),
+            ]}
+            onPress={() => {}}>
             <AppText weight="bold" size={16} style={{ marginBottom: 10 }}>
               {tr('اختر الدرجة', 'Choose a grade')} · {picking}
             </AppText>
@@ -317,7 +326,6 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 26,
     borderTopRightRadius: 26,
     padding: 18,
-    paddingBottom: 34,
   },
   gradeOpt: {
     width: '22%',

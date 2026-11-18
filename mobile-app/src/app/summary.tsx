@@ -23,7 +23,7 @@ export default function SummaryScreen() {
   const hours = courses.reduce((n, g) => n + courseHours(g.sections), 0);
 
   return (
-    <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
+    <SafeAreaView style={styles.screen} edges={['top', 'bottom', 'left', 'right']}>
       <ScrollView contentContainerStyle={styles.content}>
         <ScreenHeader title={tr('ملخص الجدول', 'Timetable summary')} leading={<IconButton icon="back" label={tr('رجوع', 'Back')} onPress={goBack} />} />
         <View style={{ flexDirection: row, gap: 8 }}>

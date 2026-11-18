@@ -5,14 +5,16 @@ import {
   Platform,
   Pressable,
   ScrollView,
-  Share,
   StyleSheet,
   Switch,
   useWindowDimensions,
   View,
 } from 'react-native';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { captureRef } from 'react-native-view-shot';
+
+import { shareText as openShareSheet } from '../../modules/text-share';
 
 import { AppText } from '@/components/AppText';
 import { Icon, type IconName } from '@/components/Icon';
@@ -42,6 +44,7 @@ const REMINDER_MINUTES = 15;
 export default function ExportScreen() {
   const { chosen, absence } = useAppData();
   const { width, height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   // Same rule as the timetable: side by side on iPad (or any big enough screen).
   const wide = width >= 700 && height >= 500;
   const previewRef = useRef<ComponentRef<typeof View>>(null);
@@ -128,7 +131,7 @@ export default function ExportScreen() {
     run('text', async () => {
       const text = buildScheduleText(chosen);
       try {
-        await Share.share({ message: text });
+        await openShareSheet(text);
       } catch {
         // No share sheet (e.g. some browsers): copy instead.
         await Clipboard.setStringAsync(text);
@@ -144,13 +147,15 @@ export default function ExportScreen() {
 
   const lastDay = addDays(start, weeks * 7 - 1);
 
+  // Width inside the side insets (on iPhone Duo unfolded the status bar can sit in a side bar).
+  const availW = width - insets.left - insets.right;
   // iPad: options on the start side (right in Arabic), the preview fills the rest.
-  const sideW = Math.round(Math.min(420, Math.max(320, width * 0.36)));
+  const sideW = Math.round(Math.min(420, Math.max(320, availW * 0.36)));
   // Narrow phones: thinner teal edge and card padding, so the day columns keep their full width
   // (8 + 6 each side, the same room the grid had before the card).
-  const slimFrame = !wide && width < 500;
+  const slimFrame = !wide && availW < 500;
   const framePad = slimFrame ? 28 : 52;
-  const gridW = wide ? width - 32 - 16 - sideW - framePad : width - 32 - framePad;
+  const gridW = wide ? availW - 32 - 16 - sideW - framePad : availW - 32 - framePad;
   const largeGrid = gridW >= 560;
 
   const header = (
@@ -163,7 +168,7 @@ export default function ExportScreen() {
 
   if (chosen.length === 0) {
     return (
-      <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
+      <SafeAreaView style={styles.screen} edges={['top', 'bottom', 'left', 'right']}>
         <ScrollView contentContainerStyle={styles.content}>
           {header}
           <Card style={{ alignItems: 'center', gap: 10, paddingVertical: 28 }}>
@@ -358,7 +363,7 @@ export default function ExportScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
+    <SafeAreaView style={styles.screen} edges={['top', 'bottom', 'left', 'right']}>
       <ScrollView contentContainerStyle={styles.content}>
         {header}
         {preview}

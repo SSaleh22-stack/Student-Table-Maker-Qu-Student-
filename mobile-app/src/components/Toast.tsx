@@ -9,12 +9,12 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { AppText } from '@/components/AppText';
 import { Icon } from '@/components/Icon';
 import { tr } from '@/lib/i18n';
+import { sides, useScreenInsets } from '@/lib/insets';
 import { row } from '@/lib/rtl';
 import { colors } from '@/lib/theme';
 
@@ -46,7 +46,7 @@ export function Toast({
   inset?: number;
   position?: 'top' | 'bottom';
 }) {
-  const insets = useSafeAreaInsets();
+  const insets = useScreenInsets();
   const atTop = position === 'top';
   const x = useSharedValue(0);
   const y = useSharedValue(0);
@@ -95,7 +95,7 @@ export function Toast({
     <Animated.View
       key={toast.id}
       entering={(atTop ? FadeInUp : FadeInDown).duration(180)}
-      style={[styles.place, { left: inset, right: inset }, atTop ? { top: insets.top + 6 } : { bottom: 12 }]}>
+      style={[styles.place, sides(Math.max(inset, insets.left + 8), Math.max(inset, insets.right + 8)), atTop ? { top: insets.top + 6 } : { bottom: 12 }]}>
       <GestureDetector gesture={pan}>
         <Animated.View
           style={[styles.toast, { flexDirection: row }, style]}
