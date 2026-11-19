@@ -9,14 +9,15 @@ import { Button, Card, IconButton, ScreenHeader } from '@/components/ui';
 import { tr } from '@/lib/i18n';
 import { activityLabel, courseHours, creditHours, formatExam, formatSchedule, getCourseTheme, groupCourses, hoursLabel } from '@/lib/courses';
 import { row } from '@/lib/rtl';
-import { clashingCodes, clashPairs, examClashes } from '@/lib/schedule';
+import { clashPairs, conflictCodes, examClashes } from '@/lib/schedule';
 import { goBack } from '@/lib/nav';
 import { colors } from '@/lib/theme';
 import { useAppData } from '@/store/AppData';
 
 export default function SummaryScreen() {
   const { chosen } = useAppData();
-  const clashes = useMemo(() => clashingCodes(chosen), [chosen]);
+  // Courses with a time clash or an exam-period clash
+  const clashes = useMemo(() => conflictCodes(chosen), [chosen]);
   const pairs = useMemo(() => clashPairs(chosen), [chosen]);
   const exams = useMemo(() => examClashes(chosen), [chosen]);
   const courses = useMemo(() => groupCourses(chosen), [chosen]);

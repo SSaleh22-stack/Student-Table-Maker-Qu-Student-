@@ -124,11 +124,21 @@ export interface ExamClash {
   courses: Course[];
 }
 
+/** A section's final-exam period as the portal gives it (e.g. "3"), or null when it has none. */
+export const examPeriodOf = (c: Course): string | null => c.finalExam?.date?.trim() || null;
+
+/** A chosen section of another course whose final exam is in the same period as `section`, if any. */
+export const findExamClash = (section: Course, chosen: Course[]): Course | null => {
+  const period = examPeriodOf(section);
+  if (!period) return null;
+  return chosen.find((c) => c.code !== section.code && examPeriodOf(c) === period) ?? null;
+};
+
 /** Exam periods shared by two or more different courses in the timetable. */
 export const examClashes = (chosen: Course[]): ExamClash[] => {
   const byPeriod = new Map<string, Map<string, Course>>();
   for (const c of chosen) {
-    const period = c.finalExam?.date?.trim();
+    const period = examPeriodOf(c);
     if (!period) continue;
     const courses = byPeriod.get(period) ?? new Map<string, Course>();
     if (!courses.has(c.code)) courses.set(c.code, c);
@@ -150,6 +160,17 @@ export const clashingCodes = (chosen: Course[]): Set<string> => {
       }
     }
   }
+  return codes;
+};
+
+/**
+ * Course codes in the timetable with any conflict: a class at the same time as another
+ * section, or a final exam in the same period as another course. This is what "تعارض" means
+ * on the totals, the course chips and the course list.
+ */
+export const conflictCodes = (chosen: Course[]): Set<string> => {
+  const codes = clashingCodes(chosen);
+  for (const e of examClashes(chosen)) for (const c of e.courses) codes.add(c.code);
   return codes;
 };
 

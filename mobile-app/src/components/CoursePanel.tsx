@@ -21,7 +21,7 @@ import {
   type CourseGroup,
 } from '@/lib/courses';
 import { inputDir, pushToEnd, row } from '@/lib/rtl';
-import { findClash } from '@/lib/schedule';
+import { findClash, findExamClash } from '@/lib/schedule';
 import { colors, fonts } from '@/lib/theme';
 import type { Course } from '@/lib/types';
 
@@ -205,6 +205,7 @@ export function CoursePanel({ groups, chosen, clashCodes, onTapSection, wrapTop 
                           section={s}
                           chosen={chosenIds.has(s.id)}
                           clash={findClash(s, chosen)}
+                          examClash={findExamClash(s, chosen)}
                           onPress={() => onTapSection(s)}
                         />
                       ))}
@@ -218,6 +219,7 @@ export function CoursePanel({ groups, chosen, clashCodes, onTapSection, wrapTop 
                           section={s}
                           chosen={chosenIds.has(s.id)}
                           clash={findClash(s, chosen)}
+                          examClash={findExamClash(s, chosen)}
                           onPress={() => onTapSection(s)}
                         />
                       ))}
@@ -242,6 +244,7 @@ function SectionTile({
   section,
   chosen,
   clash,
+  examClash,
   onPress,
   wide,
 }: {
@@ -249,12 +252,16 @@ function SectionTile({
   section: Course;
   chosen: boolean;
   clash: Course | null;
+  /** A chosen section of another course with the same exam period */
+  examClash: Course | null;
   onPress: () => void;
 }) {
   const closed = section.status === 'closed';
   const slots = slotsOf(section);
   const activity = activityLabel(section);
   const period = section.finalExam?.date;
+  // A class at the same time, or the final exam in the same period as another course
+  const conflict = !!(clash || examClash);
   return (
     <Pressable
       onPress={onPress}
@@ -262,14 +269,20 @@ function SectionTile({
       accessibilityState={{ selected: chosen }}
       accessibilityLabel={`${tr('الشعبة', 'Section')} ${section.section}${activity ? ` ${activity}` : ''}`}
       accessibilityHint={chosen ? tr('اضغط لإزالتها من الجدول', 'Tap to remove it from the timetable') : tr('اضغط لإضافتها إلى الجدول', 'Tap to add it to the timetable')}
-      style={[styles.tile, wide && { width: '100%' }, clash && styles.tileClash, chosen && (clash ? styles.tileOnClash : styles.tileOn), closed && { opacity: 0.75 }]}>
+      style={[
+        styles.tile,
+        wide && { width: '100%' },
+        conflict && styles.tileClash,
+        chosen && (conflict ? styles.tileOnClash : styles.tileOn),
+        closed && { opacity: 0.75 },
+      ]}>
       <View style={[styles.tileTop, { flexDirection: row }]}>
         <AppText size={13} weight="bold" style={[styles.tight, { flex: 1 }]} numberOfLines={1}>
           {tr('الشعبة', 'Section')} {section.section}
         </AppText>
         {activity ? <Tag label={activity} tone={activity === 'نظري' || activity === 'Lecture' ? 'muted' : 'accent'} /> : null}
         {chosen ? (
-          <View style={[styles.tileCheck, clash && { backgroundColor: '#E07B1F' }]}>
+          <View style={[styles.tileCheck, conflict && { backgroundColor: '#E07B1F' }]}>
             <Icon name="check" size={10} color="#FFFFFF" strokeWidth={3.5} />
           </View>
         ) : null}
@@ -302,8 +315,13 @@ function SectionTile({
         </AppText>
       ) : null}
       {period ? (
-        <AppText size={11} weight="bold" color="#3730A3" style={styles.tight} numberOfLines={1}>
+        <AppText size={11} weight="bold" color={examClash ? colors.clash : '#3730A3'} style={styles.tight} numberOfLines={1}>
           {tr('فترة الاختبار', 'Exam period')} {period}
+        </AppText>
+      ) : null}
+      {examClash ? (
+        <AppText size={11} weight="semibold" color={colors.clash} style={styles.tight} numberOfLines={1}>
+          {tr('نفس الاختبار مع', 'Same exam as')} {examClash.code}
         </AppText>
       ) : null}
       {closed ? (
@@ -324,11 +342,13 @@ function SectionRow({
   section,
   chosen,
   clash,
+  examClash,
   onPress,
 }: {
   section: Course;
   chosen: boolean;
   clash: Course | null;
+  examClash: Course | null;
   onPress: () => void;
 }) {
   const exam = formatExam(section.finalExam);
@@ -338,7 +358,12 @@ function SectionRow({
       accessibilityRole="button"
       accessibilityState={{ selected: chosen }}
       accessibilityHint={chosen ? tr('اضغط لإزالتها من الجدول', 'Tap to remove it from the timetable') : tr('اضغط لإضافتها إلى الجدول', 'Tap to add it to the timetable')}
-      style={[styles.secRow, { flexDirection: row }, clash && styles.tileClash, chosen && (clash ? styles.tileOnClash : styles.tileOn)]}>
+      style={[
+        styles.secRow,
+        { flexDirection: row },
+        (clash || examClash) && styles.tileClash,
+        chosen && (clash || examClash ? styles.tileOnClash : styles.tileOn),
+      ]}>
       <AppText size={14} weight="bold" style={{ width: 26 }}>
         {section.section}
       </AppText>
@@ -354,8 +379,13 @@ function SectionRow({
             {tr('تتعارض مع', 'Clashes with')} {clash.code} · {clash.section}
           </AppText>
         ) : null}
+        {examClash ? (
+          <AppText size={11.5} color={colors.clash} numberOfLines={1}>
+            {tr('نفس فترة الاختبار مع', 'Same exam period as')} {examClash.code}
+          </AppText>
+        ) : null}
       </View>
-      {chosen ? <Tag label={tr('مضافة', 'Added')} tone={clash ? 'warn' : 'accent'} /> : section.status === 'closed' ? <Tag label={tr('مغلقة', 'Closed')} tone="danger" /> : null}
+      {chosen ? <Tag label={tr('مضافة', 'Added')} tone={clash || examClash ? 'warn' : 'accent'} /> : section.status === 'closed' ? <Tag label={tr('مغلقة', 'Closed')} tone="danger" /> : null}
     </Pressable>
   );
 }

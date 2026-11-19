@@ -16,7 +16,7 @@ import {
   type CourseGroup,
 } from '@/lib/courses';
 import { inputDir, padEnd, padStart, pushToEnd, row, scrollStartsAtReadingSide } from '@/lib/rtl';
-import { findClash } from '@/lib/schedule';
+import { findClash, findExamClash } from '@/lib/schedule';
 import { colors, fonts } from '@/lib/theme';
 import type { Course } from '@/lib/types';
 
@@ -87,9 +87,10 @@ export function CourseDock({
       };
     }
     if (!g.sections.some((s) => slotsOf(s).length > 0)) return { text: tr('بلا وقت', 'No time'), tone: 'muted' };
-    // Open sections that fit the timetable; if every open one clashes, say so.
+    // Open sections that fit the timetable (no class at the same time, no exam in the same period);
+    // if every open one clashes, say so.
     const open = g.sections.filter((s) => s.status !== 'closed');
-    const fitting = open.filter((s) => !findClash(s, chosen)).length;
+    const fitting = open.filter((s) => !findClash(s, chosen) && !findExamClash(s, chosen)).length;
     if (fitting > 0) return { text: tr(`${fitting} مفتوحة`, `${fitting} open`), tone: 'accent' };
     return open.length > 0 ? { text: tr('تعارض', 'Clash'), tone: 'warn' } : { text: tr('مغلقة', 'Closed'), tone: 'danger' };
   };
@@ -249,7 +250,7 @@ export function CourseDock({
                 chosen={chosenIds.has(s.id)}
                 previewed={previewId === s.id}
                 clash={findClash(s, chosen)}
-                examClash={examPeriodClash(s, chosen)}
+                examClash={findExamClash(s, chosen)}
                 onPreview={() => onPreview(s)}
                 onToggle={() => onToggle(s)}
               />
@@ -260,13 +261,6 @@ export function CourseDock({
     </View>
   );
 }
-
-/** A chosen section of another course with the same final-exam period, if any. */
-const examPeriodClash = (section: Course, chosen: Course[]): Course | null => {
-  const period = section.finalExam?.date;
-  if (!period) return null;
-  return chosen.find((c) => c.code !== section.code && c.finalExam?.date === period) ?? null;
-};
 
 function SectionCard({
   section,
@@ -294,7 +288,7 @@ function SectionCard({
     ? { label: tr('مضافة', 'Added'), tone: 'accent' }
     : closed
       ? { label: tr('مغلقة', 'Closed'), tone: 'danger' }
-      : clash
+      : clash || examClash
         ? { label: tr('تعارض', 'Clash'), tone: 'warn' }
         : section.status === 'open'
           ? { label: tr('مفتوحة', 'Open'), tone: 'ok' }

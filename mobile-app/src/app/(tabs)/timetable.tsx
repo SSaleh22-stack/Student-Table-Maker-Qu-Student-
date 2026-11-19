@@ -18,7 +18,7 @@ import { isEnglish, tr } from '@/lib/i18n';
 import { padSides } from '@/lib/insets';
 import { activityLabel, courseHours, coursesLabel, groupCourses, hoursLabel, slotsOf } from '@/lib/courses';
 import { pushToEnd, row } from '@/lib/rtl';
-import { clashingCodes, clashPairs, examClashes, findClash, gridHours } from '@/lib/schedule';
+import { clashPairs, conflictCodes, examClashes, findClash, gridHours } from '@/lib/schedule';
 import { colors, shadow } from '@/lib/theme';
 import type { Course } from '@/lib/types';
 import { useAppData } from '@/store/AppData';
@@ -73,7 +73,8 @@ export default function TimetableScreen() {
   const [previewId, setPreviewId] = useState<string | null>(null);
   const [phoneGridH, setPhoneGridH] = useState(0);
 
-  const clashCodes = useMemo(() => clashingCodes(chosen), [chosen]);
+  // Time clashes and exam-period clashes both count as a conflict (tile, chips, course list).
+  const clashCodes = useMemo(() => conflictCodes(chosen), [chosen]);
   const pairs = useMemo(() => clashPairs(chosen), [chosen]);
   const exams = useMemo(() => examClashes(chosen), [chosen]);
   const chosenCourses = useMemo(() => groupCourses(chosen), [chosen]);
@@ -161,7 +162,13 @@ export default function TimetableScreen() {
   if (!ready) return <View style={styles.screen} />;
   if (groups.length === 0) return <EmptyTimetable />;
 
-  const totals = { courses: chosenCourses.length, hours: totalHours, clash: clashCodes.size > 0 };
+  const totals = {
+    courses: chosenCourses.length,
+    hours: totalHours,
+    clash: clashCodes.size > 0,
+    // Only the final exams clash (no two classes at the same time)
+    examOnly: pairs.length === 0 && exams.length > 0,
+  };
 
   const noTimeNote =
     noTime.length > 0 ? (
@@ -309,6 +316,7 @@ function TimetableHeader({
   courses: number;
   hours: number;
   clash: boolean;
+  examOnly?: boolean;
   large?: boolean;
   /** Phone held sideways: one short row (title and totals side by side), smaller buttons. */
   slim?: boolean;
@@ -537,7 +545,20 @@ function ActionsSheet({
  * Phone: small tiles (number over its word) between the header and the timetable.
  * iPad (`wide`): the first row inside the timetable card, icon, number and word in one line.
  */
-function StatTiles({ courses, hours, clash, wide = false }: { courses: number; hours: number; clash: boolean; wide?: boolean }) {
+function StatTiles({
+  courses,
+  hours,
+  clash,
+  examOnly = false,
+  wide = false,
+}: {
+  courses: number;
+  hours: number;
+  clash: boolean;
+  /** Only final exams share a period (no class times overlap) */
+  examOnly?: boolean;
+  wide?: boolean;
+}) {
   const items: { key: string; icon: IconName; value: string; word: string; a11y: string; fg: string; tint: string; ok?: boolean }[] = [
     {
       key: 'courses',
@@ -560,9 +581,13 @@ function StatTiles({ courses, hours, clash, wide = false }: { courses: number; h
     {
       key: 'clash',
       icon: clash ? 'alert' : 'check',
-      value: clash ? tr('يوجد', 'Clash') : tr('لا', 'No'),
-      word: clash ? tr('تعارض', 'found') : tr('تعارض', 'clash'),
-      a11y: clash ? tr('يوجد تعارض', 'Clash found') : tr('لا تعارض', 'No clash'),
+      value: !clash ? tr('لا', 'No') : examOnly ? tr('تعارض', 'Exam') : tr('يوجد', 'Clash'),
+      word: !clash ? tr('تعارض', 'clash') : examOnly ? tr('اختبار', 'clash') : tr('تعارض', 'found'),
+      a11y: !clash
+        ? tr('لا تعارض', 'No clash')
+        : examOnly
+          ? tr('تعارض في فترة الاختبار', 'Exam period clash')
+          : tr('يوجد تعارض', 'Clash found'),
       fg: clash ? colors.clash : colors.success,
       tint: clash ? colors.clashSoft : colors.successSoft,
       ok: true,

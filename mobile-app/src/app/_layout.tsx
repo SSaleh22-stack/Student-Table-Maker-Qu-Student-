@@ -8,11 +8,12 @@ import {
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { IntroAnimation } from '@/components/IntroAnimation';
 import { UpdateGate } from '@/components/UpdateGate';
 import { useLang, useLanguageBoot } from '@/lib/i18n';
 import { colors } from '@/lib/theme';
@@ -29,6 +30,8 @@ export default function RootLayout() {
   });
   const langReady = useLanguageBoot();
   const lang = useLang();
+  // The opening animation plays once per app start (not when the language changes).
+  const [introDone, setIntroDone] = useState(false);
 
   useEffect(() => {
     if ((loaded || error) && langReady) SplashScreen.hideAsync();
@@ -58,6 +61,7 @@ export default function RootLayout() {
           </Stack>
           </View>
           <UpdateGate />
+          {introDone ? null : <IntroAnimation onDone={() => setIntroDone(true)} />}
         </AppDataProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

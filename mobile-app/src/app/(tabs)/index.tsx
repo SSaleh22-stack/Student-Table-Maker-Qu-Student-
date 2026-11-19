@@ -25,7 +25,7 @@ import {
 import { arabicDate } from '@/lib/export/dates';
 import { useIsTablet } from '@/lib/layout';
 import { alignStart, pushToEnd, row } from '@/lib/rtl';
-import { clashingCodes } from '@/lib/schedule';
+import { conflictCodes } from '@/lib/schedule';
 import { colors } from '@/lib/theme';
 import type { Course } from '@/lib/types';
 import { useAppData } from '@/store/AppData';
@@ -176,7 +176,7 @@ export default function HomeScreen() {
 
   const courses = groupCourses(chosen);
   const hours = courses.reduce((n, g) => n + courseHours(g.sections), 0);
-  const clashes = clashingCodes(chosen).size;
+  const clashes = conflictCodes(chosen).size;
 
   const meetings: Meeting[] = chosen.flatMap((c) =>
     slotsOf(c).flatMap((s) =>
@@ -341,7 +341,7 @@ export default function HomeScreen() {
               </Pressable>
             ) : (
               <AppText size={t(17, 22)} weight="bold" color={ON_TEAL.title}>
-                {tr('أهلاً بك، كل ما تحتاجه لفصلك هنا', 'Welcome — everything for your term is here')}
+                {tr('أهلاً بك', 'Welcome')}
               </AppText>
             )}
           </View>
@@ -488,9 +488,6 @@ function TabletHome({
             <AppText size={38} weight="bold" color={ON_TEAL.title} style={{ lineHeight: 54 }}>
               {greeting(hour)}
             </AppText>
-            <AppText size={17} color={ON_TEAL.soft}>
-              {tr('كل ما تحتاجه لفصلك في مكان واحد', 'Everything for your term, in one place')}
-            </AppText>
           </View>
         </View>
 
@@ -521,7 +518,7 @@ function TabletHome({
             ))}
           </View>
 
-          {/* Announcements and "problem or idea?" side by side, down to the tab bar */}
+          {/* Announcements and "problem or idea?" side by side */}
           <View style={[tabStyles.bottom, { flexDirection: row }]}>
             <View style={{ flex: 1.25 }}>
               <Announcements list />
@@ -534,7 +531,7 @@ function TabletHome({
               <View style={[tabStyles.feedbackIcon, { alignSelf: alignStart }]}>
                 <Icon name="message" size={28} color={WARM.icon} />
               </View>
-              <View style={{ gap: 6, marginTop: 18 }}>
+              <View style={{ gap: 6, marginTop: 18, marginBottom: 18 }}>
                 <AppText size={21} weight="bold">
                   {tr('عندك مشكلة أو فكرة؟', 'Got a problem or an idea?')}
                 </AppText>
@@ -586,7 +583,8 @@ const tabStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  bottom: { flex: 1, minHeight: 250, gap: 20, alignItems: 'stretch' },
+  // Cards as tall as their content (the taller one sets the row height), so neither has empty space.
+  bottom: { gap: 20, alignItems: 'stretch' },
   feedback: {
     flex: 1,
     padding: 24,
