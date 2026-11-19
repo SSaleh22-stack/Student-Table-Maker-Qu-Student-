@@ -88,8 +88,14 @@ applyDirection(true);
  */
 export const ltr = (text: string | number) => `⁦${text}⁩`;
 
-/** Text-input alignment and direction for the current language (apply inline, at render). */
+/**
+ * Text-input alignment and direction for the current language (apply inline, at render).
+ *
+ * Unlike `Text`, a `TextInput` never swaps left and right in native RTL (iOS builds its text
+ * attributes without a layout direction, Android maps them to Gravity.LEFT/RIGHT), so the side
+ * is given as it is on screen: right for Arabic, left for English.
+ */
 export const inputDir = (): { textAlign: 'left' | 'right'; writingDirection: 'rtl' | 'ltr' } => ({
-  textAlign: textStart,
+  textAlign: isRTL ? 'right' : 'left',
   writingDirection: isRTL ? 'rtl' : 'ltr',
 });

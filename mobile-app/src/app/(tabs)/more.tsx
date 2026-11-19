@@ -12,12 +12,24 @@ import { Logo } from '@/components/Logo';
 import { SafeAreaView } from '@/components/SafeAreaView';
 import { Button, ScreenHeader } from '@/components/ui';
 import { isEnglish, tr } from '@/lib/i18n';
+import { useIsTablet } from '@/lib/layout';
 import { row } from '@/lib/rtl';
 import { colors } from '@/lib/theme';
 import { useAppData } from '@/store/AppData';
 
 const SITE_URL = 'https://qustudent.net';
 const PRIVACY_URL = `${SITE_URL}/privacy.html`;
+const APP_STORE_URL = 'https://apps.apple.com/app/id6835769939';
+const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=net.qustudent.app';
+
+/** What "Share the app" sends: both store links, so it works whatever phone the friend has. */
+const shareMessage = () =>
+  [
+    `QU Student — ${tr('ابنِ جدولك الدراسي في دقائق', 'Build your class timetable in minutes')}`,
+    '',
+    `${tr('آيفون وآيباد', 'iPhone & iPad')}: ${APP_STORE_URL}`,
+    `${tr('أندرويد', 'Android')}: ${PLAY_STORE_URL}`,
+  ].join('\n');
 
 const formatDate = (iso?: string) => {
   if (!iso) return tr('لم تستورد بعد', 'Not imported yet');
@@ -31,6 +43,7 @@ const formatDate = (iso?: string) => {
 
 export default function MoreScreen() {
   const { importedAt, clearAll, settings, setSettings } = useAppData();
+  const tablet = useIsTablet();
 
   const confirmClear = () => {
     const run = () => clearAll();
@@ -114,6 +127,8 @@ export default function MoreScreen() {
           />
         </Group>
 
+        {/* The next class card is only on the phone home screen; the iPad one has none. */}
+        {tablet ? null : (
         <Group title={tr('الإعدادات', 'Settings')}>
           <ToggleItem
             icon="sun"
@@ -123,6 +138,7 @@ export default function MoreScreen() {
             onChange={(on) => setSettings({ showTodayCard: on })}
           />
         </Group>
+        )}
 
         <Group title={tr('المساعدة', 'Help')}>
           <Item
@@ -145,11 +161,7 @@ export default function MoreScreen() {
           <Item
             icon="share"
             title={tr('شارك التطبيق مع زملائك', 'Share the app with classmates')}
-            onPress={() =>
-              shareText(
-                `QU Student — ${tr('ابنِ جدولك الدراسي في دقائق', 'Build your class timetable in minutes')}\n${SITE_URL}`,
-              ).catch(() => {})
-            }
+            onPress={() => shareText(shareMessage()).catch(() => {})}
           />
           <Item
             icon="lock"

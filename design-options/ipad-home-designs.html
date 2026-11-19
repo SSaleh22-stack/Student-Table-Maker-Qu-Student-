@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>iPad Home Designs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #EEF3F8;
+    --surface: #FFFFFF;
+    --line: #E4EAF1;
+    --ink: #13202E;
+    --muted: #5E6B7C;
+    --faint: #94A0AF;
+    --teal: #0E7490;
+    --teal-2: #0B5E75;
+    --teal-deep: #083F4F;
+    --tint: #E3F2F6;
+    --tint-2: #CFE9F0;
+    --on-teal: #CBE7EE;
+    --warm: #F59E0B;
+    --warm-tint: #FEF3DC;
+    --rose: #D14343;
+    --rose-tint: #FBE7E7;
+    --shadow: 0 1px 2px rgba(19, 32, 46, .04), 0 8px 24px rgba(19, 32, 46, .06);
+    --W: 834px; --H: 1194px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'IBM Plex Sans Arabic', system-ui, sans-serif; background: #E2E8EF; color: var(--ink); -webkit-font-smoothing: antialiased; }
+  svg { display: block; flex-shrink: 0; }
+
+  /* ---------- Gallery ---------- */
+  .intro { max-width: 980px; margin: 0 auto; padding: 40px 16px 8px; }
+  .intro h1 { font-size: 28px; font-weight: 700; }
+  .intro p { font-size: 15px; color: var(--muted); margin-top: 6px; }
+  .gallery { display: grid; grid-template-columns: repeat(2, max-content); gap: 48px 56px; justify-content: center; padding: 32px 16px 64px; }
+  .slot { width: calc(var(--W) * var(--s) + 24px); --s: .52; }
+  .slot-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 4px; }
+  .slot-num { width: 30px; height: 30px; border-radius: 10px; background: var(--teal); color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 15px; flex-shrink: 0; align-self: center; }
+  .slot h2 { font-size: 20px; font-weight: 700; }
+  .slot p { font-size: 14px; color: var(--muted); margin: 0 0 14px 40px; margin-inline-start: 40px; margin-inline-end: 0; line-height: 1.6; min-height: 45px; }
+  .device { padding: 12px; border-radius: 40px; background: #151C24; box-shadow: 0 30px 60px rgba(19,32,46,.28), inset 0 0 0 1.5px #2C3642; }
+  .screen { width: calc(var(--W) * var(--s)); height: calc(var(--H) * var(--s)); border-radius: 28px; overflow: hidden; background: var(--bg); }
+  .screen > .ipad { transform: scale(var(--s)); transform-origin: top right; }
+  body.single .intro { display: none; }
+  body.single .gallery { display: block; padding: 0; }
+  body.single .slot { --s: 1; width: auto; }
+  body.single .slot-head, body.single .slot p { display: none; }
+  body.single .device { padding: 0; border-radius: 0; box-shadow: none; background: none; }
+  body.single .screen { border-radius: 0; }
+  @media (max-width: 1000px) { .gallery { grid-template-columns: max-content; } }
+  @media (max-width: 480px) { .slot { --s: .4; } }
+
+  /* ---------- Device chrome ---------- */
+  .ipad { width: var(--W); height: var(--H); position: relative; overflow: hidden; background: var(--bg); display: flex; flex-direction: column; }
+  .status { height: 28px; flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; padding: 0 26px; font-size: 13px; font-weight: 600; color: var(--ink); direction: ltr; position: relative; z-index: 2; }
+  .status.light { color: #fff; }
+  .status .bat { display: flex; align-items: center; gap: 6px; }
+  .status .bat i { width: 24px; height: 11px; border-radius: 3px; border: 1.5px solid currentColor; position: relative; display: block; }
+  .status .bat i::after { content: ''; position: absolute; inset: 1.5px; border-radius: 1px; background: currentColor; }
+  .body { flex: 1; min-height: 0; position: relative; }
+  .tabbar { height: 78px; flex-shrink: 0; background: rgba(255,255,255,.96); border-top: 1px solid var(--line); display: flex; justify-content: center; gap: 96px; padding-top: 10px; position: relative; }
+  .tabbar div { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 12px; color: var(--faint); font-weight: 500; }
+  .tabbar .on { color: var(--teal); font-weight: 600; }
+  .tabbar::after { content: ''; position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); width: 140px; height: 5px; border-radius: 3px; background: var(--ink); }
+
+  /* ---------- Shared pieces ---------- */
+  .row { display: flex; align-items: center; }
+  .col { display: flex; flex-direction: column; }
+  .card { background: var(--surface); border-radius: 28px; box-shadow: var(--shadow); }
+  .logo { width: 48px; height: 48px; border-radius: 15px; display: grid; place-items: center; background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.28); }
+  .logo.solid { background: var(--teal); border: 0; box-shadow: 0 6px 14px rgba(14,116,144,.3); }
+  .chip { gap: 6px; height: 38px; padding: 0 14px; border-radius: 999px; font-size: 14px; font-weight: 600; }
+  .chip.glass { background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.26); color: #fff; }
+  .chip.light { background: var(--surface); border: 1px solid var(--line); color: var(--ink); box-shadow: var(--shadow); }
+  .eyebrow { font-size: 13px; font-weight: 600; letter-spacing: .2px; }
+  .badge { height: 26px; padding: 0 10px; border-radius: 999px; font-size: 12.5px; font-weight: 700; display: inline-flex; align-items: center; gap: 5px; }
+  .code { display: grid; place-items: center; font-weight: 700; direction: ltr; border-radius: 16px; }
+  .sq { display: grid; place-items: center; flex-shrink: 0; }
+  .btn { gap: 6px; height: 42px; padding: 0 18px; border-radius: 999px; font-size: 14.5px; font-weight: 700; white-space: nowrap; }
+  .dots { gap: 5px; }
+  .dots i { display: block; width: 7px; height: 7px; border-radius: 4px; background: currentColor; opacity: .3; }
+  .dots i.on { width: 18px; opacity: 1; }
+  .bar { height: 8px; border-radius: 4px; background: #EDF1F5; overflow: hidden; }
+  .bar > i { display: block; height: 100%; border-radius: 4px; }
+  .ltr { direction: ltr; unicode-bidi: isolate; }
+</style>
+</head>
+<body>
+<div class="intro">
+  <h1>تصاميم الصفحة الرئيسية للآيباد</h1>
+  <p>أربعة اتجاهات مختلفة. الآيفون والجوالات تبقى كما هي. البيانات للتوضيح فقط. أضف <span class="ltr">?d=1</span> إلى الرابط لعرض تصميم واحد بحجمه الحقيقي.</p>
+</div>
+<div class="gallery" id="gallery"></div>
+
+<script>
+const P = {
+  calendar: '<rect x="3" y="4.5" width="18" height="16" rx="3.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/>',
+  download: '<path d="M12 3.5v11m0 0-4.2-4.2M12 14.5l4.2-4.2M4.5 16.5v2a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-2"/>',
+  calendarDays: '<rect x="3" y="4.5" width="18" height="16" rx="3.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4M8 13.5h.01M12 13.5h.01M16 13.5h.01M8 17h.01M12 17h.01"/>',
+  calculator: '<rect x="5" y="2.5" width="14" height="19" rx="3.5"/><path d="M8.5 6.5h7M8.5 11h.01M12 11h.01M15.5 11h.01M8.5 14.5h.01M12 14.5h.01M15.5 14.5h.01M8.5 18h.01M12 18h.01M15.5 18h.01"/>',
+  userMinus: '<circle cx="9.5" cy="8" r="4"/><path d="M2.5 20.5a7 7 0 0 1 14 0M16 11h6"/>',
+  star: '<path d="m12 3.2 2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 16.6l-5.2 2.8 1-5.9-4.3-4.1 5.9-.8z"/>',
+  clipboard: '<rect x="5" y="4" width="14" height="17.5" rx="3"/><path d="M9 4V3h6v1M9 13l2 2 4-4"/>',
+  play: '<circle cx="12" cy="12" r="9.5"/><path d="m10 8.5 5.5 3.5-5.5 3.5z"/>',
+  message: '<path d="M20 15.5a2 2 0 0 1-2 2H8.5L4 21V5.5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2z"/><path d="M8.5 9h7M8.5 12.5h4.5"/>',
+  globe: '<circle cx="12" cy="12" r="9.5"/><path d="M2.5 12h19M12 2.5c2.8 3 2.8 16 0 19M12 2.5c-2.8 3-2.8 16 0 19"/>',
+  bell: '<path d="M6 16v-5a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20.5a2 2 0 0 0 4 0"/>',
+  university: '<path d="M3 9.5 12 4l9 5.5M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20.5h18"/>',
+  forward: '<path d="m14.5 6-6 6 6 6"/>',
+  clock: '<circle cx="12" cy="12" r="9.5"/><path d="M12 7v5l3 2"/>',
+  pin: '<path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>',
+  home: '<path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-4.5v-6h-5v6H5a1 1 0 0 1-1-1z"/>',
+  menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
+  logo: '<rect x="3" y="4.5" width="18" height="16" rx="3.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4M8 14h3M8 17h6"/>',
+  sparkle: '<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6"/>',
+};
+const ic = (n, size = 24, color = 'currentColor', sw = 1.8) =>
+  `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="${color}" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">${P[n]}</svg>`;
+
+/* Services, in the app's order */
+const S = [
+  { i: 'calendar', l: 'جدولي', d: 'اختر الشعب وشاهد جدولك' },
+  { i: 'download', l: 'الاستيراد', d: 'المقررات المطروحة من MyQU' },
+  { i: 'calendarDays', l: 'التقويم', d: 'مواعيد الفصل والاختبارات' },
+  { i: 'calculator', l: 'المعدل', d: 'معدلك الفصلي والتراكمي' },
+  { i: 'userMinus', l: 'الغياب', d: 'نسبة غيابك قبل الحرمان' },
+  { i: 'star', l: 'قيم', d: 'تقييمات أعضاء هيئة التدريس' },
+  { i: 'clipboard', l: 'تقييم المقررات', d: 'املأ الاستبيانات بضغطة' },
+  { i: 'play', l: 'مقاطع الشرح', d: 'شرح مختصر لكل ميزة' },
+];
+
+/* Today's classes (sample) */
+const C = [
+  { t: '08:00', e: '09:15', code: 'MATH 105', n: 'تفاضل وتكامل ١', room: 'مبنى 30 · قاعة 12', state: 'done' },
+  { t: '10:00', e: '11:15', code: 'CS 210', n: 'هياكل البيانات', room: 'مبنى 30 · قاعة 112', state: 'now' },
+  { t: '13:00', e: '14:15', code: 'ENG 102', n: 'اللغة الإنجليزية ٢', room: 'مبنى 4 · قاعة 7', state: 'next' },
+];
+
+const status = (light) => `<div class="status ${light ? 'light' : ''}"><span>9:41</span><span class="bat">100% <i></i></span></div>`;
+const tabbar = () => `<div class="tabbar">
+  <div class="on">${ic('home', 25, 'currentColor', 2)}الرئيسية</div><div>${ic('calendar', 25)}الجدول</div><div>${ic('star', 25)}قيم</div><div>${ic('menu', 25)}المزيد</div></div>`;
+const langChip = (kind) => `<div class="row chip ${kind}">${ic('globe', 16)}English</div>`;
+const brand = (onTeal) => `<div class="row" style="gap:12px">
+  <div class="logo ${onTeal ? '' : 'solid'}">${ic('logo', 26, '#fff')}</div>
+  <div class="col"><span style="font-size:20px;font-weight:700;line-height:1.2;color:${onTeal ? '#fff' : 'var(--ink)'}">QU Student</span>
+  <span style="font-size:13px;color:${onTeal ? 'var(--on-teal)' : 'var(--muted)'}">جامعة القصيم</span></div></div>`;
+const codeBox = (code, size = 'm') => {
+  const s = size === 'l' ? 'width:96px;height:96px;font-size:17px;border-radius:22px' : 'width:76px;height:64px;font-size:14px';
+  return `<div class="code" style="${s};background:var(--warm-tint);color:#8A4B08">${code.replace(' ', '<br>')}</div>`;
+};
+
+/* ======================================================================
+   1 — هادئ: teal header with the next class, one clean grid of services
+   ====================================================================== */
+function d1() {
+  const tiles = S.map(s => `<div class="col" style="align-items:center;gap:14px;padding:30px 8px 28px">
+      <div class="sq" style="width:78px;height:78px;border-radius:24px;background:var(--tint)">${ic(s.i, 34, 'var(--teal-2)')}</div>
+      <span style="font-size:16.5px;font-weight:600">${s.l}</span></div>`).join('');
+  return `<div class="ipad">
+    <div style="position:absolute;top:0;left:0;right:0;height:500px;background:linear-gradient(160deg,#0F7C99 0%,#0B5E75 100%);overflow:hidden">
+      <div style="position:absolute;width:420px;height:420px;border-radius:50%;background:rgba(255,255,255,.06);top:-160px;left:-120px"></div>
+      <div style="position:absolute;width:240px;height:240px;border-radius:50%;background:rgba(255,255,255,.05);top:200px;left:140px"></div>
+    </div>
+    ${status(true)}
+    <div class="body" style="padding:18px 44px 0;display:flex;flex-direction:column">
+      <div class="row" style="justify-content:space-between">${brand(true)}${langChip('glass')}</div>
+
+      <div style="margin-top:48px;color:#fff">
+        <div class="eyebrow" style="color:var(--on-teal)">الخميس ١٩ نوفمبر</div>
+        <div style="font-size:34px;font-weight:700;line-height:1.3;margin-top:2px">صباح الخير</div>
+      </div>
+
+      <div class="row" style="margin-top:22px;gap:18px;padding:18px;border-radius:24px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:#fff">
+        <div class="code" style="width:72px;height:72px;font-size:14px;background:#fff;color:var(--teal-2)">CS<br>210</div>
+        <div class="col" style="flex:1;gap:2px">
+          <span class="eyebrow" style="color:var(--on-teal)">المحاضرة القادمة · بعد ٢٥ دقيقة</span>
+          <span style="font-size:22px;font-weight:700">هياكل البيانات</span>
+          <span style="font-size:14.5px;color:var(--on-teal)"><span class="ltr">10:00 – 11:15</span> · مبنى 30 · قاعة 112</span>
+        </div>
+        <div class="row" style="gap:6px;font-weight:700;font-size:14.5px">الجدول ${ic('forward', 16, '#fff', 2.2)}</div>
+      </div>
+
+      <div class="card" style="margin-top:32px;padding:12px 16px">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr)">${tiles}</div>
+      </div>
+
+      <div style="margin-top:20px;display:grid;grid-template-columns:1.25fr 1fr;gap:20px;flex:1;margin-bottom:28px">
+        <div class="card" style="padding:24px;background:var(--teal-deep);color:var(--on-teal);display:flex;flex-direction:column">
+          <div class="row" style="gap:8px">${ic('bell', 17)}<span class="eyebrow">إعلانات</span><div class="row dots" style="margin-inline-start:auto;color:#fff"><i class="on"></i><i></i><i></i></div></div>
+          <div style="margin-top:auto">
+            <div class="sq" style="width:52px;height:52px;border-radius:16px;background:rgba(255,255,255,.1);margin-bottom:14px">${ic('university', 26, '#fff')}</div>
+            <div style="font-size:21px;font-weight:700;color:#fff">الجامعات المدعومة</div>
+            <div class="row" style="gap:8px;margin-top:6px;font-size:15px">جامعة القصيم <span class="badge" style="background:#D7F5E1;color:#14612F">مدعومة</span></div>
+          </div>
+        </div>
+        <div class="card" style="padding:24px;display:flex;flex-direction:column">
+          <div class="sq" style="width:52px;height:52px;border-radius:16px;background:var(--warm-tint)">${ic('message', 26, '#B45309')}</div>
+          <div style="font-size:19px;font-weight:700;margin-top:16px">عندك مشكلة أو فكرة؟</div>
+          <div style="font-size:14.5px;color:var(--muted);margin-top:4px;line-height:1.6">اكتب لنا من داخل التطبيق وتصلنا رسالتك مباشرة.</div>
+          <div class="row btn" style="margin-top:auto;align-self:flex-start;background:var(--ink);color:#fff">اكتب لنا ${ic('forward', 15, '#fff', 2.2)}</div>
+        </div>
+      </div>
+    </div>
+    ${tabbar()}</div>`;
+}
+
+/* ======================================================================
+   2 — لوحة اليوم: light page, today's timeline beside a grouped list
+   ====================================================================== */
+function d2() {
+  const timeline = C.map((c, k) => {
+    const now = c.state === 'now', done = c.state === 'done';
+    return `<div class="row" style="gap:16px;align-items:stretch">
+      <div class="col" style="width:52px;align-items:flex-start;padding-top:16px">
+        <span class="ltr" style="font-size:15px;font-weight:700;color:${done ? 'var(--faint)' : 'var(--ink)'}">${c.t}</span>
+        <span class="ltr" style="font-size:12.5px;color:var(--faint)">${c.e}</span>
+      </div>
+      <div class="col" style="align-items:center;width:14px">
+        <div style="width:14px;height:14px;border-radius:50%;margin-top:20px;background:${now ? 'var(--teal)' : '#fff'};border:3px solid ${done ? 'var(--line)' : 'var(--teal)'};box-shadow:${now ? '0 0 0 5px rgba(14,116,144,.15)' : 'none'}"></div>
+        ${k < C.length - 1 ? '<div style="flex:1;width:2px;background:var(--line);margin-top:4px"></div>' : ''}
+      </div>
+      <div style="flex:1;margin-bottom:14px;padding:16px 18px;border-radius:20px;${now ? 'background:var(--teal);color:#fff;box-shadow:0 10px 24px rgba(14,116,144,.25)' : done ? 'background:#F5F8FB;color:var(--faint)' : 'background:#F5F8FB'}">
+        <div class="row" style="justify-content:space-between">
+          <span class="ltr" style="font-size:12.5px;font-weight:700;opacity:.8">${c.code}</span>
+          ${now ? '<span class="badge" style="background:rgba(255,255,255,.2);color:#fff">الآن</span>' : done ? '<span style="font-size:12.5px">انتهت</span>' : ''}
+        </div>
+        <div style="font-size:18px;font-weight:700;margin-top:2px">${c.n}</div>
+        <div class="row" style="gap:6px;font-size:13.5px;margin-top:4px;${now ? 'color:var(--on-teal)' : 'color:var(--muted)'}">${ic('pin', 14)}${c.room}</div>
+      </div></div>`;
+  }).join('');
+  const list = S.map((s, k) => `<div class="row" style="flex:1;gap:14px;padding:0 18px;${k ? 'border-top:1px solid var(--line)' : ''}">
+      <div class="sq" style="width:42px;height:42px;border-radius:13px;background:var(--tint)">${ic(s.i, 21, 'var(--teal-2)')}</div>
+      <div class="col" style="flex:1"><span style="font-size:15.5px;font-weight:600">${s.l}</span><span style="font-size:12.5px;color:var(--muted)">${s.d}</span></div>
+      ${ic('forward', 16, 'var(--faint)', 2)}</div>`).join('');
+  return `<div class="ipad">
+    ${status()}
+    <div class="body" style="padding:18px 40px 0;display:flex;flex-direction:column">
+      <div class="row" style="justify-content:space-between">${brand(false)}${langChip('light')}</div>
+
+      <div class="row" style="margin-top:36px;align-items:flex-end;justify-content:space-between">
+        <div><div class="eyebrow" style="color:var(--teal)">الخميس ١٩ نوفمبر</div>
+          <div style="font-size:34px;font-weight:700;line-height:1.3">لديك ٣ محاضرات اليوم</div></div>
+        <div class="row" style="gap:10px">
+          ${[['٥', 'مقررات'], ['١٥', 'ساعة']].map(([n, l]) => `<div class="col card" style="align-items:center;padding:10px 18px;border-radius:18px"><span style="font-size:22px;font-weight:700;line-height:1.2">${n}</span><span style="font-size:12.5px;color:var(--muted)">${l}</span></div>`).join('')}
+        </div>
+      </div>
+
+      <div style="margin-top:24px;display:grid;grid-template-columns:1fr 1fr;gap:20px;flex:1;min-height:0">
+        <div class="card" style="padding:22px 22px 10px;display:flex;flex-direction:column">
+          <div class="row" style="justify-content:space-between;margin-bottom:6px"><span style="font-size:18px;font-weight:700">اليوم</span>
+            <span class="row" style="gap:4px;font-size:14px;font-weight:700;color:var(--teal)">الجدول كاملًا ${ic('forward', 15, 'currentColor', 2.2)}</span></div>
+          ${timeline}
+          <div class="row" style="margin-top:auto;margin-bottom:12px;gap:12px;padding:14px 16px;border-radius:18px;border:1.5px dashed var(--line)">
+            ${ic('clock', 20, 'var(--muted)')}<span style="font-size:14px;color:var(--muted)">غدًا: أول محاضرة الساعة <b class="ltr" style="color:var(--ink)">08:00</b></span>
+          </div>
+        </div>
+        <div class="card" style="padding:6px 0;overflow:hidden;display:flex;flex-direction:column">${list}</div>
+      </div>
+
+      <div class="row" style="margin-top:20px;gap:20px;margin-bottom:26px;align-items:stretch">
+        <div class="card row" style="flex:1.3;padding:22px 24px;gap:18px;background:var(--teal-deep);color:var(--on-teal)">
+          <div class="sq" style="width:56px;height:56px;border-radius:17px;background:rgba(255,255,255,.1)">${ic('university', 28, '#fff')}</div>
+          <div class="col" style="flex:1;gap:4px"><span class="eyebrow">إعلانات</span><span style="font-size:19px;font-weight:700;color:#fff">الجامعات المدعومة</span><span style="font-size:14px">جامعة القصيم · مدعومة</span></div>
+          <div class="row dots" style="color:#fff;align-self:flex-start"><i class="on"></i><i></i><i></i></div>
+        </div>
+        <div class="card row" style="flex:1;padding:22px 24px;gap:16px">
+          <div class="sq" style="width:56px;height:56px;border-radius:17px;background:var(--warm-tint)">${ic('message', 27, '#B45309')}</div>
+          <div class="col" style="flex:1"><span style="font-size:17px;font-weight:700">مشكلة أو فكرة؟</span><span style="font-size:13.5px;color:var(--muted)">تصلنا رسالتك مباشرة</span></div>
+          <div class="sq" style="width:40px;height:40px;border-radius:50%;background:var(--ink)">${ic('forward', 17, '#fff', 2.2)}</div>
+        </div>
+      </div>
+    </div>
+    ${tabbar()}</div>`;
+}
+
+/* ======================================================================
+   3 — بطاقات: a tidy bento grid that shows real numbers
+   ====================================================================== */
+function d3() {
+  const small = [S[1], S[2], S[5], S[6]].map((s, k) => `<div class="card col" style="padding:20px;gap:6px">
+      <div class="sq" style="width:48px;height:48px;border-radius:15px;background:var(--tint)">${ic(s.i, 24, 'var(--teal-2)')}</div>
+      <span style="font-size:16.5px;font-weight:700;margin-top:auto">${s.l}</span>
+      <span style="font-size:13px;color:var(--muted);line-height:1.5">${k === 1 ? 'اختبارات منتصف الفصل بعد ٥ أيام' : s.d}</span></div>`).join('');
+  return `<div class="ipad">
+    ${status()}
+    <div class="body" style="padding:18px 40px 0;display:flex;flex-direction:column">
+      <div class="row" style="justify-content:space-between">${brand(false)}${langChip('light')}</div>
+      <div style="margin-top:32px"><div class="eyebrow" style="color:var(--teal)">الخميس ١٩ نوفمبر</div>
+        <div style="font-size:34px;font-weight:700;line-height:1.3">أهلاً بك، كل ما تحتاجه لفصلك هنا</div></div>
+
+      <div style="margin-top:24px;flex:1;margin-bottom:26px;display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:200px 200px 1fr 104px 104px;gap:16px">
+        <div class="card" style="grid-column:span 2;grid-row:span 2;padding:24px;background:linear-gradient(155deg,#0F7C99,#0A4F63);color:#fff;display:flex;flex-direction:column;position:relative;overflow:hidden">
+          <div style="position:absolute;width:260px;height:260px;border-radius:50%;background:rgba(255,255,255,.06);bottom:-110px;left:-70px"></div>
+          <div class="row" style="justify-content:space-between"><span class="eyebrow" style="color:var(--on-teal)">المحاضرة القادمة</span><span class="badge" style="background:rgba(255,255,255,.18);color:#fff">${ic('clock', 13, '#fff', 2.2)} بعد ٢٥ دقيقة</span></div>
+          <div class="ltr" style="font-size:15px;font-weight:700;color:var(--on-teal);margin-top:22px;text-align:right">CS 210</div>
+          <div style="font-size:30px;font-weight:700;line-height:1.25">هياكل البيانات</div>
+          <div style="font-size:15px;color:var(--on-teal);margin-top:6px"><span class="ltr">10:00 – 11:15</span> · مبنى 30 · قاعة 112</div>
+          <div style="margin-top:auto;padding-top:16px;border-top:1px solid rgba(255,255,255,.18)" class="row">
+            <div class="col" style="flex:1"><span style="font-size:12.5px;color:var(--on-teal)">بعدها</span><span style="font-size:15px;font-weight:600">اللغة الإنجليزية ٢ · <span class="ltr">13:00</span></span></div>
+            <div class="row" style="gap:4px;font-weight:700;font-size:14.5px">الجدول ${ic('forward', 16, '#fff', 2.2)}</div>
+          </div>
+        </div>
+
+        <div class="card col" style="grid-column:span 2;padding:22px 24px">
+          <div class="row" style="justify-content:space-between"><span class="eyebrow" style="color:var(--muted)">المعدل التراكمي</span>
+            <div class="sq" style="width:40px;height:40px;border-radius:13px;background:var(--tint)">${ic('calculator', 20, 'var(--teal-2)')}</div></div>
+          <div style="margin-top:auto;direction:ltr;text-align:right"><span style="font-size:44px;font-weight:700;line-height:1;color:var(--teal-2)">4.62</span><span style="font-size:17px;color:var(--faint)"> / 5</span></div>
+          <div class="bar" style="margin-top:12px"><i style="width:92%;background:var(--teal)"></i></div>
+        </div>
+
+        <div class="card col" style="grid-column:span 2;padding:22px 24px">
+          <div class="row" style="justify-content:space-between"><span class="eyebrow" style="color:var(--muted)">أعلى نسبة غياب</span>
+            <div class="sq" style="width:40px;height:40px;border-radius:13px;background:var(--rose-tint)">${ic('userMinus', 20, 'var(--rose)')}</div></div>
+          <div class="row" style="gap:10px;align-items:baseline;margin-top:auto"><span class="ltr" style="font-size:44px;font-weight:700;line-height:1;color:var(--rose)">8%</span><span style="font-size:15px;color:var(--muted)">في <span class="ltr">MATH 105</span> · الحد ٢٥٪</span></div>
+          <div class="bar" style="margin-top:12px"><i style="width:32%;background:var(--rose)"></i></div>
+        </div>
+
+        ${small}
+
+        <div class="card row" style="grid-column:span 2;padding:0 24px;gap:16px">
+          <div class="sq" style="width:52px;height:52px;border-radius:16px;background:var(--tint)">${ic('play', 26, 'var(--teal-2)')}</div>
+          <div class="col" style="flex:1"><span style="font-size:16.5px;font-weight:700">مقاطع الشرح</span><span style="font-size:13px;color:var(--muted)">شرح مختصر لكل ميزة</span></div>${ic('forward', 17, 'var(--faint)', 2)}
+        </div>
+        <div class="card row" style="grid-column:span 2;padding:0 24px;gap:16px;background:var(--ink);color:#fff">
+          <div class="sq" style="width:52px;height:52px;border-radius:16px;background:rgba(255,255,255,.1)">${ic('message', 26, '#FCD34D')}</div>
+          <div class="col" style="flex:1"><span style="font-size:16.5px;font-weight:700">عندك مشكلة أو فكرة؟</span><span style="font-size:13px;color:#B8C2CE">اكتب لنا وتصلنا مباشرة</span></div>${ic('forward', 17, '#fff', 2.2)}
+        </div>
+
+        <div class="card row" style="grid-column:span 4;padding:0 24px;gap:18px;background:var(--teal-deep);color:var(--on-teal)">
+          <div class="sq" style="width:56px;height:56px;border-radius:17px;background:rgba(255,255,255,.1)">${ic('university', 28, '#fff')}</div>
+          <div class="col" style="flex:1;gap:2px"><span class="eyebrow">إعلانات</span><span style="font-size:19px;font-weight:700;color:#fff">الجامعات المدعومة: جامعة القصيم</span></div>
+          <div class="row dots" style="color:#fff"><i class="on"></i><i></i><i></i></div>
+        </div>
+      </div>
+    </div>
+    ${tabbar()}</div>`;
+}
+
+/* ======================================================================
+   4 — أيقونات: iPadOS-style widgets on top, app-like icons below
+   ====================================================================== */
+function d4() {
+  const shades = ['#0E7490', '#0F766E', '#0369A1', '#0B5E75', '#155E75', '#0E7490', '#0F766E', '#0369A1'];
+  const icons = S.map((s, k) => `<div class="col" style="align-items:center;gap:10px">
+      <div class="sq" style="width:104px;height:104px;border-radius:30px;background:linear-gradient(160deg,${shades[k]}cc,${shades[k]});box-shadow:0 10px 22px ${shades[k]}40, inset 0 1px 0 rgba(255,255,255,.25)">${ic(s.i, 44, '#fff', 1.7)}</div>
+      <span style="font-size:16px;font-weight:600">${s.l}</span></div>`).join('');
+  return `<div class="ipad" style="background:linear-gradient(180deg,#DDEFF4 0%,#EEF3F8 42%)">
+    ${status()}
+    <div class="body" style="padding:18px 44px 0;display:flex;flex-direction:column">
+      <div class="row" style="justify-content:space-between">${brand(false)}${langChip('light')}</div>
+
+      <div style="margin-top:44px">
+        <div class="eyebrow" style="color:var(--teal-2)">الخميس ١٩ نوفمبر</div>
+        <div style="font-size:36px;font-weight:700;line-height:1.3">صباح الخير</div>
+      </div>
+
+      <div style="margin-top:28px;display:grid;grid-template-columns:1.35fr 1fr;gap:20px">
+        <div class="card" style="padding:24px;display:flex;flex-direction:column;gap:14px">
+          <div class="row" style="gap:8px">${ic('calendar', 18, 'var(--teal)')}<span class="eyebrow" style="color:var(--teal)">اليوم</span><span style="margin-inline-start:auto;font-size:13px;color:var(--muted)">٣ محاضرات</span></div>
+          ${C.map(c => `<div class="row" style="gap:14px;padding:6px 0;opacity:${c.state === 'done' ? .45 : 1}">
+              <div style="width:4px;align-self:stretch;border-radius:2px;background:${c.state === 'now' ? 'var(--teal)' : 'var(--line)'}"></div>
+              <div class="col" style="flex:1"><span style="font-size:16px;font-weight:700">${c.n}</span><span style="font-size:13px;color:var(--muted)">${c.room}</span></div>
+              <span class="ltr" style="font-size:14px;font-weight:700;color:${c.state === 'now' ? 'var(--teal)' : 'var(--muted)'}">${c.t}</span></div>`).join('')}
+        </div>
+        <div class="col" style="gap:20px">
+          <div class="card" style="flex:1;padding:20px 22px;display:flex;flex-direction:column">
+            <div class="row" style="gap:8px">${ic('calendarDays', 18, '#B45309')}<span class="eyebrow" style="color:#B45309">التقويم الأكاديمي</span></div>
+            <div class="row" style="gap:10px;align-items:baseline;margin-top:auto"><span style="font-size:40px;font-weight:700;line-height:1">٥</span><span style="font-size:15px;color:var(--muted)">أيام</span></div>
+            <span style="font-size:14.5px;font-weight:600;margin-top:4px">على اختبارات منتصف الفصل</span>
+          </div>
+          <div class="card row" style="padding:16px 20px;gap:14px">
+            <div class="col" style="flex:1"><span style="font-size:12.5px;color:var(--muted)">المعدل التراكمي</span><span class="ltr" style="font-size:24px;font-weight:700;color:var(--teal-2);text-align:right">4.62</span></div>
+            <div style="width:1px;align-self:stretch;background:var(--line)"></div>
+            <div class="col" style="flex:1"><span style="font-size:12.5px;color:var(--muted)">الساعات</span><span style="font-size:24px;font-weight:700">١٥</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:44px;font-size:19px;font-weight:700">الخدمات</div>
+      <div style="margin-top:24px;display:grid;grid-template-columns:repeat(4,1fr);row-gap:36px">${icons}</div>
+
+      <div class="row" style="margin-top:auto;margin-bottom:24px;gap:16px;padding:18px 22px;border-radius:26px;background:rgba(255,255,255,.75);border:1px solid #fff;box-shadow:var(--shadow)">
+        <div class="sq" style="width:48px;height:48px;border-radius:15px;background:var(--teal-deep)">${ic('bell', 22, '#fff')}</div>
+        <div class="col" style="flex:1"><span style="font-size:16px;font-weight:700">الجامعات المدعومة: جامعة القصيم</span><span style="font-size:13px;color:var(--muted)">إعلان · ١ من ٣</span></div>
+        <div style="width:1px;height:40px;background:var(--line)"></div>
+        <div class="row" style="gap:10px;font-size:15px;font-weight:700;color:var(--teal-2)">${ic('message', 22, 'var(--teal-2)')} مشكلة أو فكرة؟ اكتب لنا</div>
+      </div>
+    </div>
+    ${tabbar()}</div>`;
+}
+
+const designs = [
+  { name: 'هادئ', desc: 'رأس ملوّن فيه التحية والمحاضرة القادمة، ثم الخدمات في شبكة واحدة مرتبة، والإعلانات والملاحظات في بطاقتين متساويتين.', html: d1 },
+  { name: 'لوحة اليوم', desc: 'صفحة فاتحة: محاضرات اليوم كخط زمني على جهة، والخدمات قائمة منظمة مع وصف قصير على الجهة الأخرى.', html: d2 },
+  { name: 'بطاقات', desc: 'شبكة بطاقات بأحجام مدروسة تعرض أرقامك مباشرة: المحاضرة القادمة، المعدل، الغياب، وموعد الاختبارات.', html: d3 },
+  { name: 'أيقونات', desc: 'بأسلوب الآيباد: أدوات اليوم والتقويم والمعدل في الأعلى، والخدمات أيقونات كبيرة مثل أيقونات التطبيقات.', html: d4 },
+];
+
+const one = parseInt(new URLSearchParams(location.search).get('d') || '', 10);
+const list = one >= 1 && one <= 4 ? [[designs[one - 1], one]] : designs.map((d, k) => [d, k + 1]);
+if (list.length === 1) document.body.classList.add('single');
+document.getElementById('gallery').innerHTML = list
+  .map(([d, n]) => `<div class="slot"><div class="slot-head"><span class="slot-num">${n}</span><h2>${d.name}</h2></div><p>${d.desc}</p><div class="device"><div class="screen">${d.html()}</div></div></div>`)
+  .join('');
+</script>
+</body>
+</html>

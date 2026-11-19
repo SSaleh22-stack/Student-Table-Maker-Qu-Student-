@@ -34,7 +34,18 @@ interface Slide {
   cta?: string;
 }
 
-const slides = (): Slide[] => [
+const slides = (tablet: boolean): Slide[] => [
+  // Phones only: the timetable and the other pages have more room on a tablet.
+  ...(tablet
+    ? []
+    : [
+        {
+          id: 'use-tablet',
+          icon: 'tablet' as IconName,
+          title: tr('لتجربة أفضل', 'For a better experience'),
+          text: tr('ننصح باستخدام جهاز لوحي', 'We recommend using a tablet'),
+        },
+      ]),
   {
     id: 'universities',
     icon: 'university',
@@ -55,18 +66,24 @@ const slides = (): Slide[] => [
 /** Time each announcement stays before moving to the next. */
 const SLIDE_MS = 4000;
 
-/** "إعلانات" on the home page: announcements that move to the next one by themselves. */
-export function Announcements() {
+/**
+ * "إعلانات" on the home page: announcements that move to the next one by themselves.
+ * `list` (iPad home) shows every announcement at once as rows instead, filling the height it
+ * is given.
+ */
+export function Announcements({ list = false }: { list?: boolean }) {
   const tablet = useIsTablet();
   const [index, setIndex] = useState(0);
-  const SLIDES = slides();
+  const SLIDES = slides(tablet);
 
   // A fresh timer for every slide, so tapping a dot also restarts the count.
   useEffect(() => {
-    if (SLIDES.length < 2) return;
+    if (list || SLIDES.length < 2) return;
     const id = setTimeout(() => setIndex((i) => (i + 1) % SLIDES.length), SLIDE_MS);
     return () => clearTimeout(id);
-  }, [index, SLIDES.length]);
+  }, [list, index, SLIDES.length]);
+
+  if (list) return <AnnouncementList slides={SLIDES} />;
 
   const slide = SLIDES[index];
   const open = slide.href ? () => router.push(slide.href as Href) : undefined;
@@ -139,9 +156,93 @@ export function Announcements() {
   );
 }
 
+/** iPad home: every announcement as a row, with a closing line under the last one. */
+function AnnouncementList({ slides: items }: { slides: Slide[] }) {
+  return (
+    <View style={[styles.card, styles.cardList]} accessibilityRole="summary">
+      <View style={[styles.head, { flexDirection: row, marginBottom: 4 }]}>
+        <Icon name="bell" size={18} color={DARK.title} />
+        <AppText size={15.5} weight="bold" color={DARK.title} style={{ flex: 1 }}>
+          {tr('إعلانات', 'Announcements')}
+        </AppText>
+        <AppText size={13.5} weight="semibold" color={DARK.text}>
+          {items.length}
+        </AppText>
+      </View>
+
+      {items.map((s, i) => {
+        const open = s.href ? () => router.push(s.href as Href) : undefined;
+        return (
+          <Pressable
+            key={s.id}
+            onPress={open}
+            disabled={!open}
+            accessibilityRole={open ? 'link' : undefined}
+            style={({ pressed }) => [
+              styles.listRow,
+              { flexDirection: row },
+              i > 0 && styles.listDivider,
+              pressed && { opacity: 0.85 },
+            ]}>
+            <View style={styles.listIcon}>
+              <Icon name={s.icon} size={25} color={DARK.title} />
+            </View>
+            <View style={{ flex: 1, gap: 2 }}>
+              <AppText size={17} weight="bold" color={DARK.title}>
+                {s.title}
+              </AppText>
+              <View style={{ flexDirection: row, alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <AppText size={14.5} color={DARK.text}>
+                  {s.text}
+                </AppText>
+                {s.tag ? (
+                  <View style={[styles.tag, { flexDirection: row }]}>
+                    <Icon name="check" size={12} color={DARK.ok} strokeWidth={2.5} />
+                    <AppText size={12} weight="semibold" color={DARK.ok}>
+                      {s.tag}
+                    </AppText>
+                  </View>
+                ) : null}
+              </View>
+            </View>
+            {open ? <Icon name="forward" size={18} color={DARK.text} /> : null}
+          </Pressable>
+        );
+      })}
+
+      <View style={[styles.listEnd, { flexDirection: row }]}>
+        <Icon name="check" size={15} color={DARK.text} strokeWidth={2.2} />
+        <AppText size={13.5} color={DARK.text}>
+          {tr('لا توجد إعلانات أخرى', 'No other announcements')}
+        </AppText>
+      </View>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   card: { backgroundColor: DARK.bg, borderRadius: 20, padding: 14, gap: 8 },
   cardTablet: { borderRadius: 24, padding: 20, gap: 12 },
+  cardList: { flex: 1, borderRadius: 28, paddingHorizontal: 22, paddingTop: 22, paddingBottom: 10, gap: 0 },
+  listRow: { alignItems: 'center', gap: 14, paddingVertical: 16 },
+  listDivider: { borderTopWidth: 1, borderTopColor: 'rgba(255, 255, 255, 0.12)' },
+  listIcon: {
+    width: 50,
+    height: 50,
+    borderRadius: 15,
+    backgroundColor: DARK.soft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  listEnd: {
+    marginTop: 'auto',
+    alignItems: 'center',
+    gap: 8,
+    paddingTop: 14,
+    paddingBottom: 10,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.12)',
+  },
   head: { alignItems: 'center', gap: 6 },
   dots: { alignItems: 'center', gap: 6 },
   dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: DARK.dot },

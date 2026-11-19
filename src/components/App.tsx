@@ -5,6 +5,7 @@ import Icon from './Icon';
 import NavBar from './NavBar';
 import Announcements from './Announcements';
 import HeroSection from './HeroSection';
+import AppPromo from './AppPromo';
 import CourseList from './CourseList';
 import TimetableGrid from './TimetableGrid';
 import OfferedCoursesModal from './OfferedCoursesModal';
@@ -218,6 +219,7 @@ const AppContent: React.FC = () => {
 
         {currentView === 'timetable' ? (
           <>
+            <AppPromo />
             <Announcements />
             <HeroSection
               hasCourses={courses.length > 0}

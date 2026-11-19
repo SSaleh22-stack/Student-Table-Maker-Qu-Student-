@@ -56,7 +56,9 @@ const isType = (v: unknown): v is FeedbackType => v === 'problem' || v === 'sugg
 
 /** "أرسل ملاحظة": a problem, suggestion or question, sent from inside the app. */
 export default function FeedbackScreen() {
+  // Tablets get bigger text and use the width
   const tablet = useIsTablet();
+  const t = (phone: number, tab: number) => (tablet ? tab : phone);
   const params = useLocalSearchParams<{ type?: string }>();
   const [type, setType] = useState<FeedbackType>(isType(params.type) ? params.type : 'problem');
   const [message, setMessage] = useState('');
@@ -66,7 +68,7 @@ export default function FeedbackScreen() {
   const [sent, setSent] = useState<{ withContact: boolean } | null>(null);
 
   const ready = message.trim().length >= MESSAGE_MIN && !sending;
-  const current = types().find((t) => t.key === type)!;
+  const current = types().find((ty) => ty.key === type)!;
 
   const submit = async () => {
     if (!ready) return;
@@ -115,103 +117,121 @@ export default function FeedbackScreen() {
             </Card>
           ) : (
             <>
-              <AppText size={14} color={colors.muted}>
+              <AppText size={t(14, 17)} color={colors.muted}>
                 {tr(
                   'واجهت مشكلة أو عندك اقتراح؟ اكتب لنا هنا وستصلنا رسالتك مباشرة.',
                   'Hit a problem or have an idea? Write to us here and it reaches us directly.',
                 )}
               </AppText>
 
-              <View style={[styles.types, { flexDirection: row }]} accessibilityRole="radiogroup">
-                {types().map((t) => {
-                  const on = t.key === type;
+              <View style={[styles.types, tablet && { gap: 14 }, { flexDirection: row }]} accessibilityRole="radiogroup">
+                {types().map((ty) => {
+                  const on = ty.key === type;
                   return (
                     <Pressable
-                      key={t.key}
-                      onPress={() => setType(t.key)}
+                      key={ty.key}
+                      onPress={() => setType(ty.key)}
                       accessibilityRole="radio"
                       accessibilityState={{ selected: on }}
-                      accessibilityLabel={t.label}
-                      style={({ pressed }) => [styles.type, on && styles.typeOn, pressed && !on && { opacity: 0.8 }]}>
-                      <Icon name={t.icon} size={22} color={on ? colors.accent : colors.muted} />
-                      <AppText size={13.5} weight="semibold" color={on ? colors.accentDark : colors.text}>
-                        {t.label}
+                      accessibilityLabel={ty.label}
+                      style={({ pressed }) => [
+                        styles.type,
+                        tablet && styles.typeTablet,
+                        on && styles.typeOn,
+                        pressed && !on && { opacity: 0.8 },
+                      ]}>
+                      <Icon name={ty.icon} size={t(22, 28)} color={on ? colors.accent : colors.muted} />
+                      <AppText size={t(13.5, 16.5)} weight="semibold" color={on ? colors.accentDark : colors.text}>
+                        {ty.label}
                       </AppText>
                     </Pressable>
                   );
                 })}
               </View>
 
-              <Card style={{ gap: 10 }}>
-                <AppText size={14} weight="semibold">
-                  {tr('رسالتك', 'Your message')}
-                </AppText>
-                <TextInput
-                  value={message}
-                  onChangeText={(t) => {
-                    setMessage(t);
-                    if (error) setError(null);
-                  }}
-                  placeholder={current.hint}
-                  placeholderTextColor={colors.placeholder}
-                  style={[styles.input, styles.messageInput, inputDir()]}
-                  accessibilityLabel={tr('رسالتك', 'Your message')}
-                  multiline
-                  textAlignVertical="top"
-                  maxLength={MESSAGE_MAX}
-                />
-                <AppText size={11.5} color={colors.faint} align="end">
-                  {ltr(`${message.length} / ${MESSAGE_MAX}`)}
-                </AppText>
+              {/* Tablets: the message on one side, how to reach you and Send on the other */}
+              <View style={tablet ? [styles.columns, { flexDirection: row }] : { gap: 12 }}>
+                <Card style={[{ gap: 10 }, tablet && styles.cardTablet, tablet && { flex: 3 }]}>
+                  <AppText size={t(14, 17)} weight="semibold">
+                    {tr('رسالتك', 'Your message')}
+                  </AppText>
+                  <TextInput
+                    value={message}
+                    onChangeText={(v) => {
+                      setMessage(v);
+                      if (error) setError(null);
+                    }}
+                    placeholder={current.hint}
+                    placeholderTextColor={colors.placeholder}
+                    style={[styles.input, styles.messageInput, tablet && styles.messageInputTablet, inputDir()]}
+                    accessibilityLabel={tr('رسالتك', 'Your message')}
+                    multiline
+                    textAlignVertical="top"
+                    maxLength={MESSAGE_MAX}
+                  />
+                  <AppText size={t(11.5, 13.5)} color={colors.faint} align="end">
+                    {ltr(`${message.length} / ${MESSAGE_MAX}`)}
+                  </AppText>
+                </Card>
 
-                <AppText size={14} weight="semibold">
-                  {tr('وسيلة للتواصل (اختياري)', 'How to reach you (optional)')}
-                </AppText>
-                <TextInput
-                  value={contact}
-                  onChangeText={setContact}
-                  placeholder={tr('رقم واتساب أو بريد أو معرّف تيليجرام', 'WhatsApp number, email or Telegram username')}
-                  placeholderTextColor={colors.placeholder}
-                  // Numbers, emails and @usernames read left to right, even in Arabic.
-                  style={[styles.input, inputDir(), contact ? { writingDirection: 'ltr' } : null]}
-                  accessibilityLabel={tr('وسيلة للتواصل', 'How to reach you')}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  maxLength={CONTACT_MAX}
-                />
-                <AppText size={12} color={colors.muted}>
-                  {tr('اتركها إذا أردت أن نرد عليك.', 'Leave one if you would like a reply.')}
-                </AppText>
-              </Card>
-
-              {error ? (
-                <View style={[styles.errorBox, { flexDirection: row }]} accessibilityLiveRegion="polite">
-                  <Icon name="alert" size={18} color={colors.danger} />
-                  <View style={{ flex: 1, gap: 4 }}>
-                    <AppText size={13} color={colors.danger}>
-                      {errorText(error)}
+                <View style={[{ gap: 12 }, tablet && { flex: 2, gap: 16 }]}>
+                  <Card style={[{ gap: 10 }, tablet && styles.cardTablet]}>
+                    <AppText size={t(14, 17)} weight="semibold">
+                      {tr('وسيلة للتواصل (اختياري)', 'How to reach you (optional)')}
                     </AppText>
-                    {error !== 'offline' && error !== 'rate' ? (
-                      <Pressable onPress={() => router.push('/contact')} accessibilityRole="link" hitSlop={6}>
-                        <AppText size={13} weight="semibold" color={colors.accentDark}>
-                          {tr('طرق التواصل الأخرى', 'Other ways to reach us')}
+                    <TextInput
+                      value={contact}
+                      onChangeText={setContact}
+                      placeholder={tr('رقم واتساب أو بريد أو معرّف تيليجرام', 'WhatsApp number, email or Telegram username')}
+                      placeholderTextColor={colors.placeholder}
+                      style={[styles.input, tablet && styles.inputTablet, inputDir()]}
+                      accessibilityLabel={tr('وسيلة للتواصل', 'How to reach you')}
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      maxLength={CONTACT_MAX}
+                    />
+                    <AppText size={t(12, 14)} color={colors.muted}>
+                      {tr('اتركها إذا أردت أن نرد عليك.', 'Leave one if you would like a reply.')}
+                    </AppText>
+                  </Card>
+
+                  {error ? (
+                    <View style={[styles.errorBox, { flexDirection: row }]} accessibilityLiveRegion="polite">
+                      <Icon name="alert" size={18} color={colors.danger} />
+                      <View style={{ flex: 1, gap: 4 }}>
+                        <AppText size={t(13, 15)} color={colors.danger}>
+                          {errorText(error)}
                         </AppText>
-                      </Pressable>
-                    ) : null}
+                        {error !== 'offline' && error !== 'rate' ? (
+                          <Pressable onPress={() => router.push('/contact')} accessibilityRole="link" hitSlop={6}>
+                            <AppText size={t(13, 15)} weight="semibold" color={colors.accentDark}>
+                              {tr('طرق التواصل الأخرى', 'Other ways to reach us')}
+                            </AppText>
+                          </Pressable>
+                        ) : null}
+                      </View>
+                    </View>
+                  ) : null}
+
+                  <Button
+                    label={tr('إرسال', 'Send')}
+                    icon="message"
+                    onPress={submit}
+                    disabled={!ready}
+                    loading={sending}
+                    style={tablet ? { minHeight: 56, borderRadius: 16 } : undefined}
+                  />
+
+                  <View style={[styles.note, { flexDirection: row }]}>
+                    <Icon name="info" size={t(15, 17)} color={colors.faint} />
+                    <AppText size={t(12, 14)} color={colors.faint} style={{ flex: 1 }}>
+                      {tr(
+                        'يُرفق مع رسالتك إصدار التطبيق ونوع الجهاز ونظامه فقط، لمساعدتنا في حل المشكلة. لا تُرسل بيانات جدولك أو درجاتك.',
+                        "Only the app version, device model and OS version are attached, to help us fix problems. Your timetable and grades aren't sent.",
+                      )}
+                    </AppText>
                   </View>
                 </View>
-              ) : null}
-
-              <Button label={tr('إرسال', 'Send')} icon="message" onPress={submit} disabled={!ready} loading={sending} />
-
-              <View style={[styles.note, { flexDirection: row }]}>
-                <Icon name="info" size={15} color={colors.faint} />
-                <AppText size={12} color={colors.faint} style={{ flex: 1 }}>
-                  {tr(
-                    'يُرفق مع رسالتك إصدار التطبيق ونوع الجهاز ونظامه فقط، لمساعدتنا في حل المشكلة. لا تُرسل بيانات جدولك أو درجاتك.',
-                    "Only the app version, device model and OS version are attached, to help us fix problems. Your timetable and grades aren't sent.",
-                  )}
-                </AppText>
               </View>
             </>
           )}
@@ -224,7 +244,9 @@ export default function FeedbackScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
   content: { padding: 16, gap: 12, paddingBottom: 32 },
-  contentTablet: { width: '100%', maxWidth: 640, alignSelf: 'center', padding: 24 },
+  contentTablet: { width: '100%', maxWidth: 1100, alignSelf: 'center', paddingHorizontal: 32, paddingTop: 24, gap: 20 },
+  columns: { gap: 20, alignItems: 'flex-start' },
+  cardTablet: { padding: 20, gap: 12 },
   types: { gap: 8 },
   type: {
     flex: 1,
@@ -236,6 +258,7 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
     backgroundColor: colors.surface,
   },
+  typeTablet: { paddingVertical: 18, gap: 6, borderRadius: 20 },
   typeOn: { borderColor: colors.accent, backgroundColor: colors.accentTint },
   input: {
     minHeight: 44,
@@ -249,6 +272,8 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   messageInput: { minHeight: 140, paddingTop: 10, paddingBottom: 10 },
+  messageInputTablet: { minHeight: 300, fontSize: 17, borderRadius: 14, paddingHorizontal: 16, paddingTop: 14 },
+  inputTablet: { minHeight: 54, fontSize: 17, borderRadius: 14, paddingHorizontal: 16 },
   errorBox: {
     gap: 8,
     alignItems: 'flex-start',

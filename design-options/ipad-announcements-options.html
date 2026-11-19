@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>iPad Announcements Options</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #EEF3F8; --surface: #FFFFFF; --line: #E4EAF1; --ink: #1B2533; --muted: #4A5668; --faint: #8A94A3;
+    --teal: #0E7490; --teal-2: #155E75; --deep: #0A4A5C; --tint: #E9F6F9; --on-teal: #CFEAF0; --soft: #E6F6FA;
+    --warm: #B45309; --warm-tint: #FEF3DC; --ok: #86EFAC;
+    --shadow: 0 8px 24px rgba(19, 32, 46, .07);
+    --W: 834px; --H: 1194px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'IBM Plex Sans Arabic', system-ui, sans-serif; background: #E2E8EF; color: var(--ink); -webkit-font-smoothing: antialiased; }
+  svg { display: block; flex-shrink: 0; }
+
+  .gallery { display: flex; flex-wrap: wrap; gap: 48px; justify-content: center; padding: 40px 16px 64px; }
+  .slot { --s: .5; width: calc(var(--W) * var(--s) + 24px); }
+  .slot-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .slot-num { width: 34px; height: 34px; border-radius: 11px; background: var(--teal); color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 17px; }
+  .slot h2 { font-size: 20px; font-weight: 700; }
+  .slot-head .pick { margin-inline-start: auto; font-size: 12.5px; font-weight: 700; color: #14612F; background: #DCF5E4; padding: 3px 10px; border-radius: 999px; }
+  .device { padding: 12px; border-radius: 40px; background: #151C24; box-shadow: 0 30px 60px rgba(19,32,46,.28), inset 0 0 0 1.5px #2C3642; }
+  .screen { width: calc(var(--W) * var(--s)); height: calc(var(--H) * var(--s)); border-radius: 28px; overflow: hidden; }
+  .screen > .ipad { transform: scale(var(--s)); transform-origin: top right; }
+  body.single .gallery { display: block; padding: 0; }
+  body.single .slot { --s: 1; width: auto; }
+  body.single .slot-head { display: none; }
+  body.single .device { padding: 0; border-radius: 0; box-shadow: none; background: none; }
+  body.single .screen { border-radius: 0; }
+  @media (max-width: 480px) { .slot { --s: .4; } }
+
+  .ipad { width: var(--W); height: var(--H); position: relative; overflow: hidden; background: var(--bg); display: flex; flex-direction: column; }
+  .row { display: flex; align-items: center; }
+  .col { display: flex; flex-direction: column; }
+  .sq { display: grid; place-items: center; flex-shrink: 0; }
+  .status { height: 28px; display: flex; justify-content: space-between; align-items: center; padding: 0 26px; font-size: 13px; font-weight: 600; color: #fff; direction: ltr; position: relative; z-index: 2; }
+  .hero { position: relative; background: linear-gradient(160deg, #0F7C99 0%, #0B5E75 100%); padding: 0 40px 100px; overflow: hidden; }
+  .hero::before { content: ''; position: absolute; width: 460px; height: 460px; border-radius: 50%; background: rgba(255,255,255,.06); top: -190px; left: -140px; }
+  .hero::after { content: ''; position: absolute; width: 260px; height: 260px; border-radius: 50%; background: rgba(255,255,255,.06); bottom: -150px; left: 38%; }
+  .logo { width: 52px; height: 52px; border-radius: 15px; background: rgba(255,255,255,.14); display: grid; place-items: center; }
+  .chip { gap: 6px; height: 40px; padding: 0 16px; border-radius: 999px; background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.28); color: #fff; font-size: 15px; font-weight: 600; }
+  .content { flex: 1; min-height: 0; padding: 0 32px 28px; margin-top: -64px; display: flex; flex-direction: column; gap: 20px; position: relative; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 28px; box-shadow: var(--shadow); }
+  .services { display: grid; grid-template-columns: repeat(4, 1fr); padding: 12px 16px; }
+  .svc { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 26px 4px; }
+  .svc .sq { width: 78px; height: 78px; border-radius: 24px; background: var(--tint); }
+  .svc span { font-size: 16.5px; font-weight: 600; }
+  .deep { background: var(--deep); color: var(--on-teal); border-radius: 28px; }
+  .dots { gap: 6px; }
+  .dots i { display: block; width: 7px; height: 7px; border-radius: 4px; background: rgba(255,255,255,.3); }
+  .dots i.on { width: 18px; background: #fff; }
+  .tag { display: inline-flex; align-items: center; gap: 4px; height: 24px; padding: 0 9px; border-radius: 999px; background: rgba(134,239,172,.16); color: var(--ok); font-size: 12.5px; font-weight: 600; }
+  .btn-dark { gap: 6px; height: 46px; padding: 0 20px; border-radius: 999px; background: var(--ink); color: #fff; font-size: 15.5px; font-weight: 700; white-space: nowrap; }
+  .tabbar { height: 78px; flex-shrink: 0; background: #fff; border-top: 1px solid var(--line); display: flex; justify-content: center; gap: 96px; padding-top: 10px; position: relative; }
+  .tabbar div { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 12px; color: var(--faint); font-weight: 500; }
+  .tabbar .on { color: var(--teal); font-weight: 600; }
+  .tabbar::after { content: ''; position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); width: 140px; height: 5px; border-radius: 3px; background: var(--ink); }
+</style>
+</head>
+<body>
+<div class="gallery" id="gallery"></div>
+<script>
+const P = {
+  calendar: '<rect x="3" y="4.5" width="18" height="16" rx="3.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/>',
+  download: '<path d="M12 3.5v11m0 0-4.2-4.2M12 14.5l4.2-4.2M4.5 16.5v2a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-2"/>',
+  calendarDays: '<rect x="3" y="4.5" width="18" height="16" rx="3.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4M8 13.5h.01M12 13.5h.01M16 13.5h.01M8 17h.01M12 17h.01"/>',
+  calculator: '<rect x="5" y="2.5" width="14" height="19" rx="3.5"/><path d="M8.5 6.5h7M8.5 11h.01M12 11h.01M15.5 11h.01M8.5 14.5h.01M12 14.5h.01M15.5 14.5h.01M8.5 18h.01M12 18h.01M15.5 18h.01"/>',
+  userMinus: '<circle cx="9.5" cy="8" r="4"/><path d="M2.5 20.5a7 7 0 0 1 14 0M16 11h6"/>',
+  star: '<path d="m12 3.2 2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 16.6l-5.2 2.8 1-5.9-4.3-4.1 5.9-.8z"/>',
+  clipboard: '<rect x="5" y="4" width="14" height="17.5" rx="3"/><path d="M9 4V3h6v1M9 13l2 2 4-4"/>',
+  play: '<circle cx="12" cy="12" r="9.5"/><path d="m10 8.5 5.5 3.5-5.5 3.5z"/>',
+  message: '<path d="M20 15.5a2 2 0 0 1-2 2H8.5L4 21V5.5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2z"/><path d="M8.5 9h7M8.5 12.5h4.5"/>',
+  globe: '<circle cx="12" cy="12" r="9.5"/><path d="M2.5 12h19M12 2.5c2.8 3 2.8 16 0 19M12 2.5c-2.8 3-2.8 16 0 19"/>',
+  bell: '<path d="M6 16v-5a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20.5a2 2 0 0 0 4 0"/>',
+  university: '<path d="M3 9.5 12 4l9 5.5M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20.5h18"/>',
+  forward: '<path d="m14.5 6-6 6 6 6"/>',
+  check: '<path d="m5 12.5 4.5 4.5L19 7.5"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  home: '<path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-4.5v-6h-5v6H5a1 1 0 0 1-1-1z"/>',
+  menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
+  logo: '<rect x="3" y="4.5" width="18" height="16" rx="3.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4M8 14h3M8 17h6"/>',
+};
+const ic = (n, size = 24, color = 'currentColor', sw = 1.8) =>
+  `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="${color}" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">${P[n]}</svg>`;
+
+const S = [['calendar', 'جدولي'], ['download', 'الاستيراد'], ['calendarDays', 'التقويم'], ['calculator', 'المعدل'], ['userMinus', 'الغياب'], ['star', 'قيم'], ['clipboard', 'تقييم المقررات'], ['play', 'مقاطع الشرح']];
+
+const header = () => `
+  <div class="hero">
+    <div class="status"><span>9:41</span><span>100%</span></div>
+    <div class="row" style="justify-content:space-between;margin-top:18px;position:relative;z-index:1">
+      <div class="row" style="gap:12px"><div class="logo">${ic('logo', 28, '#fff')}</div>
+        <div class="col"><span style="font-size:23px;font-weight:700;color:#fff;line-height:1.3">QU Student</span><span style="font-size:14.5px;color:var(--on-teal)">جامعة القصيم</span></div></div>
+      <div class="row chip">${ic('globe', 18)}English</div>
+    </div>
+    <div style="margin-top:52px;position:relative;z-index:1">
+      <div style="font-size:15px;font-weight:600;color:var(--on-teal)">الخميس 19 نوفمبر 2026</div>
+      <div style="font-size:38px;font-weight:700;color:#fff;line-height:1.4">مساء الخير</div>
+      <div style="font-size:17px;color:var(--soft)">كل ما تحتاجه لفصلك في مكان واحد</div>
+    </div>
+  </div>`;
+
+const services = (big) => `<div class="card services" style="${big ? 'flex:1;align-content:space-evenly;padding:18px 16px' : ''}">${S.map(([i, l]) => `
+  <div class="svc" style="${big ? 'padding:20px 4px;gap:16px' : ''}"><div class="sq" style="${big ? 'width:92px;height:92px;border-radius:28px' : ''}">${ic(i, big ? 40 : 34, 'var(--teal-2)')}</div><span style="${big ? 'font-size:17.5px' : ''}">${l}</span></div>`).join('')}</div>`;
+
+const tabbar = () => `<div class="tabbar"><div class="on">${ic('home', 25, 'currentColor', 2)}الرئيسية</div><div>${ic('calendar', 25)}الجدول</div><div>${ic('star', 25)}قيم</div><div>${ic('menu', 25)}المزيد</div></div>`;
+
+/* 1 — compact strips, services take the room */
+const d1 = () => `<div class="ipad">${header()}
+  <div class="content">
+    ${services(true)}
+    <div class="deep row" style="gap:16px;padding:18px 22px">
+      <div class="sq" style="width:56px;height:56px;border-radius:17px;background:rgba(255,255,255,.12)">${ic('university', 28, '#fff')}</div>
+      <div class="col" style="flex:1;gap:3px">
+        <div class="row" style="gap:6px;font-size:13px;font-weight:600">${ic('bell', 14)}إعلانات</div>
+        <div class="row" style="gap:10px"><span style="font-size:18px;font-weight:700;color:#fff">الجامعات المدعومة</span><span style="font-size:15px">جامعة القصيم</span><span class="tag">${ic('check', 12, 'currentColor', 2.6)}مدعومة</span></div>
+      </div>
+      <div class="row dots"><i class="on"></i><i></i></div>
+    </div>
+    <div class="card row" style="gap:16px;padding:18px 22px">
+      <div class="sq" style="width:56px;height:56px;border-radius:17px;background:var(--warm-tint)">${ic('message', 27, 'var(--warm)')}</div>
+      <div class="col" style="flex:1"><span style="font-size:18px;font-weight:700">عندك مشكلة أو فكرة؟</span><span style="font-size:14.5px;color:var(--muted)">اكتب لنا من داخل التطبيق وتصلنا رسالتك مباشرة</span></div>
+      <div class="row btn-dark">اكتب لنا ${ic('forward', 16, '#fff', 2.2)}</div>
+    </div>
+  </div>${tabbar()}</div>`;
+
+/* 2 — every announcement as a row, side by side with the feedback card */
+const d2 = () => `<div class="ipad">${header()}
+  <div class="content">
+    ${services(false)}
+    <div class="row" style="flex:1;gap:20px;align-items:stretch">
+      <div class="deep col" style="flex:1.3;padding:22px 22px 10px">
+        <div class="row" style="gap:8px;font-size:15px;font-weight:700;color:#fff;margin-bottom:8px">${ic('bell', 18)}إعلانات<span style="margin-inline-start:auto;font-size:13px;font-weight:600;color:var(--on-teal)">2</span></div>
+        ${[
+          ['university', 'الجامعات المدعومة', 'جامعة القصيم', true, false],
+          ['plus', 'أضف جامعتك', 'تريد إضافة جامعتك؟ تواصل معنا', false, true],
+        ].map(([i, t, d, tag, link], k) => `
+          <div class="row" style="gap:14px;padding:16px 0;${k ? 'border-top:1px solid rgba(255,255,255,.12)' : ''}">
+            <div class="sq" style="width:50px;height:50px;border-radius:15px;background:rgba(255,255,255,.12)">${ic(i, 25, '#fff')}</div>
+            <div class="col" style="flex:1;gap:2px"><span style="font-size:17px;font-weight:700;color:#fff">${t}</span>
+              <div class="row" style="gap:8px;font-size:14.5px">${d}${tag ? `<span class="tag">${ic('check', 12, 'currentColor', 2.6)}مدعومة</span>` : ''}</div></div>
+            ${link ? ic('forward', 18, 'var(--on-teal)', 2.2) : ''}
+          </div>`).join('')}
+        <div class="row" style="margin-top:auto;padding:14px 0 10px;border-top:1px solid rgba(255,255,255,.12);gap:8px;font-size:13.5px;color:var(--on-teal)">${ic('check', 15, 'var(--on-teal)', 2.2)}لا توجد إعلانات أخرى</div>
+      </div>
+      <div class="card col" style="flex:1;padding:24px">
+        <div class="sq" style="width:56px;height:56px;border-radius:18px;background:var(--warm-tint)">${ic('message', 28, 'var(--warm)')}</div>
+        <span style="font-size:21px;font-weight:700;margin-top:18px">عندك مشكلة أو فكرة؟</span>
+        <span style="font-size:15.5px;color:var(--muted);line-height:1.6;margin-top:6px">اكتب لنا من داخل التطبيق وتصلنا رسالتك مباشرة.</span>
+        <div class="row btn-dark" style="margin-top:auto;align-self:flex-start">اكتب لنا ${ic('forward', 16, '#fff', 2.2)}</div>
+      </div>
+    </div>
+  </div>${tabbar()}</div>`;
+
+/* 3 — two short cards side by side, text centred next to the icon */
+const d3 = () => `<div class="ipad">${header()}
+  <div class="content" style="justify-content:flex-start">
+    ${services(true)}
+    <div class="row" style="gap:20px;align-items:stretch;height:150px;flex-shrink:0">
+      <div class="deep col" style="flex:1.2;padding:18px 22px;justify-content:center;gap:12px">
+        <div class="row" style="gap:6px;font-size:13px;font-weight:600">${ic('bell', 14)}إعلانات<div class="row dots" style="margin-inline-start:auto"><i class="on"></i><i></i></div></div>
+        <div class="row" style="gap:14px">
+          <div class="sq" style="width:54px;height:54px;border-radius:16px;background:rgba(255,255,255,.12)">${ic('university', 27, '#fff')}</div>
+          <div class="col" style="gap:3px"><span style="font-size:18px;font-weight:700;color:#fff">الجامعات المدعومة</span>
+            <div class="row" style="gap:8px;font-size:14.5px">جامعة القصيم <span class="tag">${ic('check', 12, 'currentColor', 2.6)}مدعومة</span></div></div>
+        </div>
+      </div>
+      <div class="card row" style="flex:1;padding:18px 22px;gap:14px">
+        <div class="sq" style="width:54px;height:54px;border-radius:17px;background:var(--warm-tint)">${ic('message', 27, 'var(--warm)')}</div>
+        <div class="col" style="flex:1;gap:3px"><span style="font-size:18px;font-weight:700">مشكلة أو فكرة؟</span><span style="font-size:14px;color:var(--muted)">تصلنا رسالتك مباشرة</span></div>
+        <div class="sq" style="width:46px;height:46px;border-radius:50%;background:var(--ink)">${ic('forward', 18, '#fff', 2.2)}</div>
+      </div>
+    </div>
+  </div>${tabbar()}</div>`;
+
+const designs = [['شريط مختصر', d1, true], ['قائمة الإعلانات', d2, false], ['بطاقتان صغيرتان', d3, false]];
+const one = parseInt(new URLSearchParams(location.search).get('d') || '', 10);
+const list = one >= 1 && one <= 3 ? [[...designs[one - 1], one]] : designs.map((d, k) => [...d, k + 1]);
+if (list.length === 1) document.body.classList.add('single');
+document.getElementById('gallery').innerHTML = list.map(([name, fn, pick, n]) => `
+  <div class="slot"><div class="slot-head"><span class="slot-num">${n}</span><h2>${name}</h2>${pick ? '<span class="pick">اقتراحي</span>' : ''}</div>
+  <div class="device"><div class="screen">${fn()}</div></div></div>`).join('');
+</script>
+</body>
+</html>
