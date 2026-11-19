@@ -79,6 +79,8 @@ interface AppDataValue extends Persisted {
   /** Adds a section to the timetable (other sections of the course stay) */
   chooseSection: (section: Course) => void;
   removeSection: (section: Course) => void;
+  /** Empties the timetable (the imported courses, grades and absences stay) */
+  clearTimetable: () => void;
   addManualCourse: (course: Course) => void;
   setGpa: (patch: Partial<Omit<GpaInputs, 'grades'>>) => void;
   setGrade: (code: string, grade: GradeLetter) => void;
@@ -169,6 +171,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     setState((prev) => ({ ...prev, chosenIds: prev.chosenIds.filter((id) => id !== section.id) }));
   }, []);
 
+  const clearTimetable = useCallback(() => {
+    setState((prev) => (prev.chosenIds.length ? { ...prev, chosenIds: [] } : prev));
+  }, []);
+
   const addManualCourse = useCallback((course: Course) => {
     setState((prev) => ({
       ...prev,
@@ -254,6 +260,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     importCourses,
     chooseSection,
     removeSection,
+    clearTimetable,
     addManualCourse,
     setGpa,
     setGrade,

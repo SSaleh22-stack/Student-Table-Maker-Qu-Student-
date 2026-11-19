@@ -7,16 +7,20 @@
  *      This writes credentials.json and credentials/android/keystore.jks (both gitignored).
  *   3. node scripts/build-android-local.mjs
  *
+ * With --apk it builds an installable APK instead (same signing key), to test on a phone without
+ * going through Google Play.
+ *
  * The keystore passwords are read from credentials.json and handed to Gradle through environment
  * variables, so they are never printed or written anywhere else. The bundle is copied to dist/.
  *
  * Tool locations can be overridden with JAVA_HOME, ANDROID_HOME and GRADLE_USER_HOME.
  */
 import { spawnSync } from 'node:child_process';
-import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+const apk = process.argv.includes('--apk');
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const androidDir = join(root, 'android');
 
@@ -48,7 +52,7 @@ writeFileSync(join(androidDir, 'local.properties'), `sdk.dir=${ANDROID_HOME.repl
 
 const versionCode = readFileSync(join(androidDir, 'app', 'build.gradle'), 'utf8').match(/versionCode\s+(\d+)/)?.[1];
 const versionName = readFileSync(join(androidDir, 'app', 'build.gradle'), 'utf8').match(/versionName\s+"([^"]+)"/)?.[1];
-console.log(`Building ${versionName} (versionCode ${versionCode}), signed with key "${ks.keyAlias}"…\n`);
+console.log(`Building ${apk ? 'an APK' : 'an App Bundle'} of ${versionName} (versionCode ${versionCode}), signed with key "${ks.keyAlias}"…\n`);
 
 const env = {
   ...process.env,
@@ -66,20 +70,29 @@ const env = {
 };
 
 // ".\" so it is found even when NoDefaultCurrentDirectoryInExePath is set.
-const gradle = spawnSync('cmd.exe', ['/d', '/c', '.\\gradlew.bat', 'bundleRelease', '--no-daemon'], {
+const gradle = spawnSync('cmd.exe', ['/d', '/c', '.\\gradlew.bat', apk ? 'assembleRelease' : 'bundleRelease', '--no-daemon'], {
   cwd: androidDir,
   env,
   stdio: 'inherit',
 });
 if (gradle.status !== 0) fail(`Gradle failed (exit ${gradle.status}).`);
 
-const aab = join(androidDir, 'app', 'build', 'outputs', 'bundle', 'release', 'app-release.aab');
-if (!existsSync(aab)) fail('Build finished but app-release.aab was not found.');
+const built = apk
+  ? join(androidDir, 'app', 'build', 'outputs', 'apk', 'release', 'app-release.apk')
+  : join(androidDir, 'app', 'build', 'outputs', 'bundle', 'release', 'app-release.aab');
+if (!existsSync(built)) fail(`Build finished but ${built} was not found.`);
 mkdirSync(join(root, 'dist'), { recursive: true });
-const out = join(root, 'dist', `qu-student-${versionName}-${versionCode}.aab`);
-copyFileSync(aab, out);
+const out = join(root, 'dist', `qu-student-${versionName}-${versionCode}.${apk ? 'apk' : 'aab'}`);
+copyFileSync(built, out);
 
 // Show who signed it, so it can be checked against the upload key in Play Console.
+// keytool only reads the old jar signature, which APKs no longer carry, so APKs go through apksigner.
 console.log('\nSigning certificate:');
-spawnSync(join(JAVA_HOME, 'bin', 'keytool.exe'), ['-printcert', '-jarfile', out], { stdio: 'inherit' });
+if (apk) {
+  const tools = join(ANDROID_HOME, 'build-tools');
+  const latest = readdirSync(tools).sort().pop();
+  spawnSync('cmd.exe', ['/d', '/c', join(tools, latest, 'apksigner.bat'), 'verify', '--print-certs', out], { env, stdio: 'inherit' });
+} else {
+  spawnSync(join(JAVA_HOME, 'bin', 'keytool.exe'), ['-printcert', '-jarfile', out], { stdio: 'inherit' });
+}
 console.log(`\n✔ ${out}\n`);

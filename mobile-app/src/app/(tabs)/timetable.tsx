@@ -1,12 +1,13 @@
 import { router } from 'expo-router';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { KeyboardAvoidingView, Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/AppText';
 import { ClashNotes } from '@/components/ClashNotes';
 import { CourseDock } from '@/components/CourseDock';
 import { CoursePanel } from '@/components/CoursePanel';
-import { Icon } from '@/components/Icon';
+import { Icon, type IconName } from '@/components/Icon';
 import { Logo } from '@/components/Logo';
 import { SafeAreaView } from '@/components/SafeAreaView';
 import { SectionDetails } from '@/components/SectionDetails';
@@ -14,6 +15,7 @@ import { Toast, type ToastData } from '@/components/Toast';
 import { Button, Card, IconButton } from '@/components/ui';
 import { WeekGrid } from '@/components/WeekGrid';
 import { isEnglish, tr } from '@/lib/i18n';
+import { padSides } from '@/lib/insets';
 import { activityLabel, courseHours, coursesLabel, groupCourses, hoursLabel, slotsOf } from '@/lib/courses';
 import { pushToEnd, row } from '@/lib/rtl';
 import { clashingCodes, clashPairs, examClashes, findClash, gridHours } from '@/lib/schedule';
@@ -191,6 +193,7 @@ export default function TimetableScreen() {
           <View style={[styles.wideMain, !tablet && { gap: 8 }]}>
             <TimetableHeader {...totals} large={tablet} slim={!tablet} />
             <Card style={[styles.wideCard, !tablet && { padding: 10 }]}>
+              {tablet ? <StatTiles {...totals} wide /> : null}
               <View
                 style={{ flex: 1 }}
                 onLayout={(e) => {
@@ -222,6 +225,7 @@ export default function TimetableScreen() {
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <View style={styles.top}>
             <TimetableHeader {...totals} />
+            <StatTiles {...totals} />
           </View>
 
           <Card style={styles.phoneCard}>
@@ -284,11 +288,15 @@ export default function TimetableScreen() {
   );
 }
 
+/** Header width (iPad) from which the four named buttons fit beside the title. */
+const BUTTONS_BESIDE_MIN_W = 600;
+
 /** 3 → "مقررات", 1, 2, 11+ → "مقرر": the noun after a written number. */
 const unit = (n: number, one: string, many: string) => (n >= 3 && n <= 10 ? many : one);
 
 /**
- * Logo, title and the export / summary / import buttons. The totals sit under the title as
+ * Logo, title and the import / summary / export / delete actions (named buttons on iPad, one
+ * "options" button on phones). The totals sit under the title as
  * small pills with bold numbers: easy to read, without taking height from the timetable.
  */
 function TimetableHeader({
@@ -306,14 +314,60 @@ function TimetableHeader({
   slim?: boolean;
 }) {
   const button = slim ? 34 : 40;
+  const { clearTimetable } = useAppData();
+  const [menuOpen, setMenuOpen] = useState(false);
+  // iPad held upright leaves the header narrow: the named buttons then get their own row.
+  const [headerW, setHeaderW] = useState(0);
+  const buttonsBelow = large && headerW > 0 && headerW < BUTTONS_BESIDE_MIN_W;
+  const actions: TimetableAction[] = [
+    {
+      key: 'import',
+      icon: 'download',
+      short: tr('استيراد', 'Import'),
+      title: tr('استيراد من البوابة', 'Import from the portal'),
+      subtitle: tr('المقررات المطروحة من MyQU', 'Offered courses from MyQU'),
+      run: () => router.push('/import'),
+    },
+    {
+      key: 'summary',
+      icon: 'fileText',
+      short: tr('ملخص', 'Summary'),
+      title: tr('ملخص الجدول', 'Timetable summary'),
+      subtitle: tr('المقررات وفترات الاختبارات', 'Courses and exam periods'),
+      run: () => router.push('/summary'),
+    },
+    {
+      key: 'export',
+      icon: 'share',
+      short: tr('تصدير', 'Export'),
+      title: tr('تصدير الجدول', 'Export timetable'),
+      subtitle: tr('صورة، PDF، Excel، تقويم', 'Image, PDF, Excel, calendar'),
+      run: () => router.push('/export'),
+    },
+    {
+      key: 'delete',
+      icon: 'trash',
+      short: tr('حذف', 'Delete'),
+      title: tr('حذف الجدول', 'Delete timetable'),
+      subtitle: courses
+        ? tr('إزالة كل الشعب المختارة', 'Remove every section you picked')
+        : tr('الجدول فارغ', 'The timetable is empty'),
+      danger: true,
+      disabled: courses === 0,
+      run: () => confirmClearTimetable(clearTimetable),
+    },
+  ];
   return (
-    <View style={[styles.header, { flexDirection: row }]}>
+    <View
+      style={[styles.header, { flexDirection: row }, large && { flexWrap: 'wrap', rowGap: 12 }]}
+      onLayout={large ? (e) => setHeaderW(Math.round(e.nativeEvent.layout.width)) : undefined}>
       <Logo size={large ? 46 : slim ? 30 : 40} />
       <View style={slim ? { flexDirection: row, alignItems: 'center', gap: 8 } : { gap: 3, flexShrink: 1 }}>
         <AppText weight="bold" size={large ? 24 : slim ? 18 : 20} style={{ lineHeight: large ? 30 : slim ? 24 : 25 }}>
           {tr('جدولي', 'My timetable')}
         </AppText>
-        {/* The totals drop to a second line on a narrow window (e.g. half of iPhone Duo unfolded). */}
+        {/* Elsewhere the totals are tiles next to the timetable (StatTiles). */}
+        {slim ? (
         <View style={[{ flexDirection: row, flexWrap: 'wrap', columnGap: 5, rowGap: 3, alignItems: 'center' }]}>
           <Total
             value={courses}
@@ -339,16 +393,225 @@ function TimetableHeader({
             ) : null}
           </View>
         </View>
+        ) : null}
       </View>
-      <View style={[{ flexDirection: row, gap: 8 }, pushToEnd]}>
-        <IconButton icon="share" label={tr('تصدير الجدول', 'Export timetable')} size={button} onPress={() => router.push('/export')} />
-        <IconButton icon="fileText" label={tr('ملخص الجدول', 'Timetable summary')} size={button} onPress={() => router.push('/summary')} />
-        {large ? (
-          <Button label={tr('استيراد', 'Import')} icon="download" variant="soft" onPress={() => router.push('/import')} />
-        ) : (
-          <IconButton icon="download" label={tr('استيراد من البوابة', 'Import from the portal')} size={button} onPress={() => router.push('/import')} />
-        )}
+      {large ? (
+        // iPad: every action as a button with its name, beside the title.
+        <View style={[{ flexDirection: row, gap: 8 }, buttonsBelow ? { width: '100%' } : pushToEnd]}>
+          {actions.map((a) => (
+            <Button
+              key={a.key}
+              label={a.short}
+              icon={a.icon}
+              variant={a.key === 'import' ? 'primary' : a.danger ? 'danger' : 'outline'}
+              disabled={a.disabled}
+              onPress={a.run}
+              style={buttonsBelow ? { flex: 1 } : undefined}
+            />
+          ))}
+        </View>
+      ) : (
+        // Phone: one "options" button that opens a sheet listing the actions with a description.
+        <Pressable
+          onPress={() => setMenuOpen(true)}
+          accessibilityRole="button"
+          accessibilityLabel={tr('خيارات الجدول', 'Timetable options')}
+          hitSlop={4}
+          style={({ pressed }) => [
+            styles.optionsBtn,
+            { flexDirection: row, height: button },
+            pushToEnd,
+            pressed && { opacity: 0.7 },
+          ]}>
+          <Icon name="more" size={18} color={colors.accentDark} strokeWidth={3} />
+          <AppText size={slim ? 13 : 14} weight="bold" color={colors.accentDark}>
+            {tr('خيارات', 'Options')}
+          </AppText>
+        </Pressable>
+      )}
+      {large ? null : <ActionsSheet visible={menuOpen} actions={actions} onClose={() => setMenuOpen(false)} />}
+    </View>
+  );
+}
+
+interface TimetableAction {
+  key: 'import' | 'summary' | 'export' | 'delete';
+  icon: IconName;
+  /** Button text on iPad */
+  short: string;
+  /** Row title in the phone sheet */
+  title: string;
+  subtitle: string;
+  danger?: boolean;
+  disabled?: boolean;
+  run: () => void;
+}
+
+/** Asks before emptying the timetable; the imported courses stay, so sections can be picked again. */
+function confirmClearTimetable(clear: () => void) {
+  const title = tr('حذف الجدول؟', 'Delete the timetable?');
+  const message = tr(
+    'ستُزال كل الشعب التي اخترتها من جدولك. تبقى المقررات المستوردة ويمكنك اختيار الشعب من جديد.',
+    'All the sections you picked will be removed from your timetable. The imported courses stay, so you can pick sections again.',
+  );
+  if (Platform.OS === 'web') {
+    if (typeof window !== 'undefined' && window.confirm(`${title}\n${message}`)) clear();
+    return;
+  }
+  Alert.alert(title, message, [
+    { text: tr('إلغاء', 'Cancel'), style: 'cancel' },
+    { text: tr('حذف', 'Delete'), style: 'destructive', onPress: clear },
+  ]);
+}
+
+/** Phone: the timetable actions in a sheet from the bottom, each with its name and what it does. */
+function ActionsSheet({
+  visible,
+  actions,
+  onClose,
+}: {
+  visible: boolean;
+  actions: TimetableAction[];
+  onClose: () => void;
+}) {
+  const insets = useSafeAreaInsets();
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
+      <View style={[styles.sheetBackdrop, padSides(insets.left, insets.right)]}>
+        <Pressable
+          style={StyleSheet.absoluteFill}
+          onPress={onClose}
+          accessibilityRole="button"
+          accessibilityLabel={tr('إغلاق', 'Close')}
+        />
+        <View style={[styles.sheet, shadow, { paddingBottom: Math.max(16, insets.bottom + 8) }]} accessibilityViewIsModal>
+          <View style={styles.sheetGrab} />
+          <View style={[{ flexDirection: row, alignItems: 'center', marginTop: 6 }]}>
+            <AppText size={18} weight="bold" style={{ flex: 1 }} accessibilityRole="header">
+              {tr('خيارات الجدول', 'Timetable options')}
+            </AppText>
+            <IconButton icon="x" label={tr('إغلاق', 'Close')} tone="muted" size={34} onPress={onClose} />
+          </View>
+          {actions.map((a, i) => (
+            <Pressable
+              key={a.key}
+              disabled={a.disabled}
+              onPress={() => {
+                onClose();
+                // Deleting asks first; an alert can't open while the sheet is still closing (iOS).
+                if (a.key === 'delete') setTimeout(a.run, 350);
+                else a.run();
+              }}
+              accessibilityRole="button"
+              accessibilityState={{ disabled: !!a.disabled }}
+              accessibilityHint={a.subtitle}
+              style={({ pressed }) => [
+                styles.sheetRow,
+                { flexDirection: row },
+                i > 0 && styles.sheetDivider,
+                a.disabled && { opacity: 0.45 },
+                pressed && { opacity: 0.6 },
+              ]}>
+              <View style={[styles.sheetIcon, a.danger && { backgroundColor: colors.dangerSoft }]}>
+                <Icon name={a.icon} size={21} color={a.danger ? colors.danger : colors.accentDark} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <AppText size={15.5} weight="bold" color={a.danger ? colors.danger : colors.text}>
+                  {a.title}
+                </AppText>
+                <AppText size={12.5} color={colors.muted}>
+                  {a.subtitle}
+                </AppText>
+              </View>
+              {a.danger ? null : <Icon name="forward" size={16} color={colors.faint} />}
+            </Pressable>
+          ))}
+        </View>
       </View>
+    </Modal>
+  );
+}
+
+/**
+ * The timetable totals as three tiles: courses, credit hours and whether anything clashes.
+ * Phone: small tiles (number over its word) between the header and the timetable.
+ * iPad (`wide`): the first row inside the timetable card, icon, number and word in one line.
+ */
+function StatTiles({ courses, hours, clash, wide = false }: { courses: number; hours: number; clash: boolean; wide?: boolean }) {
+  const items: { key: string; icon: IconName; value: string; word: string; a11y: string; fg: string; tint: string; ok?: boolean }[] = [
+    {
+      key: 'courses',
+      icon: 'book',
+      value: String(courses),
+      word: isEnglish() ? (courses === 1 ? 'course' : 'courses') : unit(courses, 'مقرر', 'مقررات'),
+      a11y: courses ? coursesLabel(courses) : tr('لا مقررات', 'No courses'),
+      fg: colors.accentDark,
+      tint: colors.accentTint,
+    },
+    {
+      key: 'hours',
+      icon: 'clock',
+      value: String(hours),
+      word: isEnglish() ? (hours === 1 ? 'hour' : 'hours') : unit(hours, 'ساعة', 'ساعات'),
+      a11y: hoursLabel(hours),
+      fg: colors.accentDark,
+      tint: colors.accentTint,
+    },
+    {
+      key: 'clash',
+      icon: clash ? 'alert' : 'check',
+      value: clash ? tr('يوجد', 'Clash') : tr('لا', 'No'),
+      word: clash ? tr('تعارض', 'found') : tr('تعارض', 'clash'),
+      a11y: clash ? tr('يوجد تعارض', 'Clash found') : tr('لا تعارض', 'No clash'),
+      fg: clash ? colors.clash : colors.success,
+      tint: clash ? colors.clashSoft : colors.successSoft,
+      ok: true,
+    },
+  ];
+
+  if (wide) {
+    return (
+      <View style={[styles.tilesWide, { flexDirection: row }]}>
+        {items.map((it) => (
+          <View
+            key={it.key}
+            accessible
+            accessibilityLabel={it.a11y}
+            style={[styles.tileWide, { flexDirection: row }, it.ok && { backgroundColor: it.tint }]}>
+            <View style={[styles.tileIcon, { backgroundColor: it.ok ? colors.surface : it.tint }]}>
+              <Icon name={it.icon} size={17} color={it.fg} strokeWidth={2.2} />
+            </View>
+            <AppText size={20} weight="bold" color={it.fg} style={{ lineHeight: 26 }}>
+              {it.value}
+            </AppText>
+            <AppText size={13.5} weight="semibold" color={colors.muted}>
+              {it.word}
+            </AppText>
+          </View>
+        ))}
+      </View>
+    );
+  }
+
+  return (
+    <View style={[styles.tiles, { flexDirection: row }]}>
+      {items.map((it) => (
+        <View
+          key={it.key}
+          accessible
+          accessibilityLabel={it.a11y}
+          style={[styles.tile, it.ok && { backgroundColor: it.tint }]}>
+          <View style={{ flexDirection: row, alignItems: 'center', gap: 5 }}>
+            <Icon name={it.icon} size={14} color={it.fg} strokeWidth={2.2} />
+            <AppText size={17} weight="bold" color={it.fg} style={{ lineHeight: 22 }}>
+              {it.value}
+            </AppText>
+          </View>
+          <AppText size={11.5} weight="semibold" color={colors.muted}>
+            {it.word}
+          </AppText>
+        </View>
+      ))}
     </View>
   );
 }
@@ -464,6 +727,54 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   wideMain: { flex: 1, gap: 12 },
+  tiles: { gap: 8, marginTop: 10 },
+  tile: { flex: 1, alignItems: 'center', gap: 1, paddingVertical: 8, borderRadius: 14, backgroundColor: colors.surface },
+  tilesWide: {
+    gap: 10,
+    paddingBottom: 12,
+    marginBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.divider,
+  },
+  tileWide: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 16,
+    backgroundColor: colors.bg,
+  },
+  tileIcon: { width: 34, height: 34, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
+  optionsBtn: {
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    backgroundColor: colors.surface,
+  },
+  sheetBackdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(15, 23, 42, 0.35)' },
+  sheet: {
+    width: '100%',
+    maxWidth: 560,
+    alignSelf: 'center',
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: 26,
+    borderTopRightRadius: 26,
+    paddingHorizontal: 18,
+  },
+  sheetGrab: { alignSelf: 'center', width: 44, height: 5, borderRadius: 3, backgroundColor: '#CBD5E1', marginTop: 10 },
+  sheetRow: { alignItems: 'center', gap: 13, paddingVertical: 12 },
+  sheetDivider: { borderTopWidth: 1, borderTopColor: colors.divider },
+  sheetIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 13,
+    backgroundColor: colors.accentTint,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   wideCard: { flex: 1, padding: 14 },
   noTime: {
     marginTop: 8,

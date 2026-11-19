@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>iPad Stats Options</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #EEF3F8; --line: #E3E9F0; --ink: #1B2533; --muted: #4A5668; --faint: #8A94A3;
+    --teal: #0E7490; --teal-2: #155E75; --tint: #E9F6F9; --ok: #166534; --ok-bg: #E3F5EA;
+    --clash: #9A4A0A; --clash-bg: #FFF1E2; --red: #B42318; --red-line: #F3C2BE;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'IBM Plex Sans Arabic', system-ui, sans-serif; background: #E2E8EF; color: var(--ink); -webkit-font-smoothing: antialiased; }
+  svg { display: block; flex-shrink: 0; }
+  .intro { max-width: 1100px; margin: 0 auto; padding: 36px 20px 0; }
+  .intro h1 { font-size: 26px; }
+  .intro p { color: var(--muted); font-size: 15px; margin-top: 4px; }
+  .option { max-width: 1100px; margin: 36px auto 0; padding: 0 20px; }
+  .option:last-child { margin-bottom: 64px; }
+  .head { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+  .num { min-width: 34px; height: 34px; padding: 0 8px; border-radius: 11px; background: var(--teal); color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 15px; }
+  .num.ref { background: #64748B; }
+  .head h2 { font-size: 21px; }
+  .pick { font-size: 12.5px; font-weight: 700; color: #14612F; background: #DCF5E4; padding: 3px 10px; border-radius: 999px; }
+  .desc { color: var(--muted); font-size: 14.5px; margin-bottom: 16px; margin-inline-start: 44px; }
+  .pair { display: flex; gap: 32px; align-items: flex-start; flex-wrap: wrap; }
+  .frame { padding: 10px; border-radius: 40px; background: #151C24; box-shadow: 0 24px 50px rgba(19,32,46,.25); }
+  .frame.tab { border-radius: 30px; }
+  .screen { overflow: hidden; border-radius: 32px; }
+  .frame.tab .screen { border-radius: 22px; }
+  .screen > div { transform-origin: top right; }
+  .cap { font-size: 13px; color: var(--muted); font-weight: 600; text-align: center; margin-top: 8px; }
+
+  .dev { background: var(--bg); position: relative; overflow: hidden; display: flex; flex-direction: column; }
+  .row { display: flex; align-items: center; }
+  .col { display: flex; flex-direction: column; }
+  .sq { display: grid; place-items: center; flex-shrink: 0; }
+  .status { height: 46px; flex-shrink: 0; display: flex; justify-content: space-between; align-items: flex-end; padding: 0 28px 6px; font-size: 14px; font-weight: 600; direction: ltr; }
+  .dev.ipad .status { height: 26px; align-items: center; padding: 0 22px; font-size: 12px; }
+  .logo { border-radius: 13px; background: var(--teal); }
+  .total { gap: 3px; padding: 1px 8px; border-radius: 999px; background: #fff; align-items: baseline; }
+  .total b { font-size: 14.5px; color: var(--teal-2); }
+  .total span { font-size: 11.5px; color: var(--muted); font-weight: 600; }
+  .okpill { gap: 3px; height: 22px; padding: 0 6px; border-radius: 999px; background: var(--ok-bg); color: var(--ok); font-size: 11.5px; font-weight: 700; }
+  .card { background: #fff; border-radius: 22px; }
+  .days { display: grid; gap: 5px; font-size: 12px; color: var(--muted); font-weight: 600; text-align: center; margin-bottom: 6px; }
+  .cells { display: grid; gap: 5px; }
+  .cells .h { font-size: 12px; color: var(--muted); font-weight: 600; text-align: center; }
+  .c { overflow: hidden; border-radius: 9px; padding: 5px 7px; font-size: 11px; font-weight: 700; direction: ltr; text-align: right; line-height: 1.35; }
+  .c small { display: block; font-weight: 600; opacity: .85; }
+  .e { background: #F2F5F9; border-radius: 9px; }
+  .tabbar { height: 80px; flex-shrink: 0; background: #fff; border-top: 1px solid var(--line); display: flex; justify-content: space-around; padding: 10px 16px 0; }
+  .dev.ipad .tabbar { height: 62px; justify-content: center; gap: 150px; padding-top: 8px; }
+  .tabbar div { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 12px; color: var(--faint); font-weight: 500; }
+  .tabbar .on { color: var(--teal); font-weight: 700; }
+  .course { gap: 10px; padding: 11px 12px; border: 1px solid var(--line); border-radius: 14px; background: #fff; }
+  .code { font-size: 10.5px; font-weight: 700; padding: 3px 7px; border-radius: 7px; direction: ltr; }
+  .chip { gap: 6px; height: 36px; padding: 0 14px; border-radius: 999px; background: #fff; border: 1px solid var(--line); font-size: 13px; font-weight: 700; direction: ltr; white-space: nowrap; }
+  .sec { width: 170px; flex-shrink: 0; padding: 12px; border-radius: 16px; background: #fff; border: 1px solid var(--line); }
+</style>
+</head>
+<body>
+<div class="intro">
+  <h1>أرقام الجدول في الآيباد</h1>
+  <p>نفس بطاقات الجوال، في ثلاثة أماكن قريبة من الجدول على الآيباد.</p>
+</div>
+<div id="options"></div>
+<script>
+const P = {
+  download: '<path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>',
+  file: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/>',
+  share: '<path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13"/>',
+  trash: '<path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6"/>',
+  check: '<path d="M20 6L9 17l-5-5"/>',
+  more: '<path d="M5 12h.01M12 12h.01M19 12h.01"/>',
+  forward: '<path d="m15 6-6 6 6 6"/>',
+  down: '<path d="m6 9 6 6 6-6"/>',
+  home: '<path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-4.5v-6h-5v6H5a1 1 0 0 1-1-1z"/>',
+  calendar: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+  star: '<path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/>',
+  menu: '<path d="M4 6h16M4 12h16M4 18h16"/>',
+  search: '<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>',
+  book: '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M4 19.5V21h16"/>',
+  clock: '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+  shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/>',
+};
+const ic = (n, s = 20, c = 'currentColor', w = 1.9) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${P[n]}</svg>`;
+const logo = (s) => `<div class="logo sq" style="width:${s}px;height:${s}px">${ic('calendar', s * .55, '#fff')}</div>`;
+
+/* The current pills under the title */
+const pills = (big) => `<div class="row" style="gap:5px"><div class="row total"><b>5</b><span>مقررات</span></div><div class="row total"><b>15</b><span>ساعة</span></div>
+  <div class="row okpill">${ic('check', 12, 'currentColor', 2.6)}${big ? 'لا تعارض' : ''}</div></div>`;
+const titleOnly = (big) => `<span style="font-size:${big ? 23 : 21}px;font-weight:700">جدولي</span>`;
+const titleWithPills = (big) => `<div class="col" style="gap:3px">${titleOnly(big)}${pills(big)}</div>`;
+
+/* The header buttons, as built: one options button on phones, named buttons on iPad */
+const optionsBtn = `<div class="row" style="margin-inline-start:auto;gap:6px;height:40px;padding:0 12px;border-radius:12px;background:#fff;font-size:14px;font-weight:700;color:var(--teal-2)">${ic('more', 18, 'currentColor', 3)}خيارات</div>`;
+const ipadBtns = `<div class="row" style="margin-inline-start:auto;gap:8px">${[['download', 'استيراد', 1], ['file', 'ملخص'], ['share', 'تصدير'], ['trash', 'حذف', 0, 1]].map(([i, l, p, d]) =>
+  `<div class="row" style="gap:6px;height:44px;padding:0 16px;border-radius:999px;font-size:14.5px;font-weight:600;${p ? 'background:var(--teal);color:#fff' : d ? 'background:#fff;border:1px solid var(--red-line);color:var(--red)' : 'background:#fff;border:1px solid #CBD8E3;color:var(--ink)'}">${ic(i, 17)}${l}</div>`).join('')}</div>`;
+
+const C = (code, t, bg, fg, name) => `<div class="c" style="background:${bg};color:${fg}">${code}<small>${t}</small>${name ? `<small style="direction:rtl">${name}</small>` : ''}</div>`;
+const pink = ['#FDE2E4', '#B4235A'], green = ['#E2F0DC', '#3F6212'], grey = ['#E5E9F0', '#334155'], violet = ['#ECE6FB', '#5B21B6'];
+const grid = (rowH, names) => {
+  const n = (s) => names ? s : '';
+  const rows = [
+    ['8', C('CS101', '8–9:30', ...pink, n('مقدمة في الحاسب')), '<div class="e"></div>', C('CS101', '8–9:30', ...pink, n('مقدمة في الحاسب')), C('CS101', '8–9:40', ...pink, n('مقدمة في الحاسب')), '<div class="e"></div>'],
+    ['9', '', '', '', '', ''],
+    ['10', C('MATH201', '10–11:30', ...grey, n('التفاضل والتكامل')), C('ISL101', '10–11', ...green, n('الثقافة الإسلامية')), '<div class="e"></div>', C('MATH201', '10–11:30', ...grey, n('التفاضل والتكامل')), C('ISL101', '10–11', ...green, n('الثقافة الإسلامية'))],
+    ['11', '', '', '', '', ''],
+    ['12', '<div class="e"></div>', C('PHYS101', '12–1:30', ...green, n('الفيزياء العامة')), '<div class="e"></div>', C('PHYS101', '12–1:30', ...green, n('الفيزياء العامة')), '<div class="e"></div>'],
+    ['1', '', '', '', '', ''],
+    ['2', C('ENG101', '2–3:30', ...violet, n('مهارات اللغة')), '<div class="e"></div>', C('PHYS101', '2–3:40', ...green, n('الفيزياء العامة')), '<div class="e"></div>', C('ENG101', '2–3:30', ...violet, n('مهارات اللغة'))],
+  ];
+  const cols = '22px repeat(5, minmax(0, 1fr))';
+  return `<div class="days" style="grid-template-columns:${cols}"><span></span><span>الأحد</span><span>الاثنين</span><span>الثلاثاء</span><span>الأربعاء</span><span>الخميس</span></div>
+    <div class="cells" style="grid-template-columns:${cols};grid-auto-rows:${rowH}px">${rows.map(r => `<div class="h">${r[0]}</div>${r.slice(1).map(x => x || '<div></div>').join('')}`).join('')}</div>`;
+};
+const tabbar = `<div class="tabbar"><div>${ic('home', 24)}الرئيسية</div><div class="on">${ic('calendar', 24, 'currentColor', 2.1)}الجدول</div><div>${ic('star', 24)}قيم</div><div>${ic('menu', 24)}المزيد</div></div>`;
+
+/* Phone: header, grid card, the course chips and section cards under it (as in the app) */
+const dock = `<div style="padding:10px 0 8px">
+  <div class="row" style="gap:8px;padding:0 14px;overflow:hidden">
+    <div class="sq" style="width:36px;height:36px;border-radius:50%;background:#fff;border:1px solid var(--line)">${ic('search', 16, 'var(--muted)')}</div>
+    <div class="row chip" style="background:var(--teal);color:#fff;border:0">STAT201 · تعارض</div><div class="row chip">ISL101 ✓</div><div class="row chip">PHYS101 ✓</div>
+  </div>
+  <div class="row" style="gap:10px;padding:10px 14px 0;overflow:hidden">
+    ${['الشعبة 01', 'الشعبة 02'].map(t => `<div class="sec"><div style="font-size:14px;font-weight:700">${t}</div><div style="font-size:12px;color:var(--teal-2);font-weight:700">أحد، أربعاء 10–11:30</div><div style="font-size:12px;color:var(--muted)">نظري · د. ليلى سعد</div><div style="margin-top:8px;height:32px;border-radius:10px;background:var(--tint);display:grid;place-items:center;font-size:13px;font-weight:700;color:var(--teal-2)">+ إضافة</div></div>`).join('')}
+  </div></div>`;
+const phone = ({ header, aboveGrid = '', inGridTop = '', inGridBottom = '' }) => `<div class="dev" style="width:390px;height:844px"><div class="status"><span>9:41</span><span>100%</span></div>
+  <div style="padding:6px 14px 0">${header}</div>${aboveGrid}
+  <div class="card col" style="margin:8px 14px 0;padding:8px;flex:1;min-height:0;overflow:hidden">${inGridTop}<div style="flex:1;overflow:hidden">${grid(38, false)}</div>${inGridBottom}</div>
+  ${dock}${tabbar}</div>`;
+
+/* iPad landscape: timetable on one side, offered courses on the other */
+const panel = (top = '') => `<div class="card col" style="width:330px;padding:16px;gap:10px;flex-shrink:0">${top}
+  <div class="row" style="gap:8px"><span style="font-size:17px;font-weight:700">المقررات المطروحة</span><span style="font-size:12px;color:var(--muted)">17 شعبة</span></div>
+  <div class="row" style="gap:6px"><span style="padding:5px 12px;border-radius:999px;background:var(--teal);color:#fff;font-size:12.5px;font-weight:700">الكل · 17</span>
+    <span style="padding:5px 12px;border-radius:999px;border:1px solid var(--line);font-size:12.5px">المضافة · 5</span>
+    <span class="sq" style="margin-inline-start:auto;width:32px;height:32px;border-radius:50%;border:1px solid var(--line)">${ic('search', 15, 'var(--muted)')}</span></div>
+  ${[['CS101', 'مقدمة في الحاسب', ...pink], ['MATH201', 'التفاضل والتكامل 2', ...grey], ['STAT201', 'الاحتمالات والإحصاء', '#DCF3EC', '#0F766E'], ['ISL101', 'الثقافة الإسلامية 1', ...green], ['PHYS101', 'الفيزياء العامة 1', ...green], ['ENG101', 'مهارات اللغة الإنجليزية', ...violet]]
+    .map(([c, n, bg, fg]) => `<div class="row course"><span class="code" style="background:${bg};color:${fg}">${c}</span><span style="flex:1;font-size:13px;font-weight:600">${n}</span>${ic('down', 15, 'var(--faint)')}</div>`).join('')}
+</div>`;
+const ipad = ({ header, aboveGrid = '', inGridTop = '', inGridBottom = '', panelTop = '' }) => `<div class="dev ipad" style="width:1194px;height:834px"><div class="status"><span>9:41</span><span>100%</span></div>
+  <div class="row" style="flex:1;min-height:0;gap:16px;padding:8px 18px 14px;align-items:stretch">
+    <div class="col" style="flex:1;gap:12px;min-width:0">${header}${aboveGrid}
+      <div class="card col" style="flex:1;padding:14px 12px;overflow:hidden;min-height:0">${inGridTop}<div style="flex:1;overflow:hidden">${grid(70, true)}</div>${inGridBottom}</div></div>
+    ${panel(panelTop)}
+  </div>${tabbar}</div>`;
+
+/* ---- tiles, same look as the phone's option 2 ---- */
+const statItems = [
+  ['book', '5', 'مقررات', 'var(--teal-2)', false],
+  ['clock', '15', 'ساعة', 'var(--teal-2)', false],
+  ['check', 'لا', 'تعارض', 'var(--ok)', true],
+];
+/* Stacked tile: number over its word (the phone's look) */
+const tile = (bg, pad = '8px 6px', num = 17) => ([i, n, l, fg, ok]) => `<div class="col" style="flex:1;min-width:0;align-items:center;gap:1px;padding:${pad};border-radius:14px;background:${ok ? 'var(--ok-bg)' : bg}">
+  <div class="row" style="gap:5px">${ic(i, 14, fg, 2.2)}<b style="font-size:${num}px;line-height:1.2;color:${fg}">${n}</b></div>
+  <span style="font-size:11.5px;color:var(--muted);font-weight:600">${l}</span></div>`;
+/* Wide tile: icon, number and word in one line (for a row across the iPad) */
+const wideTile = (bg) => ([i, n, l, fg, ok]) => `<div class="row" style="flex:1;min-width:0;justify-content:center;gap:10px;padding:12px 14px;border-radius:16px;background:${ok ? 'var(--ok-bg)' : bg}">
+  <div class="sq" style="width:34px;height:34px;border-radius:11px;background:${ok ? '#fff' : 'var(--tint)'}">${ic(i, 17, fg, 2.2)}</div>
+  <b style="font-size:20px;color:${fg}">${n}</b><span style="font-size:13.5px;color:var(--muted);font-weight:600">${l}</span></div>`;
+
+const phoneTiles = `<div style="padding:8px 14px 0"><div class="row" style="gap:8px">${statItems.map(tile('#fff')).join('')}</div></div>`;
+const phoneRef = () => phone({ header: `<div class="row" style="gap:10px">${logo(40)}${titleOnly(false)}${optionsBtn}</div>`, aboveGrid: phoneTiles });
+
+const ipadHeader = `<div class="row" style="gap:12px">${logo(46)}${titleOnly(true)}${ipadBtns}</div>`;
+
+/* A: the tiles in the header, between the title and the buttons */
+const oA = () => ipad({ header: `<div class="row" style="gap:12px">${logo(46)}${titleOnly(true)}
+  <div class="row" style="gap:8px;width:250px;margin-inline-start:12px">${statItems.map(tile('#fff', '6px 4px', 16)).join('')}</div>${ipadBtns}</div>` });
+
+/* B: a row of wide tiles right above the timetable */
+const oB = () => ipad({ header: ipadHeader, aboveGrid: `<div class="row" style="gap:12px">${statItems.map(wideTile('#fff')).join('')}</div>` });
+
+/* C: inside the timetable card, as its top row (above the day names) */
+const oC = () => ipad({ header: ipadHeader, inGridTop: `<div class="row" style="gap:10px;padding-bottom:12px;margin-bottom:10px;border-bottom:1px solid var(--line)">
+  <span style="font-size:15px;font-weight:700;margin-inline-end:6px">هذا الأسبوع</span>
+  <div class="row" style="gap:10px;flex:1">${statItems.map(wideTile('var(--bg)')).join('')}</div></div>` });
+
+const ipadOptions = [
+  ['في رأس الصفحة', 'البطاقات الثلاث بجانب العنوان، بين «جدولي» والأزرار. لا تأخذ أي مساحة من الجدول.', oA, false],
+  ['صف فوق الجدول', 'نفس فكرة الجوال: صف بطاقات أعرض مباشرة فوق الجدول، بالأيقونة والرقم والكلمة في سطر واحد.', oB, true],
+  ['داخل بطاقة الجدول', 'البطاقات أول صف داخل بطاقة الجدول نفسها، فوق أسماء الأيام، فتبدو جزءًا من الجدول.', oC, false],
+];
+
+const PS = .62, IS = .5;
+document.getElementById('options').innerHTML = `
+  <section class="option">
+    <div class="head"><span class="num ref">الجوال</span><h2>بطاقات أرقام (اخترته)</h2></div>
+    <p class="desc">كما اخترت للجوال: ثلاث بطاقات فوق الجدول. التصاميم التالية للآيباد فقط.</p>
+    <div class="pair"><div><div class="frame"><div class="screen" style="width:${390 * PS}px;height:${844 * PS}px"><div style="transform:scale(${PS})">${phoneRef()}</div></div></div><div class="cap">الجوال</div></div></div>
+  </section>` + ipadOptions.map(([name, desc, f, pick], k) => `
+  <section class="option">
+    <div class="head"><span class="num">${k + 1}</span><h2>${name}</h2>${pick ? '<span class="pick">اقتراحي</span>' : ''}</div>
+    <p class="desc">${desc}</p>
+    <div class="pair"><div><div class="frame tab"><div class="screen" style="width:${1194 * IS}px;height:${834 * IS}px"><div style="transform:scale(${IS})">${f()}</div></div></div><div class="cap">الآيباد</div></div></div>
+  </section>`).join('');
+</script>
+</body>
+</html>

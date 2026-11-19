@@ -24,6 +24,8 @@ const ICONS = {
   x: [{ d: 'M18 6L6 18M6 6l12 12' }],
   plus: [{ d: 'M12 5v14M5 12h14' }],
   minus: [{ d: 'M5 12h14' }],
+  book: [{ d: 'M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5zM4 19.5V21h16' }],
+  more: [{ d: 'M5 12h.01M12 12h.01M19 12h.01' }],
   tablet: [{ x: 4, y: 2, w: 16, h: 20, rx: 2.5 }, { d: 'M11 18h2' }],
   chevronDown: [{ d: 'M6 9l6 6 6-6' }],
   chevronUp: [{ d: 'M18 15l-6-6-6 6' }],
