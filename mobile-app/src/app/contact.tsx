@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
@@ -58,8 +59,26 @@ export default function ContactScreen() {
       <ScrollView contentContainerStyle={[styles.content, tablet && styles.contentTablet]}>
         <ScreenHeader title={tr('تواصل معنا', 'Contact us')} leading={<IconButton icon="back" label={tr('رجوع', 'Back')} onPress={goBack} />} />
 
+        <Pressable
+          onPress={() => router.push('/feedback')}
+          accessibilityRole="button"
+          style={({ pressed }) => [styles.feedback, { flexDirection: row }, pressed && { opacity: 0.9 }]}>
+          <View style={styles.feedbackIcon}>
+            <Icon name="message" size={22} color="#FFFFFF" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <AppText size={15} weight="bold" color="#FFFFFF">
+              {tr('أرسل مشكلة أو اقتراح', 'Report a problem or suggest')}
+            </AppText>
+            <AppText size={12.5} color="#DDF0F4">
+              {tr('اكتب رسالتك هنا وتصلنا مباشرة', 'Write it here and it reaches us directly')}
+            </AppText>
+          </View>
+          <Icon name="forward" size={16} color="#FFFFFF" />
+        </Pressable>
+
         <AppText size={14} color={colors.muted}>
-          {tr('في حال وجود استفسارات أو مشاكل تقنية أو اقتراحات، تواصل معنا عبر:', 'For questions, technical problems or suggestions, reach us through:')}
+          {tr('أو تواصل معنا عبر:', 'Or reach us through:')}
         </AppText>
 
         <Card style={{ padding: 0, overflow: 'hidden' }}>
@@ -129,6 +148,15 @@ const styles = StyleSheet.create({
   contentTablet: { width: '100%', maxWidth: 640, alignSelf: 'center', padding: 24 },
   channel: { alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: 12 },
   divider: { borderTopWidth: 1, borderTopColor: colors.divider },
+  feedback: { alignItems: 'center', gap: 12, padding: 14, borderRadius: 20, backgroundColor: colors.accent },
+  feedbackIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255, 255, 255, 0.18)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   channelIcon: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   university: { alignItems: 'center', gap: 12 },
   universityIcon: {

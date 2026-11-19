@@ -53,6 +53,7 @@ export default function RootLayout() {
             <Stack.Screen name="absence" />
             <Stack.Screen name="tutorials" />
             <Stack.Screen name="contact" />
+            <Stack.Screen name="feedback" />
             <Stack.Screen name="reviews" />
           </Stack>
           </View>

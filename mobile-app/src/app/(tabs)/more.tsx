@@ -131,6 +131,12 @@ export default function MoreScreen() {
             subtitle={tr('شاهد طريقة الاستخدام', 'See how to use the app')}
             onPress={() => router.push('/tutorials')} />
           <Item
+            icon="message"
+            title={tr('أرسل مشكلة أو اقتراح', 'Report a problem or suggest')}
+            subtitle={tr('تصلنا رسالتك مباشرة من داخل التطبيق', 'Reaches us directly from inside the app')}
+            onPress={() => router.push('/feedback')}
+          />
+          <Item
             icon="mail"
             title={tr('تواصل معنا', 'Contact us')}
             subtitle={tr('واتساب، تيليجرام، البريد الإلكتروني', 'WhatsApp, Telegram, email')}
