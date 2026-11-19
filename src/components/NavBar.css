@@ -256,6 +256,22 @@
   font-weight: 600;
   color: var(--qs-text);
   align-self: flex-start;
+  text-decoration: none;
+}
+
+a.qs-contact-value:hover {
+  color: var(--qs-accent);
+  text-decoration: underline;
+}
+
+.qs-contact-icon-whatsapp {
+  background: #e3f7ea;
+  color: #128c4b;
+}
+
+.qs-contact-icon-telegram {
+  background: #e2f2fb;
+  color: #1d8fcb;
 }
 
 @media (max-width: 900px) {

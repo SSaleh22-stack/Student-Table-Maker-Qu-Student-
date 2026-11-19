@@ -29,6 +29,12 @@
         "--strictPort"
       ],
       "port": 5180
+    },
+    {
+      "name": "extension-build",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "preview", "--", "--port", "4180", "--strictPort"],
+      "port": 4180
     }
   ]
 }

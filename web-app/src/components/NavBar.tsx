@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
+import FeedbackForm from './FeedbackForm';
 import Icon, { IconName } from './Icon';
 import Logo from './Logo';
 import './NavBar.css';
@@ -324,9 +325,13 @@ const NavBar: React.FC<NavBarProps> = ({ currentView, onViewChange }) => {
             <div className="qs-modal-body">
               <p className="qs-modal-intro">
                 {isAr
-                  ? 'في حال وجود استفسارات أو مشاكل تقنية أو اقتراحات، تواصل معنا عبر:'
-                  : 'For questions, technical problems or suggestions, reach us on:'}
+                  ? 'واجهت مشكلة أو عندك اقتراح؟ اكتب لنا هنا وستصلنا رسالتك مباشرة.'
+                  : 'Hit a problem or have an idea? Write to us here and it reaches us directly.'}
               </p>
+
+              <FeedbackForm source="website" isAr={isAr} />
+
+              <p className="qs-contact-or">{isAr ? 'أو تواصل معنا عبر:' : 'Or reach us on:'}</p>
 
               <div className="qs-contact-list">
                 {CONTACT_CHANNELS.map((c) => (
