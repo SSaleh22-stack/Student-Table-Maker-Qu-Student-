@@ -26,6 +26,8 @@ const NAME_DELAY = HOLD + 150; // the name starts coming out once the logo is mo
 const NAME_IN = 550;
 const SHOW = 1750; // when the whole thing starts fading into the app
 const FADE = 350;
+/** Longest the intro may stay up, even if the animation can't run. */
+const MAX_MS = 3500;
 
 const ease = Easing.out(Easing.cubic);
 
@@ -76,6 +78,14 @@ export function IntroAnimation({ onDone }: { onDone: () => void }) {
     // Runs once, when the name has been measured.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nameW]);
+
+  // Safety net: whatever happens (the name is never measured, animation frames don't run),
+  // the app is never left behind the intro for more than a few seconds.
+  useEffect(() => {
+    const giveUp = setTimeout(onDone, MAX_MS);
+    return () => clearTimeout(giveUp);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const screenStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
   const logoStyle = useAnimatedStyle(() => ({ transform: [{ translateX: logoX.value }] }));
