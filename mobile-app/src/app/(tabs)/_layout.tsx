@@ -11,6 +11,7 @@ export default function TabsLayout() {
       screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: colors.bg } }}>
       <Tabs.Screen name="index" options={{ title: tr('الرئيسية', 'Home') }} />
       <Tabs.Screen name="timetable" options={{ title: tr('الجدول', 'Timetable') }} />
+      <Tabs.Screen name="tasks" options={{ title: tr('مهامي', 'My tasks') }} />
       <Tabs.Screen name="qeeem" options={{ title: tr('قيم', 'Qeeem') }} />
       <Tabs.Screen name="more" options={{ title: tr('المزيد', 'More') }} />
     </Tabs>

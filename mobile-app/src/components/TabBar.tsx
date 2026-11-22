@@ -12,6 +12,7 @@ import { colors } from '@/lib/theme';
 const ICONS: Record<string, IconName> = {
   index: 'home',
   timetable: 'calendar',
+  tasks: 'clipboardCheck',
   gpa: 'calculator',
   absence: 'userMinus',
   qeeem: 'star',
