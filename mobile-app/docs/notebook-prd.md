@@ -135,12 +135,12 @@ All tools sit in one toolbar, which mirrors for RTL.
 | NB-41 | **Highlighter** | See-through, drawn under the pen ink so it never covers writing. Default colors: yellow, green, pink, blue, plus the color picker. Optional straight-line mode (hold at the end of a stroke). |
 | NB-42 | **Eraser** | Two modes: whole-stroke eraser (default) and pixel eraser. Can be set to erase highlighter only. |
 | NB-43 | **Lasso** | Select strokes, shapes, text and images to move, resize, rotate, recolor, copy, cut, paste (also onto another page or notebook), or delete. |
-| NB-44 | **Shapes** | Hold at the end of a stroke to snap it to a straight line, arrow, rectangle, circle/ellipse or triangle. A shape tool for drawing shapes directly. |
+| NB-44 | **Shapes (hold to snap)** | The student draws a shape in one stroke and then keeps the pen (or finger) **still at the end without lifting it**. After a short hold (about half a second, to tune in testing), a ring fills around the pen tip and a dashed preview of the recognized shape appears. For the **first 3 snaps only**, a small hint above the pen also says "ثبّت القلم لحظة… سيصبح مستطيلاً" (with the recognized shape's name). After that, only the ring and the preview appear. The hint goes away when the shape snaps or the pen is lifted. When the hold completes, the hand-drawn stroke is replaced by a clean shape in the same color and width. The shape stays selected with resize and rotate handles, and a message "تحوّل إلى مستطيل · تراجع" offers to bring back the hand-drawn stroke. Recognized shapes: straight line, arrow, rectangle (snaps to a square when the sides are almost equal), circle or ellipse (snaps to a circle when almost round), triangle, and other polygons up to 8 sides. If nothing matches, the stroke stays as drawn. A "تحويل الأشكال عند التوقف" switch in the pen options turns it off (on by default). There is also a shape tool for drawing shapes directly. |
 | NB-45 | **Ruler** | An on-screen ruler you can move and rotate with two fingers. Ink drawn along it snaps straight. Shows its angle. |
 | NB-46 | **Text box** | Type Arabic or English with automatic text direction per paragraph. Font size, color, bold. Uses IBM Plex Sans Arabic like the rest of the app. Text boxes can be moved and resized. |
 | NB-47 | **Image** | Insert from photos or the camera, then move, resize, rotate, crop and delete. |
 | NB-47a | **Scientific calculator** | A toolbar button opens a scientific calculator laid out like a classic exam calculator (the fx-991ES PLUS key set from the reference photo): an LCD-style display with natural math (fractions, integrals, powers); SHIFT and ALPHA keys with gold and pink second-function labels above each key; the round replay (cursor) pad; MODE/SETUP and ON; CALC/SOLVE, ∫ and d/dx, x⁻¹/x!, log with any base and Σ; fractions, √/∛, x²/x³, xⁿ/ⁿ√x, log/10ˣ, ln/eˣ; (−), ° ' ", hyp, sin/cos/tan and their inverses; RCL/STO, ENG, parentheses, S⇔D, M+/M−; the 0–9 keys with CONST, CONV, CLR, MATRIX, VECTOR, STAT, CMPLX, BASE, Rnd and Ran#; green DEL/AC; ×, ÷, +, − with nPr, nCr, Pol and Rec; ×10ˣ with π and e; Ans and =. A short history sits under it. It opens **docked** as a side panel (the page shrinks beside it); a "floating" button turns it into a movable window, and a "dock" button puts it back. It only calculates and never writes onto the page. It copies the layout, colors and functions, but **not the brand name, logo, model name or solar panel** of the real calculator. |
-| NB-48 | **Undo / redo** | At least 50 steps per open notebook. Two-finger tap to undo and three-finger tap to redo on tablets. |
+| NB-48 | **Undo / redo** | At least 50 steps per open notebook. In the right-to-left toolbar, **undo is the right button** (its arrow points right) and **redo is the left button** (its arrow points left); in a vertical toolbar, undo is on top. Two-finger tap to undo and three-finger tap to redo on tablets. |
 | NB-49 | **Navigation** | Pinch to zoom (up to 400%) and pan with two fingers. Scroll pages vertically. |
 | NB-49a | **Icons-only header** | The open notebook has no title bar. Only icon buttons float over the canvas: back (top right), and pages, share and more (top left). The page number stays in the counter at the bottom, and the notebook name shows in the pages view and the library. This gives the page about 10% more room. |
 
@@ -168,6 +168,28 @@ All tools sit in one toolbar, which mirrors for RTL.
 - **NB-72** **Share the editable notebook:** a single notebook file (for example `.qunote`: a zip holding the notebook data, its PDFs, images, and optionally recordings) sent through the system share sheet. The file extension is still to be confirmed.
 - **NB-73** Opening a `.qunote` file on a device with QU Student imports a **copy** into the library and asks which folder or course to put it in. Nothing syncs back to the sender.
 - **NB-74** The share screen has an "Include recordings" switch that shows the file size with and without them. It only appears when the notebook has recordings.
+
+### 7.6 First-run tours and setup
+
+Each of these shows once per device. A "Show the tour again" row in the notebook settings replays them.
+
+- **NB-80a Library tour.** It starts the first time the student opens المذكرات. A welcome card ("ابدأ الجولة" / "لاحقاً") comes first, then 4 steps. Each step dims the screen, highlights one area and shows a card with "N من 4", a title, one or two lines, progress dots, "التالي" and "تخطي الجولة":
+  1. The course folders, created from the timetable.
+  2. My folders, with "Show all" and "New folder".
+  3. The "New notebook" button.
+  4. Search, sort and settings. The last button is "تم، لنبدأ".
+- **NB-80b First-time writing setup.** The first time the student opens any notebook, before the notebook tour, a 2-step popup asks for the important settings:
+  1. **How do you write?** Pen (Apple Pencil / S Pen; the finger only scrolls and zooms) or Finger. **Which hand?** Right or left, used for palm rejection and to keep the toolbar away from the writing hand.
+  2. **Important settings:** what double-tapping the Apple Pencil does (eraser / last tool / nothing; shown only when "Pen" is chosen), the default paper, the toolbar position (top / bottom / right / left), and iCloud Drive backup (on by default, Wi-Fi only).
+
+  "Skip setup" keeps the defaults: Pen, right hand, double-tap to eraser, lined paper, toolbar on top, and backup **on**. Every choice can be changed later in the notebook settings. On Android the backup row is Google Drive and starts **off**, because turning it on needs a Google sign-in (NB-86a).
+- **NB-80c Notebook tour.** It runs right after the setup, with 5 steps in the same style:
+  1. The toolbar.
+  2. The grip: long-press to move the toolbar.
+  3. Undo (right) and redo (left).
+  4. The record button.
+  5. Pages and share. The last button is "تم، لنبدأ".
+- Skipping a tour never shows it again on its own.
 
 ## 8. Storage, saving and backup
 

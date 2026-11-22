@@ -411,7 +411,7 @@ function listRow(icon, label, o = {}) {
   if (o.value) left.push(T(o.value, { size: 15, color: C.faint }));
   if (o.toggle !== undefined) left.push(toggle(o.toggle));
   if (o.chevron) left.push(I('forward', 18, C.placeholder));
-  return H([...right, spacer(), ...left], { name: 'row', gap: 12, px: 20, py: 14, w: o.w || CW, cross: 'CENTER' });
+  return H([...right, spacer(), ...left], { name: 'row', gap: 12, px: 20, py: o.py || 11, w: o.w || CW, cross: 'CENTER' });
 }
 function divider(w) { return R(w, 1, C.divider, { name: 'divider' }); }
 function group(rows, w = CW) {
@@ -423,7 +423,7 @@ function group(rows, w = CW) {
 // ---------- editor chrome ----------
 const TOOLS = [['pen', 'قلم'], ['highlighter', 'تظليل'], ['eraser', 'ممحاة'], ['lasso', 'تحديد'], ['shapes', 'أشكال'], ['ruler', 'مسطرة'], ['type', 'نص'], ['image', 'صورة'], ['calculator', 'آلة حاسبة']];
 function toolButton(icon, active, o = {}) {
-  const kids = [I(icon, 22, active ? C.white : C.text)];
+  const kids = [I(o.glyph || icon, 22, active ? C.white : C.text)];
   const b = V(kids, { name: 'tool/' + icon, fill: active ? C.accent : null, radius: 12, align: 'CENTER', cross: 'CENTER', w: 40, h: 40 });
   if (o.dot) { const d = E(8, o.dot); d.strokes = [solid(C.white)]; d.strokeWeight = 1.5; b.appendChild(d); d.layoutPositioning = 'ABSOLUTE'; d.x = 28; d.y = 28; }
   return b;
@@ -451,7 +451,7 @@ function editorToolbar(scr, o = {}) {
     ? H([E(10, C.white), T(o.recTime || '12:47', { size: 14, w: 'bold', color: C.white, font: { family: 'Inter', style: 'Semi Bold' } }), I('pause', 14, C.white, { filled: true }), I('stop', 14, C.white, { filled: true })], { name: 'record/active', gap: 6, px: 10, py: 10, radius: 999, fill: C.danger, cross: 'CENTER' })
     : H([I('mic', 20, C.danger)], { name: 'record', fill: C.dangerSoft, radius: 999, pad: 10 });
   const grip = (vertical ? V : H)([I(vertical ? 'gripH' : 'grip', 18, C.placeholder, { sw: 2.8 })], { name: 'grip (long-press to move)', w: vertical ? 40 : 20, h: vertical ? 20 : 40, align: 'CENTER', cross: 'CENTER' });
-  const items = [grip, ...tools, sep(), ...colors, sep(), toolButton('undo', false), toolButton('redo', false), sep(), rec];
+  const items = [grip, ...tools, sep(), ...colors, sep(), toolButton('undo', false, { glyph: 'redo' }), toolButton('redo', false, { glyph: 'undo' }), sep(), rec];
   const props = { name: 'toolbar/' + pos, fill: C.surface, radius: 22, gap: 3, px: vertical ? 7 : 10, py: vertical ? 10 : 7, shadow: true, cross: 'CENTER', align: 'MIN' };
   const bar = vertical ? V(items, props) : H(items, props);
   let x, y;
@@ -551,10 +551,12 @@ function libraryContent(s, o = {}) {
   let y = 280;
   const st1 = sectionTitle('موادي', showAll(6), 'من جدولك'); place(s, st1, PAD, y); y += 40;
   const courses = H([folderCard('CS102', 'البرمجة 2', '4 مذكرات', { course: true }), folderCard('MATH106', 'التفاضل والتكامل', '3 مذكرات', { course: true }), folderCard('PHYS101', 'فيزياء عامة 1', '2 مذكرة', { course: true }), folderCard('ARAB101', 'مهارات لغوية', 'لا توجد مذكرات', { course: true })], { gap: 15 });
+  courses.name = 'courses-row';
   place(s, courses, SW - PAD - courses.width, y); y += courses.height + 22;
   const addFolder = H([I('folderPlus', 18, C.accent), T('مجلد جديد', { size: 14, w: 'bold', color: C.accent })], { name: 'new-folder', gap: 6, cross: 'CENTER' });
-  const st2 = sectionTitle('مجلداتي', H([showAll(5), R(1, 16, C.border), addFolder], { gap: 14, cross: 'CENTER' })); place(s, st2, PAD, y); y += 40;
+  const st2 = sectionTitle('مجلداتي', H([showAll(5), R(1, 16, C.border), addFolder], { gap: 14, cross: 'CENTER' })); st2.name = 'my-folders-title'; place(s, st2, PAD, y); y += 40;
   const mine = H([folderCard('مجلد', 'مراجعة الاختبارات', '5 مذكرات'), folderCard('مجلد', 'مشروع التخرج', 'مذكرتان'), folderCard('مجلد', 'التدريب الصيفي', '3 مذكرات'), folderCard('مجلد', 'نادي البرمجة', 'مذكرة واحدة')], { gap: 15 });
+  mine.name = 'my-folders-row';
   place(s, mine, SW - PAD - mine.width, y); y += mine.height + 22;
   const st3 = sectionTitle('بدون مجلد', showAll(9)); place(s, st3, PAD, y); y += 40;
   const loose = H([notebookCard('أفكار سريعة', 'اليوم 10:32 ص', { mic: false }), notebookCard('اختبار 2023 — محلول', 'أمس', { pdf: true }), notebookCard('ملاحظات الإرشاد', '18 نوفمبر', { style: 'dotted' }), notebookCard('محاضرة مسجلة', '15 نوفمبر', { mic: true })], { gap: 32, cross: 'MIN' });
@@ -674,6 +676,7 @@ function sPenOptions() {
     divider(316),
     H([toggle(true), spacer(), T('حساسية الضغط', { size: 15, w: 'medium' })], { w: 316, cross: 'CENTER' }),
     H([toggle(false), spacer(), T('الرسم بالإصبع', { size: 15, w: 'medium' })], { w: 316, cross: 'CENTER' }),
+    H([toggle(true), spacer(), V([T('تحويل الأشكال عند التوقف', { size: 15, w: 'medium' }), T('أبقِ القلم ثابتاً في نهاية الشكل', { size: 12, color: C.faint })], { gap: 2, cross: 'MAX' })], { w: 316, cross: 'CENTER', name: 'shape-snap-switch' }),
   ], { name: 'pen-popover', fill: C.surface, radius: 22, pad: 20, gap: 16, shadow: true, cross: 'MAX' });
   const tb = s.findOne((n) => n.name.startsWith('toolbar/'));
   const penBtn = tb.findOne((n) => n.name === 'tool/pen');
@@ -853,7 +856,7 @@ function sSettings() {
   statusBar(s);
   place(s, navBar('إعدادات المذكرات', { sub: 'تُحفظ على جهازك' }), PAD, 44);
   let y = 146;
-  const lab = (t) => { const x = T(t, { size: 14, w: 'semibold', color: C.faint }); place(s, x, SW - PAD - x.width - 8, y); y += 30; };
+  const lab = (t) => { const x = T(t, { size: 14, w: 'semibold', color: C.faint }); place(s, x, SW - PAD - x.width - 8, y); y += 26; };
   lab('النسخ الاحتياطي');
   const g1 = group([
     listRow('cloud', 'النسخ الاحتياطي إلى iCloud Drive', { sub: 'مجلد "QU Student" يظهر في تطبيق الملفات', toggle: true }),
@@ -861,13 +864,14 @@ function sSettings() {
     listRow('wifi', 'عبر Wi-Fi فقط', { sub: 'لا تستخدم بيانات الجوال للنسخ', toggle: true }),
     listRow('restore', 'استعادة من النسخة الاحتياطية', { chevron: true }),
   ]);
-  place(s, g1, PAD, y); y += g1.height + 26;
+  place(s, g1, PAD, y); y += g1.height + 18;
   lab('الكتابة');
   const g2 = group([
     listRow('pencilTip', 'النقر المزدوج على Apple Pencil', { value: 'التبديل إلى الممحاة', chevron: true }),
     listRow('hand', 'الرسم بالإصبع', { sub: 'عند توصيل قلم، الإصبع للتمرير فقط', toggle: false }),
+    listRow('hand', 'اليد التي تكتب بها', { value: 'اليمنى', chevron: true }),
   ]);
-  place(s, g2, PAD, y); y += g2.height + 26;
+  place(s, g2, PAD, y); y += g2.height + 18;
   lab('التخزين');
   const segW = CW - 40;
   const seg = figma.createFrame(); seg.name = 'storage-bar'; seg.resize(segW, 14); seg.cornerRadius = 7; seg.fills = [solid(C.surfaceMuted)]; seg.clipsContent = true;
@@ -879,9 +883,10 @@ function sSettings() {
     seg,
     H([legend(C.accent, 'ملفات PDF', '590 MB'), legend(C.warningBar, 'التسجيلات', '420 MB'), legend('#8B5CF6', 'الكتابة والصور', '110 MB')], { gap: 22 }),
   ], { name: 'storage', fill: C.surface, radius: 22, stroke: C.border, pad: 20, gap: 14, w: CW, cross: 'MAX' });
-  place(s, storage, PAD, y); y += storage.height + 26;
+  place(s, storage, PAD, y); y += storage.height + 18;
   const g3 = group([
     listRow('trash', 'المحذوفة مؤخراً', { value: '3', chevron: true }),
+    listRow('play', 'إعادة عرض الجولة التعريفية', { chevron: true }),
     listRow('message', 'أرسل ملاحظاتك عن المذكرات', { sub: 'ميزة تجريبية — رأيك يهمنا', chevron: true }),
   ]);
   place(s, g3, PAD, y);
@@ -1058,6 +1063,209 @@ function sCalcFloating() {
   void pg;
 }
 
+
+// ---------- first-run tours ----------
+function boxOf(s, n) { const a = n.absoluteBoundingBox, b = s.absoluteBoundingBox; return { x: a.x - b.x, y: a.y - b.y, w: a.width, h: a.height }; }
+function unionBox(a, b) { const x = Math.min(a.x, b.x), y = Math.min(a.y, b.y); return { x, y, w: Math.max(a.x + a.w, b.x + b.w) - x, h: Math.max(a.y + a.h, b.y + b.h) - y }; }
+function find(s, name) { const n = s.findOne((x) => x.name === name); if (!n) throw new Error('tour target not found: ' + name); return n; }
+// Dims the whole screen except a rounded hole around `box`, with a light ring on the hole.
+function spotlight(s, box, o = {}) {
+  const pad = o.pad !== undefined ? o.pad : 10, r = o.radius !== undefined ? o.radius : 18;
+  const hb = { x: box.x - pad, y: box.y - pad, w: box.w + 2 * pad, h: box.h + 2 * pad };
+  const ov = R(SW, SH, '#1B2533'); place(s, ov, 0, 0);
+  const hole = R(hb.w, hb.h, '#000000', { radius: r }); place(s, hole, hb.x, hb.y);
+  const dim = figma.subtract([ov, hole], s);
+  dim.name = 'tour/dim'; dim.fills = [solid('#1B2533', 0.62)];
+  const ring = R(hb.w, hb.h, null, { radius: r, stroke: C.accentLight, strokeW: 3, name: 'tour/ring' }); place(s, ring, hb.x, hb.y);
+  return hb;
+}
+function tourCard(step, total, title, body, o = {}) {
+  const dots = H(Array.from({ length: total }, (_, i) => R(i === step - 1 ? 18 : 7, 7, i === step - 1 ? C.accent : C.borderStrong, { radius: 4 })), { gap: 5, cross: 'CENTER', name: 'progress' });
+  const btn = H([T(o.last ? 'تم، لنبدأ' : 'التالي', { size: 15, w: 'bold', color: C.white }), o.last ? null : I('forward', 16, C.white)], { name: 'btn/next', gap: 6, px: 18, py: 10, radius: 999, fill: C.accent, cross: 'CENTER' });
+  return V([
+    H([pill(step + ' من ' + total, C.accentTint, C.accentDark, { size: 12 }), spacer(), o.last ? null : T('تخطي الجولة', { size: 14, w: 'semibold', color: C.faint })], { w: 316, cross: 'CENTER' }),
+    V([T(title, { size: 19, w: 'bold', width: 316 }), T(body, { size: 15, color: C.muted, width: 316, lh: 24 })], { gap: 6, cross: 'MAX' }),
+    H([dots, spacer(), btn], { w: 316, cross: 'CENTER' }),
+  ], { name: 'tour/card', fill: C.surface, radius: 22, pad: 18, gap: 14, shadow: true, cross: 'MAX', w: 352 });
+}
+// Places the card under (or over) the highlighted area with a small pointer.
+function tourTip(s, hb, card, prefer) {
+  const below = prefer ? prefer === 'below' : hb.y + hb.h + 24 + card.height < SH - 24;
+  let x = hb.x + hb.w / 2 - card.width / 2; x = Math.max(20, Math.min(SW - 20 - card.width, x));
+  const y = below ? hb.y + hb.h + 16 : hb.y - 16 - card.height;
+  place(s, card, x, y);
+  const cx = Math.max(x + 30, Math.min(x + card.width - 30, hb.x + hb.w / 2));
+  const tri = figma.createNodeFromSvg(below ? '<svg xmlns="http://www.w3.org/2000/svg" width="26" height="13" viewBox="0 0 26 13"><path d="M0 13 L13 0 L26 13 Z" fill="#FFFFFF"/></svg>' : '<svg xmlns="http://www.w3.org/2000/svg" width="26" height="13" viewBox="0 0 26 13"><path d="M0 0 L13 13 L26 0 Z" fill="#FFFFFF"/></svg>');
+  tri.name = 'tour/pointer'; tri.fills = [];
+  place(s, tri, cx - 13, below ? y - 12 : y + card.height - 1);
+}
+
+const LIB_STEPS = 4;
+function libTourScreen(name, col, row) { const s = screen(name, col, row); libraryContent(s); return s; }
+
+function sLibWelcome() {
+  const s = libTourScreen('24 · جولة المكتبة — الترحيب (أول زيارة)', 0, 5);
+  overlay(s);
+  const art = V([H([I('notebookPen', 46, C.accent)], { fill: C.surface, radius: 999, w: 96, h: 96, align: 'CENTER', cross: 'CENTER', shadow: 'sm' })], { fill: C.accentSoft, radius: 999, w: 140, h: 140, align: 'CENTER', cross: 'CENTER' });
+  const m = V([
+    art,
+    H([T('أهلاً بك في المذكرات', { size: 26, w: 'bold', align: 'CENTER' }), betaPill(13)], { gap: 10, cross: 'CENTER' }),
+    T('اكتب بالقلم، علّق على ملفات PDF، وسجّل المحاضرة وأنت تكتب.\nخذ جولة سريعة من 4 خطوات لتعرف مكان كل شيء.', { size: 16, color: C.muted, align: 'CENTER', lh: 26 }),
+    H([secondaryBtn('لاحقاً', { w: 160, fill: C.surfaceMuted, color: C.muted }), primaryBtn('ابدأ الجولة', { icon: 'play', w: 240 })].reverse(), { gap: 12, cross: 'CENTER' }),
+  ], { name: 'tour/welcome', fill: C.surface, radius: 28, pad: 32, gap: 18, cross: 'CENTER', w: 560, shadow: true });
+  place(s, m, (SW - m.width) / 2, (SH - m.height) / 2);
+}
+function sLibTour1() {
+  const s = libTourScreen('25 · جولة المكتبة 1 — مجلدات المواد', 1, 5);
+  const hb = spotlight(s, boxOf(s, find(s, 'courses-row')));
+  tourTip(s, hb, tourCard(1, LIB_STEPS, 'مجلد لكل مادة', 'تُنشأ مجلدات موادك تلقائياً من جدولك. اضغط على مادة لترى مذكراتها، أو «عرض الكل» لكل المواد.'), 'below');
+}
+function sLibTour2() {
+  const s = libTourScreen('26 · جولة المكتبة 2 — مجلداتي', 2, 5);
+  const hb = spotlight(s, unionBox(boxOf(s, find(s, 'my-folders-title')), boxOf(s, find(s, 'my-folders-row'))));
+  tourTip(s, hb, tourCard(2, LIB_STEPS, 'مجلداتك الخاصة', 'أنشئ مجلدات بالأسماء التي تريد ورتّب فيها مذكراتك. يظهر هنا 4 فقط، واضغط «عرض الكل» لرؤية البقية.'), 'below');
+}
+function sLibTour3() {
+  const s = libTourScreen('27 · جولة المكتبة 3 — مذكرة جديدة', 3, 5);
+  const hb = spotlight(s, boxOf(s, find(s, 'fab')), { radius: 999 });
+  tourTip(s, hb, tourCard(3, LIB_STEPS, 'ابدأ مذكرة جديدة', 'اختر ورقاً فارغاً أو مسطراً، أو استورد ملف PDF، أو امسح ورقة بالكاميرا.'), 'above');
+}
+function sLibTour4() {
+  const s = libTourScreen('28 · جولة المكتبة 4 — البحث والإعدادات', 4, 5);
+  const hb = spotlight(s, unionBox(boxOf(s, find(s, 'input')), boxOf(s, find(s, 'btn/sliders'))));
+  tourTip(s, hb, tourCard(4, LIB_STEPS, 'البحث والترتيب والإعدادات', 'ابحث في مذكراتك ورتّبها، ومن الإعدادات فعّل النسخ الاحتياطي واعرف مساحة التخزين.', { last: true }), 'below');
+}
+
+// ---------- first time inside a notebook: quick setup, then the tour ----------
+function setupHeader(title, step) {
+  return H([V([T(title, { size: 24, w: 'bold' }), T('إعداد سريع للكتابة · ' + step + ' من 2', { size: 14, color: C.faint })], { gap: 2, cross: 'MAX' }), spacer(), H([R(step === 1 ? 22 : 8, 8, step === 1 ? C.accent : C.borderStrong, { radius: 4 }), R(step === 2 ? 22 : 8, 8, step === 2 ? C.accent : C.borderStrong, { radius: 4 })], { gap: 6, cross: 'CENTER' })], { w: 564, cross: 'CENTER' });
+}
+function choiceCard(icon, title, sub, on) {
+  const check = on ? H([I('check', 14, C.white)], { fill: C.accent, radius: 999, pad: 4 }) : E(22, null, { stroke: C.borderStrong, strokeW: 2 });
+  return V([
+    H([H([I(icon, 30, on ? C.white : C.accent)], { fill: on ? C.accent : C.accentTint, radius: 18, pad: 14 }), spacer(), check], { w: 236, cross: 'MIN' }),
+    T(title, { size: 18, w: 'bold', width: 236 }),
+    T(sub, { size: 13, color: C.faint, width: 236, lh: 20 }),
+  ], { name: 'choice', pad: 18, gap: 10, radius: 20, stroke: on ? C.accent : C.border, strokeW: on ? 2 : 1, fill: on ? C.accentTint : C.surface, w: 272, cross: 'MAX' });
+}
+function setupRow(label, sub, control) {
+  return V([V([T(label, { size: 16, w: 'bold' }), sub ? T(sub, { size: 13, color: C.faint, width: 564 }) : null], { gap: 2, cross: 'MAX' }), control], { gap: 10, cross: 'MAX', w: 564 });
+}
+function sSetup1() {
+  const { s } = editorBase('29 · أول مرة داخل مذكرة — الإعداد 1: كيف تكتب؟', 0, 6);
+  overlay(s);
+  modal(s, [
+    setupHeader('قبل أن تبدأ', 1),
+    setupRow('كيف تكتب؟', null, H([choiceCard('pencilTip', 'بالقلم', 'تكتب بقلم آبل أو قلم سامسونج، والإصبع للتمرير والتكبير فقط.', true), choiceCard('hand', 'بالإصبع', 'إذا لم يكن معك قلم. اكتب بإصبع واحد وحرّك الصفحة بإصبعين.', false)], { gap: 20 })),
+    setupRow('بأي يد تكتب؟', 'نستخدمها لتجاهل راحة يدك على الشاشة، ولإبعاد شريط الأدوات عن يدك.', H([chip('اليد اليمنى', { on: true, icon: 'hand' }), chip('اليد اليسرى', { icon: 'hand' })], { gap: 10 })),
+    H([T('تخطي الإعداد', { size: 15, w: 'semibold', color: C.faint }), spacer(), primaryBtn('التالي', { w: 220 })], { w: 564, cross: 'CENTER' }),
+  ], 620);
+}
+function sSetup2() {
+  const { s } = editorBase('30 · أول مرة داخل مذكرة — الإعداد 2: إعدادات مهمة', 1, 6);
+  overlay(s);
+  const smallPaper = (label, style, on) => { const p = paper(64, 82, style, C.white, { step: 9, top: 14, margin: 12, shadow: false, radius: 6, dot: 2 }); p.strokes = [solid(on ? C.accent : C.border)]; p.strokeWeight = on ? 2.5 : 1; return V([p, T(label, { size: 13, w: on ? 'bold' : 'medium', color: on ? C.accent : C.muted, align: 'CENTER' })], { gap: 6, cross: 'CENTER' }); };
+  modal(s, [
+    setupHeader('إعدادات مهمة', 2),
+    setupRow('النقر المزدوج على القلم', 'ماذا يحدث عند النقر مرتين على Apple Pencil؟', H([chip('التبديل إلى الممحاة', { on: true }), chip('آخر أداة'), chip('لا شيء')], { gap: 8 })),
+    setupRow('الورق الافتراضي', 'للمذكرات الجديدة، وتستطيع تغييره لكل مذكرة.', H([smallPaper('مسطر', 'lined', true), smallPaper('فارغ', 'blank'), smallPaper('مربعات', 'grid'), smallPaper('نقاط', 'dotted')], { gap: 16 })),
+    setupRow('مكان شريط الأدوات', 'تستطيع نقله لاحقاً بالضغط المطوّل عليه.', H([chip('أعلى', { on: true }), chip('أسفل'), chip('يمين'), chip('يسار')], { gap: 8 })),
+    H([toggle(true), spacer(), V([T('النسخ الاحتياطي إلى iCloud Drive', { size: 16, w: 'bold' }), T('تلقائياً عبر Wi-Fi، في مجلد QU Student', { size: 13, color: C.faint })], { gap: 2, cross: 'MAX' })], { w: 564, cross: 'CENTER', name: 'backup-row' }),
+    divider(564),
+    H([T('تجدها كلها لاحقاً في إعدادات المذكرات', { size: 13, color: C.faint }), spacer(), primaryBtn('ابدأ الكتابة', { icon: 'pen', w: 220 })], { w: 564, cross: 'CENTER' }),
+  ], 620);
+}
+
+const ED_STEPS = 5;
+function sEdTour1() {
+  const { s } = editorBase('31 · جولة المذكرة 1 — شريط الأدوات', 2, 6);
+  const hb = spotlight(s, boxOf(s, find(s, 'toolbar/top')), { radius: 26 });
+  tourTip(s, hb, tourCard(1, ED_STEPS, 'كل أدواتك هنا', 'القلم، التظليل، الممحاة، التحديد، الأشكال، المسطرة، النص، الصور، والآلة الحاسبة العلمية.'), 'below');
+}
+function sEdTour2() {
+  const { s } = editorBase('32 · جولة المذكرة 2 — نقل الشريط', 3, 6);
+  const hb = spotlight(s, boxOf(s, find(s, 'grip (long-press to move)')), { radius: 14, pad: 8 });
+  tourTip(s, hb, tourCard(2, ED_STEPS, 'انقل الشريط كما تحب', 'اضغط مطولاً على الشريط ثم اسحبه إلى الأعلى أو الأسفل أو اليمين أو اليسار.'), 'below');
+}
+function sEdTour3() {
+  const { s } = editorBase('33 · جولة المذكرة 3 — تراجع وإعادة', 4, 6);
+  const hb = spotlight(s, unionBox(boxOf(s, find(s, 'tool/undo')), boxOf(s, find(s, 'tool/redo'))), { radius: 14, pad: 8 });
+  tourTip(s, hb, tourCard(3, ED_STEPS, 'تراجع وإعادة', 'الزر الأيمن للتراجع والأيسر للإعادة. أو انقر بإصبعين للتراجع وبثلاثة أصابع للإعادة.'), 'below');
+}
+function sEdTour4() {
+  const { s } = editorBase('34 · جولة المذكرة 4 — تسجيل المحاضرة', 0, 7);
+  const hb = spotlight(s, boxOf(s, find(s, 'record')), { radius: 999, pad: 8 });
+  tourTip(s, hb, tourCard(4, ED_STEPS, 'سجّل المحاضرة وأنت تكتب', 'بعدها اضغط على أي كتابة لتسمع ما قاله الدكتور في تلك اللحظة.'), 'below');
+}
+function sEdTour5() {
+  const { s } = editorBase('35 · جولة المذكرة 5 — الصفحات والمشاركة', 1, 7);
+  const hb = spotlight(s, boxOf(s, find(s, 'editor-actions')), { radius: 999, pad: 8 });
+  tourTip(s, hb, tourCard(5, ED_STEPS, 'الصفحات والمشاركة', 'رتّب الصفحات وأضف صفحات جديدة، وشارك المذكرة كملف PDF أو صورة أو ملف قابل للتعديل.', { last: true }), 'below');
+}
+
+
+// ---------- shape snapping: draw, hold still, get a clean shape ----------
+const SNAP = { x: 150, y: 230, w: 330, h: 210 }; // the rectangle on the page, in page units
+function snapTitle(p) {
+  place(p, T('الأشكال التلقائية', { size: 40, font: HAND_AR, color: C.inkBlue, align: 'RIGHT' }), PAGE_W - 60 - 320, 36).resize(320, 60);
+  place(p, ink('M4 8 C 80 2, 180 12, 300 5', 304, 14, C.inkBlue, 2.5), PAGE_W - 60 - 300, 96);
+}
+function snapDrawPage() {
+  const p = paper(PAGE_W, PAGE_H, 'grid', C.white, { step: 32 });
+  p.name = 'page/grid';
+  snapTitle(p);
+  place(p, R(SNAP.w, SNAP.h, C.accent, { opacity: 0.06, stroke: C.accent, strokeW: 2, dash: [9, 7], radius: 2, name: 'snap-preview (clean rectangle)' }), SNAP.x, SNAP.y);
+  place(p, ink('M14 18 C 80 8, 170 16, 330 12 C 336 70, 330 150, 336 214 C 240 220, 120 212, 10 220 C 4 150, 12 80, 8 26', 346, 232, C.inkBlue, 3.5), SNAP.x - 8, SNAP.y - 8);
+  return p;
+}
+// Hand-drawn vs clean versions of each shape, 72x70 boxes.
+const SHAPE_PAIRS = [
+  ['مربع', 'M6 8 C 30 4, 50 6, 64 6 C 66 26, 64 46, 66 62 C 44 64, 24 62, 6 64 C 4 44, 6 24, 6 12', () => R(60, 60, null, { stroke: C.inkBlue, strokeW: 3 })],
+  ['دائرة', 'M38 4 C 58 4, 68 22, 66 38 C 64 56, 50 68, 34 66 C 16 64, 4 50, 6 32 C 8 16, 22 6, 40 8', () => E(62, null, { stroke: C.inkRed, strokeW: 3 })],
+  ['مثلث', 'M36 4 C 46 22, 56 40, 68 64 C 46 62, 26 66, 4 64 C 14 44, 24 26, 34 8', () => ink('M33 3 L64 61 L2 61 Z', 66, 64, C.inkGreen, 3)],
+  ['خط مستقيم', 'M2 40 C 20 30, 36 44, 52 34 S 66 30, 70 32', () => ink('M2 34 L70 34', 72, 68, C.inkBlack, 3)],
+  ['سهم', 'M2 44 C 20 36, 40 46, 66 30 M 66 30 L 52 26 M 66 30 L 58 42', () => ink('M2 36 L66 36 M66 36 L54 28 M66 36 L54 44', 70, 70, C.inkBlack, 3)],
+];
+const SHAPE_COLORS = [C.inkBlue, C.inkRed, C.inkGreen, C.inkBlack, C.inkBlack];
+function snapDonePage() {
+  const p = paper(PAGE_W, PAGE_H, 'grid', C.white, { step: 32 });
+  p.name = 'page/grid';
+  snapTitle(p);
+  place(p, R(SNAP.w, SNAP.h, null, { stroke: C.inkBlue, strokeW: 3.5, name: 'clean rectangle' }), SNAP.x, SNAP.y);
+  const head = T('أمثلة: قبل  ←  بعد', { size: 17, w: 'bold', color: C.muted }); place(p, head, PAGE_W - 48 - head.width, 486);
+  SHAPE_PAIRS.forEach(([label, rough, clean], i) => {
+    const y = 528 + i * 74;
+    const lb = T(label, { size: 16, w: 'semibold', color: C.text }); place(p, lb, PAGE_W - 48 - lb.width, y + 24);
+    place(p, ink(rough, 72, 70, SHAPE_COLORS[i], 3), 330, y);
+    place(p, I('forward', 26, C.placeholder), 270, y + 22);
+    const c = clean(); place(p, c, 150 + (72 - c.width) / 2, y + (70 - c.height) / 2);
+  });
+  return p;
+}
+function sSnapHold() {
+  const { s, pg } = editorBase('36 · تحويل الأشكال 1 — ارسم ثم توقف لحظة', 2, 7, { page: snapDrawPage, active: 'pen', footer: '1 / 2' });
+  const tipX = pg.x + SNAP.x * K, tipY = pg.y + (SNAP.y + 18) * K; // where the stroke ends
+  const ring = figma.createNodeFromSvg('<svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 60 60" fill="none"><circle cx="30" cy="30" r="24" stroke="#DDF0F4" stroke-width="6"/><path d="M30 6 A24 24 0 1 1 7.2 37.4" stroke="#0E7490" stroke-width="6" stroke-linecap="round"/></svg>');
+  ring.name = 'hold-ring (fills while the pen stays still)'; ring.fills = [];
+  place(s, ring, tipX - 30, tipY - 30);
+  const pen = I('pencilTip', 46, C.text, { sw: 1.8 }); pen.name = 'apple-pencil';
+  place(s, pen, tipX - 4, tipY - 42);
+  const hint = H([I('clock', 16, C.white), T('ثبّت القلم لحظة… سيصبح مستطيلاً', { size: 14, w: 'medium', color: C.white })], { gap: 8, fill: C.text, radius: 999, px: 16, py: 9, cross: 'CENTER' });
+  place(s, hint, tipX - hint.width / 2 + 40, tipY - 92);
+  hint.name = 'snap-hint (first 3 snaps only)';
+}
+function sSnapDone() {
+  const { s, pg } = editorBase('37 · تحويل الأشكال 2 — الشكل النظيف وأمثلة', 3, 7, { page: snapDonePage, active: 'pen', footer: '1 / 2' });
+  const x = pg.x + SNAP.x * K, y = pg.y + SNAP.y * K, w = SNAP.w * K, h = SNAP.h * K;
+  place(s, R(w + 16, h + 16, null, { stroke: C.accent, strokeW: 1.5, dash: [6, 5], radius: 4, name: 'selection' }), x - 8, y - 8);
+  for (const [hx, hy] of [[0, 0], [w / 2, 0], [w, 0], [0, h / 2], [w, h / 2], [0, h], [w / 2, h], [w, h]]) { const d = E(13, C.white, { stroke: C.accent, strokeW: 2 }); place(s, d, x + hx - 6.5, y + hy - 6.5); }
+  place(s, R(1.5, 26, C.accent), x + w / 2 - 0.75, y - 34);
+  const rot = H([I('restore', 14, C.accent)], { fill: C.white, stroke: C.accent, strokeW: 2, radius: 999, pad: 4, name: 'rotate-handle' }); place(s, rot, x + w / 2 - 12, y - 58);
+  const sizeChip = pill('عرض 330 · ارتفاع 210', C.text, C.white, { size: 12, px: 10, py: 4 }); place(s, sizeChip, x + w / 2 - sizeChip.width / 2, y + h + 18);
+  const toast = H([I('check', 18, C.white), T('تحوّل إلى مستطيل', { size: 15, w: 'medium', color: C.white }), R(1, 20, '#4A5668'), T('تراجع', { size: 15, w: 'bold', color: C.accentLight })], { name: 'snap-toast', gap: 12, fill: C.text, radius: 999, px: 20, py: 12, shadow: true, cross: 'CENTER' });
+  place(s, toast, (SW - toast.width) / 2, 156);
+}
+
 function sCover() {
   const f = figma.createFrame();
   f.name = '00 · Cover';
@@ -1068,7 +1276,7 @@ function sCover() {
     T('المذكرات', { size: 54, w: 'bold', color: C.white }),
     T('Notebook · Beta', { size: 22, w: 'semibold', color: '#CFEFF5', font: { family: 'Inter', style: 'Semi Bold' } }),
     T('تصاميم iPad بالعربية (من اليمين لليسار)، مبنية على notebook-prd.md', { size: 18, color: '#CFEFF5', width: 700 }),
-    T('01 الرئيسية · 02–05 المكتبة والاستيراد · 06–12 المحرر والأدوات والتسجيل · 13 الصفحات · 14 المشاركة · 15 الإعدادات · 16 المحذوفة · 17 الحالة الفارغة · 18–21 نقل شريط الأدوات · 22–23 الآلة الحاسبة العلمية', { size: 16, color: C.white, lh: 28, width: 700 }),
+    T('01 الرئيسية · 02–05 المكتبة والاستيراد · 06–12 المحرر والأدوات والتسجيل · 13 الصفحات · 14 المشاركة · 15 الإعدادات · 16 المحذوفة · 17 الحالة الفارغة · 18–21 نقل شريط الأدوات · 22–23 الآلة الحاسبة · 24–28 جولة المكتبة · 29–30 إعداد أول مرة · 31–35 جولة داخل المذكرة · 36–37 تحويل الأشكال', { size: 16, color: C.white, lh: 28, width: 700 }),
   ], { gap: 16, cross: 'MAX' });
   place(f, col, SW - 56 - col.width, 90);
   STATUS_COMP.x = f.x; STATUS_COMP.y = f.y + f.height + 80;
@@ -1083,7 +1291,7 @@ async function main() {
   for (const n of [...page.children]) n.remove();
   PAGE = page;
   STATUS_COMP = buildStatusComponent(page);
-  const steps = [sCover, sHome, sLibrary, sFolder, sNewNotebook, sReceivePdf, sEditor, sPenOptions, sPdfLasso, sShapesText, sRecording, sPlayback, sContinue, sPages, sExport, sSettings, sDeleted, sEmpty, sToolbarDrag, sToolbarRight, sToolbarBottom, sToolbarLeft, sCalcDocked, sCalcFloating];
+  const steps = [sCover, sHome, sLibrary, sFolder, sNewNotebook, sReceivePdf, sEditor, sPenOptions, sPdfLasso, sShapesText, sRecording, sPlayback, sContinue, sPages, sExport, sSettings, sDeleted, sEmpty, sToolbarDrag, sToolbarRight, sToolbarBottom, sToolbarLeft, sCalcDocked, sCalcFloating, sLibWelcome, sLibTour1, sLibTour2, sLibTour3, sLibTour4, sSetup1, sSetup2, sEdTour1, sEdTour2, sEdTour3, sEdTour4, sEdTour5, sSnapHold, sSnapDone];
   const errors = [];
   for (const fn of steps) {
     try { fn(); } catch (e) { errors.push(fn.name + ': ' + (e && e.message ? e.message : String(e))); }
