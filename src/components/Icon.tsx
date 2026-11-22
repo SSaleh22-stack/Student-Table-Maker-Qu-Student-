@@ -10,6 +10,7 @@ export type IconName =
   | 'mail'
   | 'send'
   | 'whatsapp'
+  | 'xLogo'
   | 'download'
   | 'plus'
   | 'list'
@@ -87,6 +88,13 @@ const paths: Record<IconName, React.ReactNode> = {
     </>
   ),
   send: <path d="M22 2L11 13M22 2l-7 20-4-9-9-4z" />,
+  /** The X (Twitter) logo: a slanted bar crossed by a stroke. */
+  xLogo: (
+    <>
+      <path d="M4 4l11.7 16H20L8.3 4z" />
+      <path d="M20 4l-6.6 7.5M4 20l6.6-7.5" />
+    </>
+  ),
   whatsapp: (
     <>
       <path d="M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9z" />

@@ -41,6 +41,15 @@ const CONTACT_CHANNELS: {
     url: 'https://t.me/qu4611',
   },
   {
+    id: 'x',
+    icon: 'xLogo',
+    labelAr: 'إكس (تويتر)',
+    labelEn: 'X (Twitter)',
+    value: '@QUStud',
+    copy: '@QUStud',
+    url: 'https://x.com/QUStud',
+  },
+  {
     id: 'email',
     icon: 'mail',
     labelAr: 'البريد الإلكتروني',

@@ -10,6 +10,7 @@ export type IconName =
   | 'mail'
   | 'send'
   | 'whatsapp'
+  | 'xLogo'
   | 'university'
   | 'download'
   | 'plus'
@@ -36,7 +37,8 @@ export type IconName =
   | 'mapPin'
   | 'user'
   | 'clock'
-  | 'sliders';
+  | 'sliders'
+  | 'bell';
 
 const paths: Record<IconName, React.ReactNode> = {
   calendar: (
@@ -70,6 +72,7 @@ const paths: Record<IconName, React.ReactNode> = {
       <path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01" />
     </>
   ),
+  bell: <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0" />,
   mail: (
     <>
       <rect x="2" y="4" width="20" height="16" rx="2" />
@@ -77,6 +80,13 @@ const paths: Record<IconName, React.ReactNode> = {
     </>
   ),
   send: <path d="M22 2L11 13M22 2l-7 20-4-9-9-4z" />,
+  /** The X (Twitter) logo: a slanted bar crossed by a stroke. */
+  xLogo: (
+    <>
+      <path d="M4 4l11.7 16H20L8.3 4z" />
+      <path d="M20 4l-6.6 7.5M4 20l6.6-7.5" />
+    </>
+  ),
   whatsapp: (
     <>
       <path d="M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9z" />

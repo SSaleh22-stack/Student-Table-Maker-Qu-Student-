@@ -4,6 +4,7 @@ import { TimetableProvider } from './contexts/TimetableContext';
 import NavBar from './components/NavBar';
 import HeroSection from './components/HeroSection';
 import AppPromo from './components/AppPromo';
+import Announcements from './components/Announcements';
 import CourseList from './components/CourseList';
 import TimetableGrid from './components/TimetableGrid';
 import OfferedCoursesModal from './components/OfferedCoursesModal';
@@ -189,6 +190,7 @@ const AppContent: React.FC = () => {
         {currentView === 'timetable' ? (
           <>
             <AppPromo />
+            <Announcements />
             <HeroSection
               hasCourses={courses.length > 0}
               onOpenOfferedCourses={() => setShowOfferedCoursesModal(true)}

@@ -5,6 +5,7 @@ import './Announcements.css';
 
 const TELEGRAM_URL = 'https://t.me/qu4611';
 const EMAIL = 'qu4611@gmail.com';
+const X_URL = 'https://x.com/QUStud';
 
 interface Slide {
   id: string;
@@ -15,6 +16,8 @@ interface Slide {
   tag?: string;
   /** Show the Telegram and email buttons */
   contact?: boolean;
+  /** Show the "follow us on X" button */
+  followX?: boolean;
 }
 
 /** Time each announcement stays before moving to the next. */
@@ -32,6 +35,14 @@ const Announcements: React.FC = () => {
   const [paused, setPaused] = useState(false);
 
   const slides: Slide[] = [
+    // Promotes the X account. Keep it until the owner says to take it down.
+    {
+      id: 'follow-x',
+      icon: 'xLogo',
+      title: isAr ? 'تابعنا على إكس' : 'Follow us on X',
+      text: isAr ? 'آخر الأخبار والتحديثات أولاً بأول' : 'News and updates as they happen',
+      followX: true,
+    },
     {
       id: 'universities',
       icon: 'university',
@@ -108,6 +119,15 @@ const Announcements: React.FC = () => {
                 )}
               </p>
             </div>
+            {s.followX && (
+              <div className="qs-news-actions">
+                <a className="qs-news-btn" href={X_URL} target="_blank" rel="noopener noreferrer">
+                  <Icon name="xLogo" size={16} />
+                  {isAr ? 'تابعنا' : 'Follow'}
+                  <span className="qs-news-handle" dir="ltr">@QUStud</span>
+                </a>
+              </div>
+            )}
             {s.contact && (
               <div className="qs-news-actions">
                 <a className="qs-news-btn" href={TELEGRAM_URL} target="_blank" rel="noopener noreferrer">

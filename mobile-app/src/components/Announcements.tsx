@@ -34,55 +34,49 @@ interface Slide {
   url?: string;
   /** Label of the link at the end of the slide */
   cta?: string;
-  /** Hidden from this moment on (a time-limited announcement) */
-  until?: Date;
 }
 
 /** What tapping a slide does: open its page or website, or nothing. */
 const openerFor = (s: Slide) =>
   s.href ? () => router.push(s.href as Href) : s.url ? () => Linking.openURL(s.url as string).catch(() => {}) : undefined;
 
-const slides = (tablet: boolean): Slide[] => {
-  const all: Slide[] = [
-    // Shown for one month (until the end of 22 December 2026) to promote the X account.
-    {
-      id: 'follow-x',
-      icon: 'x_logo',
-      title: tr('تابعنا على إكس', 'Follow us on X'),
-      text: tr('آخر الأخبار والتحديثات أولاً بأول', 'News and updates as they happen'),
-      url: 'https://x.com/QUStud',
-      cta: ltr('@QUStud'),
-      until: new Date(2026, 11, 23),
-    },
-    // Phones only: the timetable and the other pages have more room on a tablet.
-    ...(tablet
-      ? []
-      : [
-          {
-            id: 'use-tablet',
-            icon: 'tablet' as IconName,
-            title: tr('لتجربة أفضل', 'For a better experience'),
-            text: tr('ننصح باستخدام جهاز لوحي', 'We recommend using a tablet'),
-          },
-        ]),
-    {
-      id: 'universities',
-      icon: 'university',
-      title: tr('الجامعات المدعومة', 'Supported universities'),
-      text: tr('جامعة القصيم', 'Qassim University'),
-      tag: tr('مدعومة', 'Supported'),
-    },
-    {
-      id: 'add-university',
-      icon: 'message',
-      title: tr('أضف جامعتك', 'Add your university'),
-      text: tr('إذا كنت تريد إضافة جامعتك، يرجى التواصل معنا.', 'Want your university added? Get in touch with us.'),
-      href: '/contact',
-      cta: tr('تواصل معنا', 'Contact us'),
-    },
-  ];
-  return all.filter((s) => !s.until || Date.now() < s.until.getTime());
-};
+const slides = (tablet: boolean): Slide[] => [
+  // Promotes the X account. Keep it until the owner says to take it down.
+  {
+    id: 'follow-x',
+    icon: 'x_logo',
+    title: tr('تابعنا على إكس', 'Follow us on X'),
+    text: tr('آخر الأخبار والتحديثات أولاً بأول', 'News and updates as they happen'),
+    url: 'https://x.com/QUStud',
+    cta: ltr('@QUStud'),
+  },
+  // Phones only: the timetable and the other pages have more room on a tablet.
+  ...(tablet
+    ? []
+    : [
+        {
+          id: 'use-tablet',
+          icon: 'tablet' as IconName,
+          title: tr('لتجربة أفضل', 'For a better experience'),
+          text: tr('ننصح باستخدام جهاز لوحي', 'We recommend using a tablet'),
+        },
+      ]),
+  {
+    id: 'universities',
+    icon: 'university',
+    title: tr('الجامعات المدعومة', 'Supported universities'),
+    text: tr('جامعة القصيم', 'Qassim University'),
+    tag: tr('مدعومة', 'Supported'),
+  },
+  {
+    id: 'add-university',
+    icon: 'message',
+    title: tr('أضف جامعتك', 'Add your university'),
+    text: tr('إذا كنت تريد إضافة جامعتك، يرجى التواصل معنا.', 'Want your university added? Get in touch with us.'),
+    href: '/contact',
+    cta: tr('تواصل معنا', 'Contact us'),
+  },
+];
 
 /** Time each announcement stays before moving to the next. */
 const SLIDE_MS = 4000;
@@ -106,8 +100,7 @@ export function Announcements({ list = false }: { list?: boolean }) {
 
   if (list) return <AnnouncementList slides={SLIDES} />;
 
-  // Modulo: a time-limited slide can drop out while the page is open.
-  const slide = SLIDES[index % SLIDES.length];
+  const slide = SLIDES[index];
   const open = openerFor(slide);
 
   return (

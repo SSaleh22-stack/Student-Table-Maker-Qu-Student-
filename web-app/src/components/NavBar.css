@@ -274,6 +274,11 @@ a.qs-contact-value:hover {
   color: #1d8fcb;
 }
 
+.qs-contact-icon-x {
+  background: #edeff2;
+  color: #14171a;
+}
+
 .qs-universities {
   margin-top: 20px;
   display: flex;
