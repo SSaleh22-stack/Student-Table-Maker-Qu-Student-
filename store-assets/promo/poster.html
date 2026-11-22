@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>QU Student — متوفر الآن</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1080px; height: 1350px; overflow: hidden; }
+  body {
+    font-family: 'IBM Plex Sans Arabic', sans-serif;
+    color: #fff;
+    position: relative;
+    background:
+      radial-gradient(900px 600px at 85% 8%, rgba(127, 211, 227, .28), transparent 60%),
+      radial-gradient(700px 520px at 5% 70%, rgba(251, 191, 36, .10), transparent 60%),
+      linear-gradient(165deg, #1288a6 0%, #0E7490 38%, #0A4A5C 78%, #083a49 100%);
+  }
+  .ring { position: absolute; border-radius: 50%; border: 2px solid rgba(255,255,255,.07); }
+  .ring.a { width: 760px; height: 760px; left: -330px; top: 80px; }
+  .ring.b { width: 1100px; height: 1100px; left: -500px; top: -90px; }
+
+  /* Top bar */
+  .top {
+    position: absolute; top: 56px; right: 64px; left: 64px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .brand { display: flex; align-items: center; gap: 18px; }
+  .brand img { width: 84px; height: 84px; border-radius: 22px; box-shadow: 0 8px 24px rgba(0,0,0,.25); outline: 3px solid rgba(255,255,255,.18); }
+  .brand .name { font-size: 40px; font-weight: 700; line-height: 1.1; direction: ltr; text-align: right; }
+  .brand .uni { font-size: 22px; font-weight: 500; color: #CFEAF0; margin-top: 2px; }
+  .free {
+    font-size: 24px; font-weight: 600; padding: 10px 26px; border-radius: 999px;
+    background: rgba(255,255,255,.12); border: 1.5px solid rgba(255,255,255,.25);
+  }
+
+  /* Hero text */
+  .hero { position: absolute; top: 196px; right: 64px; width: 520px; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: #FBBF24; color: #3B2A00; font-weight: 700; font-size: 26px;
+    padding: 8px 24px; border-radius: 999px;
+  }
+  .pill i { width: 12px; height: 12px; border-radius: 50%; background: #3B2A00; display: inline-block; }
+  h1 { font-size: 66px; font-weight: 700; line-height: 1.22; margin-top: 22px; letter-spacing: -.5px; }
+  h1 span { color: #FBBF24; }
+  .sub { font-size: 27px; line-height: 1.6; color: #E3F4F7; margin-top: 16px; font-weight: 500; }
+  .sub b { color: #fff; font-weight: 700; }
+  ul { list-style: none; margin-top: 26px; display: grid; gap: 14px; }
+  li { display: flex; align-items: center; gap: 14px; font-size: 25px; font-weight: 500; }
+  li .ck {
+    flex: none; width: 36px; height: 36px; border-radius: 50%;
+    background: rgba(127, 211, 227, .22); display: grid; place-items: center;
+  }
+
+  /* Phone */
+  .phone {
+    position: absolute; left: 62px; top: 172px; width: 420px; height: 672px;
+    border-radius: 62px; background: #0B0F14; padding: 12px;
+    box-shadow: 0 30px 70px rgba(0,0,0,.40), inset 0 0 0 2px rgba(255,255,255,.08);
+    transform: rotate(-4deg); transform-origin: 50% 100%;
+  }
+  .screen {
+    width: 100%; height: 100%; border-radius: 50px; overflow: hidden;
+    background-image: url('../app-store/iphone-6.9/01-timetable.jpg');
+    /* crop the app screen out of the framed store screenshot (1320px wide) */
+    background-size: 499px auto;
+    background-position: -51px -176px;
+    background-repeat: no-repeat;
+    background-color: #F1F5F9;
+  }
+
+  /* Download cards */
+  .dl { position: absolute; left: 64px; right: 64px; top: 878px; }
+  .dl h2 {
+    font-size: 30px; font-weight: 700; text-align: right; margin-bottom: 18px;
+    text-shadow: 0 2px 12px rgba(0,0,0,.25);
+  }
+  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 26px; }
+  .card {
+    background: #fff; color: #0B0F14; border-radius: 30px; padding: 22px 20px 18px;
+    display: flex; flex-direction: column; align-items: center;
+    box-shadow: 0 18px 40px rgba(0,0,0,.28);
+  }
+  .store { display: flex; align-items: center; gap: 12px; height: 52px; }
+  .store svg { width: 42px; height: 42px; flex: none; }
+  .store .t { direction: ltr; text-align: left; line-height: 1.05; }
+  .store small { display: block; font-size: 16px; font-weight: 500; color: #475569; font-family: 'IBM Plex Sans Arabic', sans-serif; }
+  .store strong { display: block; font-size: 27px; font-weight: 700; letter-spacing: -.3px; }
+  .qr { width: 190px; height: 190px; margin-top: 14px; padding: 10px; border-radius: 16px; border: 2px solid #E2E8F0; }
+  .qr img { width: 100%; height: 100%; display: block; }
+  .for { margin-top: 12px; font-size: 21px; font-weight: 600; color: #0E7490; }
+
+  .foot {
+    position: absolute; bottom: 30px; left: 64px; right: 64px;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 21px; color: #CFEAF0;
+  }
+  .foot .site { direction: ltr; font-weight: 700; color: #fff; font-size: 24px; }
+</style>
+</head>
+<body>
+  <div class="ring b"></div>
+  <div class="ring a"></div>
+
+  <div class="top">
+    <div class="brand">
+      <img src="../../public/icons/logo.svg" alt="">
+      <div>
+        <div class="name">QU Student</div>
+        <div class="uni">لطلاب جامعة القصيم</div>
+      </div>
+    </div>
+    <div class="free">مجاني بالكامل</div>
+  </div>
+
+  <div class="hero">
+    <div class="pill"><i></i>متوفر الآن</div>
+    <h1>ابنِ جدولك الدراسي<br><span>في دقائق</span></h1>
+    <p class="sub">يعمل على <b>الآيفون</b> و<b>الآيباد</b> و<b>أندرويد</b>،<br>وكإضافة لمتصفح <b>Chrome</b> على <b>الكمبيوتر</b>.</p>
+    <ul>
+      <li><span class="ck"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7FD3E3" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>استيراد المقررات المطروحة من البوابة</li>
+      <li><span class="ck"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7FD3E3" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>تنبيه فوري عند تعارض المواعيد والاختبارات</li>
+      <li><span class="ck"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7FD3E3" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>حساب المعدل ومتابعة الغياب</li>
+      <li><span class="ck"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7FD3E3" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>تصدير الجدول PDF أو إلى التقويم</li>
+    </ul>
+  </div>
+
+  <div class="phone"><div class="screen"></div></div>
+
+  <div class="dl">
+    <h2>امسح الرمز بكاميرا جوالك وحمّله مجاناً</h2>
+    <div class="cards">
+      <div class="card">
+        <div class="store">
+          <svg viewBox="0 0 24 24" fill="#0B0F14"><path d="M16.37 12.6c-.02-2.3 1.88-3.4 1.96-3.46-1.07-1.56-2.73-1.780-3.32-1.8-1.41-.14-2.76.83-3.47.83-.72 0-1.82-.81-2.99-.79-1.54.02-2.96.9-3.75 2.27-1.6 2.78-.41 6.89 1.150 9.14.76 1.1 1.67 2.34 2.86 2.3 1.15-.05 1.58-.74 2.96-.74 1.39 0 1.78.74 2.99.72 1.24-.02 2.02-1.12 2.77-2.23.88-1.28 1.24-2.52 1.26-2.59-.03-.01-2.4-.92-2.42-3.65ZM14.1 5.86c.63-.77 1.06-1.83.94-2.89-.91.04-2.020.61-2.67 1.37-.58.67-1.09 1.76-.96 2.8 1.020.08 2.06-.52 2.69-1.28Z"/></svg>
+          <div class="t"><small>حمّله من</small><strong>App Store</strong></div>
+        </div>
+        <div class="qr"><img src="qr-appstore.svg" alt=""></div>
+        <div class="for">آيفون وآيباد</div>
+      </div>
+      <div class="card">
+        <div class="store">
+          <svg viewBox="0 0 24 24">
+            <path d="M4.2 2.6 13.6 12l-9.4 9.4c-.33-.18-.55-.53-.55-.95V3.55c0-.42.22-.77.55-.95Z" fill="#34A853"/>
+            <path d="m16.7 8.9-3.1 3.1L4.2 2.6c.13-.07.28-.1.43-.1.18 0 .36.05.52.14L16.7 8.9Z" fill="#FBBC04"/>
+            <path d="m16.7 15.1-11.55 6.26c-.16.09-.34.14-.52.14-.15 0-.3-.03-.43-.1l9.4-9.4 3.1 3.1Z" fill="#EA4335"/>
+            <path d="M20.2 12c0 .4-.21.77-.56.96l-2.94 1.6L13.6 12l3.1-3.1 2.94 1.6c.35.19.56.56.56.96Z" fill="#4285F4"/>
+          </svg>
+          <div class="t"><small>حمّله من</small><strong>Google Play</strong></div>
+        </div>
+        <div class="qr"><img src="qr-play.svg" alt=""></div>
+        <div class="for">جوالات أندرويد</div>
+      </div>
+      <div class="card">
+        <div class="store">
+          <svg viewBox="0 0 48 48">
+            <path d="M24 24 L24 2 A22 22 0 0 1 43.05 35 Z" fill="#EA4335" transform="rotate(-60 24 24)"/>
+            <path d="M24 24 L43.05 35 A22 22 0 0 1 4.95 35 Z" fill="#FBBC04" transform="rotate(-60 24 24)"/>
+            <path d="M24 24 L4.95 35 A22 22 0 0 1 24 2 Z" fill="#34A853" transform="rotate(-60 24 24)"/>
+            <circle cx="24" cy="24" r="10.5" fill="#fff"/>
+            <circle cx="24" cy="24" r="8.2" fill="#4285F4"/>
+          </svg>
+          <div class="t"><small>أضفه من</small><strong>Chrome</strong></div>
+        </div>
+        <div class="qr"><img src="qr-chrome.svg" alt=""></div>
+        <div class="for">إضافة للكمبيوتر</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <span>تطبيق مستقل، غير تابع رسمياً للجامعة</span>
+    <span class="site">qustudent.net</span>
+  </div>
+</body>
+</html>

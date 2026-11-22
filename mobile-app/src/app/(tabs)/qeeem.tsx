@@ -67,7 +67,6 @@ export default function QeeemScreen() {
   const [nav, setNav] = useState<WebFrameNavState>({ url: QEEEM_URL, canGoBack: false, canGoForward: false, loading: true });
   const [progress, setProgress] = useState(0);
   const [active, setActive] = useState<string | null>(null);
-  const [hint, setHint] = useState(true);
   /** A link outside Qeeem that the page tried to open (offered, never opened by itself) */
   const [blocked, setBlocked] = useState<string | null>(null);
 
@@ -77,15 +76,6 @@ export default function QeeemScreen() {
       .filter((c) => c.instructor && !isUnassigned(c.instructor) && !seen.has(c.instructor) && seen.add(c.instructor))
       .map((c) => ({ name: c.instructor as string, code: c.code }));
   }, [chosen]);
-
-  const path = useMemo(() => {
-    try {
-      const u = new URL(nav.url);
-      return `${u.hostname}${u.pathname === '/' ? '' : u.pathname}`;
-    } catch {
-      return 'qeeem.com/qu';
-    }
-  }, [nav.url]);
 
   /** Opens Qeeem's search results for this lecturer. */
   const search = (name: string) => {
@@ -109,18 +99,6 @@ export default function QeeemScreen() {
               {tr('تقييم الدكاترة من الطلاب · داخل التطبيق', 'Students rate their professors · in the app')}
             </AppText>
           </View>
-        </View>
-
-        <View style={{ flexDirection: row, alignItems: 'center', gap: 6, marginTop: 10 }}>
-          <NavButton icon="back" label={tr('رجوع', 'Back')} disabled={!nav.canGoBack} onPress={() => frame.current?.goBack()} />
-          <NavButton icon="forward" label={tr('تقدم', 'Forward')} disabled={!nav.canGoForward} onPress={() => frame.current?.goForward()} />
-          <View style={[styles.url, { flexDirection: row }]}>
-            <Icon name="lock" size={12} color={colors.muted} />
-            <AppText size={13} color="#3D4A5C" numberOfLines={1}>
-              {path}
-            </AppText>
-          </View>
-          <NavButton icon="refresh" label={tr('إعادة تحميل', 'Reload')} onPress={() => frame.current?.reload()} />
         </View>
 
         {instructors.length > 0 ? (
@@ -191,45 +169,8 @@ export default function QeeemScreen() {
             </Pressable>
           </View>
         ) : null}
-        {hint && !blocked ? (
-          <View style={[styles.hint, { flexDirection: row }]}>
-            <Icon name="info" size={18} color={colors.accentLight} />
-            <AppText size={12.5} color="#FFFFFF" style={{ flex: 1 }}>
-              {tr('الموقع يُفتح هنا داخل التطبيق، ويبقى في مكانه عند التنقل بين التبويبات.', 'The site opens here in the app and stays where you left it when you switch tabs.')}
-            </AppText>
-            <Pressable onPress={() => setHint(false)} accessibilityRole="button">
-              <AppText size={13} weight="bold" color={colors.accentLight}>
-                {tr('حسناً', 'OK')}
-              </AppText>
-            </Pressable>
-          </View>
-        ) : null}
       </View>
     </SafeAreaView>
-  );
-}
-
-function NavButton({
-  icon,
-  label,
-  onPress,
-  disabled,
-}: {
-  icon: 'back' | 'forward' | 'refresh';
-  label: string;
-  onPress: () => void;
-  disabled?: boolean;
-}) {
-  return (
-    <Pressable
-      onPress={onPress}
-      disabled={disabled}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      accessibilityState={{ disabled: !!disabled }}
-      style={styles.navBtn}>
-      <Icon name={icon} size={17} color={disabled ? '#A9B2BE' : colors.text} />
-    </Pressable>
   );
 }
 
@@ -244,17 +185,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  url: {
-    flex: 1,
-    height: 36,
-    borderRadius: 12,
-    backgroundColor: colors.bg,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 5,
-    paddingHorizontal: 8,
-  },
-  navBtn: { width: 36, height: 36, borderRadius: 12, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
   chip: {
     alignItems: 'center',
     gap: 6,

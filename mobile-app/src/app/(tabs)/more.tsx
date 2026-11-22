@@ -155,7 +155,7 @@ export default function MoreScreen() {
           <Item
             icon="mail"
             title={tr('تواصل معنا', 'Contact us')}
-            subtitle={tr('واتساب، تيليجرام، البريد الإلكتروني', 'WhatsApp, Telegram, email')}
+            subtitle={tr('واتساب، تيليجرام، إكس، البريد الإلكتروني', 'WhatsApp, Telegram, X, email')}
             onPress={() => router.push('/contact')}
           />
           <Item

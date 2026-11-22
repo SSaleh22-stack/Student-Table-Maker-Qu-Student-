@@ -85,6 +85,8 @@ const ICONS = {
   ],
   /** Paper plane (Telegram). */
   telegram: [{ d: 'M22 3L2 10.5l7 2.5 2.5 7L22 3z' }, { d: 'M9 13l5-4' }],
+  /** The X (Twitter) logo: a slanted bar crossed by a stroke. */
+  x_logo: [{ d: 'M4 4l11.7 16H20L8.3 4z' }, { d: 'M20 4l-6.6 7.5M4 20l6.6-7.5' }],
   /** Columned building (a university). */
   university: [{ d: 'M12 2.5l9 5H3z' }, { d: 'M5 10.5v7M9.7 10.5v7M14.3 10.5v7M19 10.5v7M3 21h18' }],
 } satisfies Record<string, Shape[]>;

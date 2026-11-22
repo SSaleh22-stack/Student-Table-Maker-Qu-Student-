@@ -371,7 +371,9 @@ function TimetableHeader({
       onLayout={large ? (e) => setHeaderW(Math.round(e.nativeEvent.layout.width)) : undefined}>
       <Logo size={large ? 46 : slim ? 30 : 40} />
       <View style={slim ? { flexDirection: row, alignItems: 'center', gap: 8 } : { gap: 3, flexShrink: 1 }}>
-        <AppText weight="bold" size={large ? 24 : slim ? 18 : 20} style={{ lineHeight: large ? 30 : slim ? 24 : 25 }}>
+        {/* Default line height and a little side room: a tighter box cuts off the dots under the
+            final ي of «جدولي» on Android. */}
+        <AppText weight="bold" size={large ? 24 : slim ? 18 : 20} style={{ paddingHorizontal: 2 }}>
           {tr('جدولي', 'My timetable')}
         </AppText>
         {/* Elsewhere the totals are tiles next to the timetable (StatTiles). */}

@@ -39,6 +39,14 @@ const channels = (): Channel[] => [
     tint: '#E2F2FB',
   },
   {
+    icon: 'x_logo',
+    title: tr('إكس (تويتر)', 'X (Twitter)'),
+    value: '@QUStud',
+    url: 'https://x.com/QUStud',
+    color: '#14171A',
+    tint: '#EDEFF2',
+  },
+  {
     icon: 'mail',
     title: tr('البريد الإلكتروني', 'Email'),
     value: 'qu4611@gmail.com',
@@ -51,7 +59,7 @@ const channels = (): Channel[] => [
 /** Universities the app works with today. */
 const universities = () => [tr('جامعة القصيم', 'Qassim University')];
 
-/** "تواصل معنا": WhatsApp, Telegram and email, and the supported universities. */
+/** "تواصل معنا": WhatsApp, Telegram, X and email, and the supported universities. */
 export default function ContactScreen() {
   // Tablets get bigger text and use the width: the channels and universities sit side by side.
   const tablet = useIsTablet();
