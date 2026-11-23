@@ -19,18 +19,16 @@
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AppText } from '@/components/AppText';
 import { SafeAreaView } from '@/components/SafeAreaView';
 import { tr } from '@/lib/i18n';
-import { row } from '@/lib/rtl';
 import { colors } from '@/lib/theme';
 import { BackupSection } from '@/notebook/backup/BackupSection';
+import { NbScreenHeader } from '@/notebook/library/LibraryScreen';
 import { goBackOr, openDeleted, openLibrary, openNotebookFeedback, openRestore } from '@/notebook/nav';
 import { useNotebooks } from '@/notebook/store/hooks';
 import { resetTours } from '@/notebook/tours/tourState';
-import { CircleButton } from '@/notebook/ui/CircleButton';
 import { Group } from '@/notebook/ui/Group';
-import { useWidthClass } from '@/notebook/ui/layout';
+import { NB_EDGE } from '@/notebook/ui/layout';
 import { ListRow } from '@/notebook/ui/ListRow';
 import { showToast } from '@/notebook/ui/toast';
 
@@ -39,24 +37,6 @@ import { WritingSection } from './WritingSection';
 
 const back = () => goBackOr(openLibrary);
 
-/** Figma navBar: a 44 pt back button, then the title (28 bold) and its subtitle, at the reading start. */
-function Header({ title, subtitle }: { title: string; subtitle: string }) {
-  const compact = useWidthClass() === 'compact';
-  return (
-    <View style={[styles.header, { flexDirection: row }]}>
-      <CircleButton icon="back" label={tr('رجوع', 'Back')} onPress={back} size={compact ? 40 : 44} />
-      <View style={styles.headerTexts}>
-        <AppText size={compact ? 24 : 28} weight="bold" numberOfLines={1} accessibilityRole="header">
-          {title}
-        </AppText>
-        <AppText size={14} color={colors.faint} numberOfLines={1}>
-          {subtitle}
-        </AppText>
-      </View>
-    </View>
-  );
-}
-
 function replayTours() {
   resetTours();
   showToast({ text: tr('ستظهر الجولة في المرة القادمة', 'The tour will show next time'), tone: 'ok', id: 'nb-replay-tours' });
@@ -64,17 +44,16 @@ function replayTours() {
 
 export default function SettingsScreen() {
   const store = useNotebooks();
-  const compact = useWidthClass() === 'compact';
   const insets = useSafeAreaInsets();
   const deleted = store.list('deleted', 'updated').length;
 
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
+      <NbScreenHeader title={tr('إعدادات المذكرات', 'Notebook settings')} subtitle={tr('تُحفظ على جهازك', 'Saved on your device')} onBack={back} />
       <ScrollView
-        contentContainerStyle={[styles.content, { paddingHorizontal: compact ? 16 : 32, paddingBottom: insets.bottom + 32 }]}
+        contentContainerStyle={[styles.content, { paddingHorizontal: NB_EDGE, paddingBottom: insets.bottom + 32 }]}
         keyboardShouldPersistTaps="handled">
         <View style={styles.inner}>
-          <Header title={tr('إعدادات المذكرات', 'Notebook settings')} subtitle={tr('تُحفظ على جهازك', 'Saved on your device')} />
 
           <BackupSection onOpenRestore={openRestore} />
 
@@ -116,8 +95,6 @@ export default function SettingsScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
-  content: { paddingTop: 12 },
-  inner: { width: '100%', maxWidth: 820, alignSelf: 'center', gap: 22 },
-  header: { alignItems: 'center', gap: 14, marginBottom: 2 },
-  headerTexts: { flex: 1, gap: 2 },
+  content: { paddingTop: 4 },
+  inner: { width: '100%', gap: 22 },
 });

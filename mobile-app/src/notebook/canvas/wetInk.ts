@@ -3,8 +3,10 @@
  * event with core/ink/wetOutline.ts, so ink never waits for JS.
  *
  * - frozen: the part of the outline that can no longer change. Each wetStep returns the newly frozen
- *   patch, which is added once (PathBuilder over the previous path). tail: the live end, rebuilt every
- *   event. Together they are exactly getStroke(pts, strokeOptions(style, false)).
+ *   patch, which is added once (PathBuilder over the previous path) as a straight-edged polygon, so
+ *   the patches tile with no gaps. tail: the live end, rebuilt every event, smoothed along its sides
+ *   and closed straight across where it meets the frozen part. Together they cover exactly
+ *   getStroke(pts, strokeOptions(style, false)).
  * - At WET_MAX_POINTS (4000) raw points the stroke is committed and continues from its last point; the
  *   committed part moves to the GHOST paths, which stay on screen until the painter's picture shows it.
  *   A finished stroke also becomes a ghost when the next stroke starts before its picture arrived.
@@ -125,6 +127,18 @@ function emptyPath(): SkPath {
   return Skia.Path.Make();
 }
 
+/**
+ * The tail as path commands: smoothed along its sides like the committed stroke (quadratic curves
+ * through the midpoints), but its first and last points (the last frozen left and right points) are
+ * kept and joined by a STRAIGHT edge, so it meets the frozen part with no gap.
+ */
+function tailCommands(tail: number[]): number[][] {
+  'worklet';
+  const cmds = outlineToCommands(tail, false);
+  cmds.push([5]);
+  return cmds;
+}
+
 /** Recomputes the outline after pts changed (one wetStep). */
 function stepWet(w: WetInk): void {
   'worklet';
@@ -137,14 +151,17 @@ function stepWet(w: WetInk): void {
   const frozenPatch = r.frozenOutlineAppend;
   const tailPoly = r.tail;
   if (frozenPatch.length > 0) {
-    const patch = Skia.Path.MakeFromCmds(outlineToCommands(frozenPatch, true));
+    // Straight edges: the patches are tiny (often one stroke point long) and must tile exactly. The
+    // midpoint smoothing of outlineToCommands would round each one into a small blob, and the gaps
+    // between the blobs showed as dots along the ink while writing.
+    const patch = Skia.Path.MakeFromCmds(polygonToCommands(frozenPatch, true));
     if (patch) {
       const b = Skia.PathBuilder.MakeFromPath(w.frozen.get());
       b.addPath(patch);
       w.frozen.set(b.build());
     }
   }
-  const t = tailPoly.length >= 4 ? Skia.Path.MakeFromCmds(outlineToCommands(tailPoly, true)) : null;
+  const t = tailPoly.length >= 4 ? Skia.Path.MakeFromCmds(tailCommands(tailPoly)) : null;
   w.tail.set(t ?? emptyPath());
 }
 

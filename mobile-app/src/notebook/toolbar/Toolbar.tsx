@@ -17,6 +17,9 @@
  * are not on the bar: the pen button shows the current color, and the second tap on the pen opens the
  * pen options with the color row first. The more menu holds shapes, ruler, text, image and calculator.
  *
+ * Medium bar (hideColors: every tool fits but the color dots do not, e.g. a top bar in a portrait
+ * iPad's header row): the full tools without the five color dots; the pen options show colors first.
+ *
  * Tour targets: ed.toolbar (the bar), ed.grip (the grip) and ed.undo (undo + redo). ed.record is on
  * the recordSlot wrapper the editor passes in (P29).
  *
@@ -62,8 +65,10 @@ export interface ToolbarProps {
   onImage: () => void;
   /** Paper color of the current page (dark paper shows the light pen ink). */
   paperColor: PaperColor;
-  /** Phone layout: true on compact windows or when the full bar does not fit (dock.ts fitsInline). */
+  /** Phone layout: true on compact windows or when the full bar does not fit (dock.ts chooseBarLayout). */
   compact: boolean;
+  /** Medium layout: the full tools without the color dots (dock.ts chooseBarLayout 'medium'). */
+  hideColors?: boolean;
   /** The writing hand: option cards open away from it. */
   hand: Hand;
   /** Button size (default 40, or 36 when compact); pass dock.ts fitButtonSize for tight slots. */
@@ -95,6 +100,7 @@ export function Toolbar({
   onImage,
   paperColor,
   compact,
+  hideColors = false,
   hand,
   buttonSize,
   onMoveTo,
@@ -251,7 +257,7 @@ export function Toolbar({
 
         {tools.map((id) => toolButton(id))}
 
-        {compact ? null : (
+        {compact || hideColors ? null : (
           <>
             {sep('s1')}
             {swatches}
@@ -276,7 +282,7 @@ export function Toolbar({
         barPos={pos}
         hand={hand}
         paperColor={paperColor}
-        colorsFirst={compact}
+        colorsFirst={compact || hideColors}
         onClose={close}
       />
       <HighlighterOptions

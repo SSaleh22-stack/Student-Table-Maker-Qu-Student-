@@ -12,6 +12,13 @@
  *   most 4 cards, first card at the reading start (CardRow, 2 per row on phones), and 'عرض الكل (n)'
  *   when it holds more (NB-10a).
  * - A search shows the matching course folders and folders, then every matching notebook.
+ * - Layout (every notebook screen): full width; the header is a fixed band at the top with the back
+ *   button exactly where the editor has it (NB_EDGE from the edge, NB_HEADER_BAND tall, same size).
+ * - First visit (settings.tours.library 'unseen'): the normal view is shown even on an empty library,
+ *   and every empty section is filled with sample cards (tourSamples.ts: course folders, folders and
+ *   notebooks that cannot be touched), so the tour starts on the first visit and has something to
+ *   point at. The samples disappear when the tour ends or is skipped; an empty library then shows the
+ *   empty state.
  * - <LibraryTour/> is mounted only in the normal (non-empty) view. Its targets: lib.headerActions
  *   (settings and sort), lib.search, lib.courses (the course folders row), lib.folders (the
  *   'مجلداتي' title and row together) and lib.new (the floating 'مذكرة جديدة' button).
@@ -42,7 +49,7 @@ import { BetaBadge } from '@/notebook/ui/BetaBadge';
 import { CardRow } from '@/notebook/ui/CardRow';
 import { CircleButton } from '@/notebook/ui/CircleButton';
 import { EmptyState } from '@/notebook/ui/EmptyState';
-import { useWidthClass } from '@/notebook/ui/layout';
+import { NB_EDGE, NB_HEADER_BAND, NB_HEADER_BUTTON, NB_HEADER_BUTTON_COMPACT, useWidthClass } from '@/notebook/ui/layout';
 import type { AnchorRect } from '@/notebook/ui/Popover';
 import { SectionTitle } from '@/notebook/ui/SectionTitle';
 import { TextPromptDialog } from '@/notebook/ui/TextPromptDialog';
@@ -59,6 +66,7 @@ import { NotebookActionsSheet, type NotebookActionsTarget } from './NotebookActi
 import { CardGrid, NotebookCard, useNow } from './NotebookCard';
 import { SearchField } from './SearchField';
 import { SortSheet } from './SortControl';
+import { sampleCourses, sampleFolders, sampleNotebooks } from './tourSamples';
 
 // ===== shared header
 
@@ -74,21 +82,25 @@ export interface NbScreenHeaderProps {
   actionsRef?: Ref<ComponentRef<typeof View>>;
 }
 
-/** Figma navBar: back button and title block at the reading start, actions at the end. */
+/**
+ * The header band of every notebook screen: render it ABOVE the screen's ScrollView (it stays put).
+ * The back button sits exactly where the editor's does (NB_EDGE from the edge, centered in the
+ * NB_HEADER_BAND band, the same size); the title block follows it, the actions sit at the other end.
+ */
 export function NbScreenHeader({ title, subtitle, badge, onBack, actions, actionsRef }: NbScreenHeaderProps) {
   const compact = useWidthClass() === 'compact';
   return (
     <View style={[styles.header, { flexDirection: row }]}>
-      <CircleButton icon="back" label={tr('رجوع', 'Back')} onPress={onBack} size={compact ? 40 : 44} />
+      <CircleButton icon="back" label={tr('رجوع', 'Back')} onPress={onBack} size={compact ? NB_HEADER_BUTTON_COMPACT : NB_HEADER_BUTTON} />
       <View style={styles.headerTexts}>
         <View style={[styles.titleLine, { flexDirection: row }]}>
-          <AppText size={compact ? 24 : 28} weight="bold" numberOfLines={1} accessibilityRole="header" style={styles.shrink}>
+          <AppText size={compact ? 20 : 24} weight="bold" numberOfLines={1} accessibilityRole="header" style={styles.shrink}>
             {title}
           </AppText>
           {badge}
         </View>
         {subtitle ? (
-          <AppText size={14} color={colors.faint} numberOfLines={1}>
+          <AppText size={13} color={colors.faint} numberOfLines={1}>
             {subtitle}
           </AppText>
         ) : null}
@@ -128,6 +140,18 @@ export function NewNotebookFab({ label, onPress, targetRef, icon = 'plus' }: { l
 
 export const goHome = () => goBackOr(() => router.replace('/'));
 
+const noop = () => {};
+
+/** Sample cards of the first-visit tour: shown like pictures (no touches, hidden from screen readers). */
+function Sample({ on, children }: { on: boolean; children: ReactNode }) {
+  if (!on) return <>{children}</>;
+  return (
+    <View pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+      {children}
+    </View>
+  );
+}
+
 // ===== library
 
 export default function LibraryScreen() {
@@ -158,9 +182,14 @@ export default function LibraryScreen() {
   const deletedCount = store.entries.length - live.length;
   const latest = useMemo(() => live.reduce<string | null>((m, e) => (!m || Date.parse(e.updatedAt) > Date.parse(m) ? e.updatedAt : m), null), [live]);
 
-  const empty = store.loaded && live.length === 0 && store.courseFolders.length === 0 && store.folders.length === 0;
   const searching = secs.query !== '';
-  const pad = compact ? 16 : 32;
+  // First visit: the tour runs on the normal view, with sample cards in the empty sections.
+  const touring = store.loaded && store.settings.tours.library === 'unseen' && !searching;
+  const empty = !touring && store.loaded && live.length === 0 && store.courseFolders.length === 0 && store.folders.length === 0;
+  const demoCourses = touring && secs.courses.total === 0;
+  const demoFolders = touring && secs.mine.total === 0;
+  const demoNotebooks = touring && secs.unfiled.total === 0 && live.length === 0;
+  const pad = NB_EDGE;
   const modalOpen = newOpen || newFolderOpen || sortOpen || actions !== null || folderActs !== null;
 
   const openEntry = (e: IndexEntry) => openNotebook(e.id);
@@ -213,10 +242,14 @@ export default function LibraryScreen() {
     </Pressable>
   );
 
-  const courseCards = secs.courses.items.map((c) => <FolderCard key={c.code} target={courseTarget(c)} onOpen={openFolder} onActions={setFolderActs} />);
-  const folderCards = secs.mine.items.map((f) => (
-    <FolderCard key={f.id} target={{ kind: 'folder', id: f.id, name: f.name, count: f.count }} onOpen={openFolder} onActions={setFolderActs} />
-  ));
+  const courseCards = demoCourses
+    ? sampleCourses().map((t) => <FolderCard key={t.kind === 'course' ? t.code : t.id} target={t} onOpen={noop} />)
+    : secs.courses.items.map((c) => <FolderCard key={c.code} target={courseTarget(c)} onOpen={openFolder} onActions={setFolderActs} />);
+  const folderCards = demoFolders
+    ? sampleFolders().map((t) => <FolderCard key={t.kind === 'folder' ? t.id : t.code} target={t} onOpen={noop} />)
+    : secs.mine.items.map((f) => (
+        <FolderCard key={f.id} target={{ kind: 'folder', id: f.id, name: f.name, count: f.count }} onOpen={openFolder} onActions={setFolderActs} />
+      ));
   const notebookCards = (list: IndexEntry[]) =>
     list.map((e) => <NotebookCard key={e.id} entry={e} now={now} lang={lang} onOpen={openEntry} onActions={openActions} />);
 
@@ -224,11 +257,13 @@ export default function LibraryScreen() {
   const showAll = (total: number, key: string) => (total > 4 ? { showAllCount: total, onShowAll: () => openSection(key) } : {});
 
   const coursesSection =
-    secs.courses.total > 0 ? (
+    secs.courses.total > 0 || demoCourses ? (
       <View style={styles.section}>
         <SectionTitle title={tr('موادي', 'My courses')} subtitle={tr('من جدولك', 'From your timetable')} {...showAll(secs.courses.total, 'courses')} />
         <View ref={coursesRef} collapsable={false}>
-          <CardRow>{courseCards}</CardRow>
+          <Sample on={demoCourses}>
+            <CardRow>{courseCards}</CardRow>
+          </Sample>
         </View>
       </View>
     ) : null;
@@ -241,8 +276,10 @@ export default function LibraryScreen() {
         {...showAll(secs.mine.total, 'mine')}
         action={newFolderAction}
       />
-      {secs.mine.total > 0 ? (
-        <CardRow>{folderCards}</CardRow>
+      {secs.mine.total > 0 || demoFolders ? (
+        <Sample on={demoFolders}>
+          <CardRow>{folderCards}</CardRow>
+        </Sample>
       ) : (
         <AppText size={14} color={colors.faint}>
           {tr('أنشئ مجلداً لتنظيم مذكراتك', 'Create a folder to organize your notebooks')}
@@ -252,13 +289,19 @@ export default function LibraryScreen() {
   );
 
   const unfiledSection =
-    secs.unfiled.total > 0 ? (
+    secs.unfiled.total > 0 || demoNotebooks ? (
       <View style={styles.section}>
         <SectionTitle
           title={tr('بدون مجلد', 'No folder')}
           {...showAll(secs.unfiled.total, 'unfiled')}
         />
-        <CardRow gap={compact ? 12 : 24}>{notebookCards(secs.unfiled.items)}</CardRow>
+        <Sample on={demoNotebooks}>
+          <CardRow gap={compact ? 12 : 24}>
+            {demoNotebooks
+              ? sampleNotebooks(now).map((e) => <NotebookCard key={e.id} entry={e} now={now} lang={lang} onOpen={noop} />)
+              : notebookCards(secs.unfiled.items)}
+          </CardRow>
+        </Sample>
       </View>
     ) : null;
 
@@ -322,12 +365,12 @@ export default function LibraryScreen() {
 
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
+      {header}
       <ScrollView
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
         contentContainerStyle={[styles.content, { paddingHorizontal: pad, paddingBottom: insets.bottom + (empty ? 32 : 120) }]}>
         <View style={styles.inner}>
-          {header}
           {store.loaded && !empty ? (
             <>
               <View ref={searchRef} collapsable={false}>
@@ -364,9 +407,9 @@ export default function LibraryScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
-  content: { paddingTop: 12 },
-  inner: { width: '100%', maxWidth: 1040, alignSelf: 'center', gap: 22 },
-  header: { alignItems: 'center', gap: 14, minHeight: 56 },
+  content: { paddingTop: 4 },
+  inner: { width: '100%', gap: 22 },
+  header: { alignItems: 'center', gap: 12, height: NB_HEADER_BAND, paddingHorizontal: NB_EDGE },
   headerTexts: { flex: 1, minWidth: 0, gap: 2 },
   titleLine: { alignItems: 'center', gap: 10 },
   shrink: { flexShrink: 1 },

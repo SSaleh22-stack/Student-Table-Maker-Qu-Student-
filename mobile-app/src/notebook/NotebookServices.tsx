@@ -210,6 +210,8 @@
 import { useEffect } from 'react';
 
 import { RecorderHost } from '@/notebook/audio/RecorderHost';
+// TEMPORARY (development only): see devTourReset.ts.
+import { useDevTourReset } from '@/notebook/devTourReset';
 import { useBackupAutoRun } from '@/notebook/backup/useBackup';
 import { pdfPathTail } from '@/notebook/core/pdf/tiles';
 import type { Id } from '@/notebook/core/model';
@@ -327,6 +329,7 @@ function bootOnce(): void {
 export function NotebookServices() {
   useThumbnailWorker();
   useBackupAutoRun();
+  useDevTourReset();
   useEffect(() => {
     bootOnce();
   }, []);

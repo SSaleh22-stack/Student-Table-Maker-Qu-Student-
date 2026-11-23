@@ -10,6 +10,11 @@
  * - a vertical toolbar on the other side sits EDGE from that screen edge (inside the safe area);
  * - top and bottom toolbars span the canvas width only: from the dock's inner edge (or the safe inset)
  *   to the opposite edge, so they never run under the dock;
+ * - with headerReserve (tablets), a TOP toolbar sits in the header band itself, in the same row as the
+ *   back button and the actions pill: between the reserved room on each side (measured from the
+ *   dock's inner edge on the dock's side), centered on the band, and the page starts right under the
+ *   header band (it gains the bar's height). When that row is too short for even the phone bar (a
+ *   docked calculator on a portrait iPad), the bar keeps its own row under the header instead;
  * - canvasInsets is what the page area must keep clear on each side: the dock width on the dock's side,
  *   the bar (and its edge gap) on the bar's side, the header band on top, the safe insets elsewhere.
  *
@@ -84,7 +89,15 @@ export const FRAME = {
 /** Windows narrower than this are compact (ui/layout.ts COMPACT_BELOW). */
 export const COMPACT_WIDTH = 600;
 
-export type BarLayout = 'full' | 'compact';
+/**
+ * - full: every tool, the five pen colors, undo / redo, record.
+ * - medium: every tool, no color dots (the pen options hold the colors), undo / redo, record. Used
+ *   where the full bar does not fit but all tools still do (a top bar in a portrait iPad's header row).
+ * - compact: the phone bar (pen, highlighter, eraser, lasso, more).
+ */
+export type BarLayout = 'full' | 'medium' | 'compact';
+/** Smallest button the medium bar may shrink to before the compact bar is used instead. */
+export const MEDIUM_MIN_BUTTON = 34;
 
 export interface BarLengthOptions {
   /** Button size (default 40 for full, 36 for compact). */
@@ -105,6 +118,11 @@ export interface EditorFramesInput {
   toolbarPos: ToolbarPos;
   barThickness: number;
   dock: DockSpec | null;
+  /**
+   * Tablets: room the header buttons take on each PHYSICAL side of the header band (edge gap, button
+   * and the gap to the bar). Given, a top toolbar goes into the header row between them.
+   */
+  headerReserve?: { left: number; right: number } | null;
 }
 
 export interface EditorFrames {
@@ -131,12 +149,13 @@ export function barThickness(button: number = BAR.button): number {
 /**
  * Main-axis length of the bar.
  * - full: grip, 9 tools (pen … calculator), separator, 5 colors, separator, undo, redo, separator, record
+ * - medium: grip, 9 tools, separator, undo, redo, separator, record
  * - compact: grip, pen, highlighter, eraser, lasso, more, separator, undo, redo, separator, record
  */
 export function barLength(layout: BarLayout, o: BarLengthOptions = {}): number {
-  const button = o.button ?? (layout === 'full' ? BAR.button : BAR.compactButton);
+  const button = o.button ?? (layout === 'compact' ? BAR.compactButton : BAR.button);
   const record = o.recordSlot ?? BAR.record;
-  const buttons = layout === 'full' ? 11 : 7;
+  const buttons = layout === 'compact' ? 7 : 11;
   const swatches = layout === 'full' ? 5 : 0;
   const separators = layout === 'full' ? 3 : 2;
   const items = 1 + buttons + swatches + separators + 1;
@@ -150,9 +169,20 @@ export function fitsInline(available: number, o: { recordSlot?: number } = {}): 
   return barLength('full', { recordSlot: o.recordSlot }) <= available;
 }
 
+/**
+ * The layout for a bar with `available` points along its axis: full when it fits, else medium when it
+ * fits with buttons of at least MEDIUM_MIN_BUTTON, else compact. `phone` forces compact.
+ */
+export function chooseBarLayout(available: number, phone: boolean, o: { recordSlot?: number } = {}): BarLayout {
+  if (phone) return 'compact';
+  if (fitsInline(available, o)) return 'full';
+  if (barLength('medium', { button: MEDIUM_MIN_BUTTON, recordSlot: o.recordSlot }) <= available) return 'medium';
+  return 'compact';
+}
+
 /** The largest whole button size (BAR.minButton … the layout's default) whose bar fits; minButton if none does. */
 export function fitButtonSize(available: number, layout: BarLayout, o: { recordSlot?: number } = {}): number {
-  const top = layout === 'full' ? BAR.button : BAR.compactButton;
+  const top = layout === 'compact' ? BAR.compactButton : BAR.button;
   for (let b = top; b > BAR.minButton; b--) {
     if (barLength(layout, { button: b, recordSlot: o.recordSlot }) <= available) return b;
   }
@@ -219,11 +249,27 @@ export function barFrame(
   return { x: b.dockRight ? b.right - t : b.right - edge - t, y: b.top, width: t, height: spanV };
 }
 
+/**
+ * A top bar's slot inside the header band, between the header buttons' reserved room (from the dock's
+ * inner edge on its side), or null when that room is shorter than the phone bar.
+ */
+function headerRowFrame(i: EditorFramesInput, reserve: { left: number; right: number }, o: FrameOptions): Rect | null {
+  const header = o.header ?? FRAME.header;
+  const t = Math.max(0, i.barThickness);
+  const b = bands(i.screen, i.insets, i.dock, o);
+  const x = b.left + Math.max(0, reserve.left);
+  const width = b.right - Math.max(0, reserve.right) - x;
+  if (width < barLength('compact')) return null;
+  return { x, y: Math.max(0, i.insets.top) + (header - t) / 2, width, height: t };
+}
+
 /** Toolbar slot, dock rect and page insets for the editor (see the file header). */
 export function editorFrames(i: EditorFramesInput, o: FrameOptions = {}): EditorFrames {
   const pos = effectiveToolbarPos(i.toolbarPos, i.screen);
-  const toolbar = barFrame(pos, i, o);
   const b = bands(i.screen, i.insets, i.dock, o);
+  const headerSlot = pos === 'top' && i.headerReserve ? headerRowFrame(i, i.headerReserve, o) : null;
+  const inHeader = headerSlot !== null;
+  const toolbar = headerSlot ?? barFrame(pos, i, o);
   const W = i.screen.width;
   const H = i.screen.height;
   let dock: Rect | null = null;
@@ -232,7 +278,7 @@ export function editorFrames(i: EditorFramesInput, o: FrameOptions = {}): Editor
     dock = { x: b.dockLeft ? 0 : W - dw, y: 0, width: dw, height: H };
   }
   const canvasInsets: Insets = {
-    top: pos === 'top' ? toolbar.y + toolbar.height : b.top,
+    top: pos === 'top' && !inHeader ? toolbar.y + toolbar.height : b.top,
     bottom: pos === 'bottom' ? H - toolbar.y : Math.max(0, i.insets.bottom),
     left: pos === 'left' ? toolbar.x + toolbar.width : b.left,
     right: pos === 'right' ? W - toolbar.x : W - b.right,

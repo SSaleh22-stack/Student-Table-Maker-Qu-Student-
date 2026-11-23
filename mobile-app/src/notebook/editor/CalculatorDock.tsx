@@ -2,12 +2,12 @@
  * The calculator in the editor (NB-47a, Figma 22 docked, 23 floating). P24's CalculatorPanel draws it;
  * this file places it and owns settings.calc.open / settings.calc.docked:
  * - docked: the panel fills `frame`, the dock rect from editorFrames (tablets: CALC_DOCK_WIDTH on the
- *   physical left in Arabic, the physical right in English, from under the header band to the
- *   bottom), or the bottom CALC_PHONE_DOCK_FRACTION of the editor on compact windows. The safe-area
+ *   physical left in every language, the full height of the editor), or the bottom
+ *   CALC_PHONE_DOCK_FRACTION of the editor on compact windows. The safe-area
  *   room the panel must keep clear comes in as padding.
  * - floating: the panel's own overlay fills the editor (absolute fill, box-none), above the toolbar.
  * - 'عائمة' / 'تثبيت' writes setSettings({ calc: { docked } }); close writes { calc: { open: false } }.
- * The keys, history and memories live in calcStore (one machine for the app), so switching between
+ * The keys and memories live in calcStore (one machine for the app), so switching between
  * docked and floating keeps the expression.
  */
 import { useCallback } from 'react';

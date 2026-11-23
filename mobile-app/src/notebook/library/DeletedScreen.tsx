@@ -22,7 +22,7 @@ import { CircleButton, PillButton } from '@/notebook/ui/CircleButton';
 import { ConfirmDialog } from '@/notebook/ui/ConfirmDialog';
 import { EmptyState } from '@/notebook/ui/EmptyState';
 import { InfoBanner } from '@/notebook/ui/InfoBanner';
-import { useWidthClass } from '@/notebook/ui/layout';
+import { NB_EDGE, useWidthClass } from '@/notebook/ui/layout';
 import { showToast } from '@/notebook/ui/toast';
 
 import { NbScreenHeader } from './LibraryScreen';
@@ -145,28 +145,28 @@ export default function DeletedScreen() {
 
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
-      <ScrollView contentContainerStyle={[styles.content, { paddingHorizontal: compact ? 16 : 32, paddingBottom: insets.bottom + 32 }]}>
+      <NbScreenHeader
+        title={tr('المحذوفة مؤخراً', 'Recently deleted')}
+        subtitle={countLabel(list.length, 'notebook', lang)}
+        onBack={back}
+        actions={
+          list.length > 0 ? (
+            <Pressable
+              onPress={() => setEmptyAsk(true)}
+              disabled={busy}
+              hitSlop={10}
+              accessibilityRole="button"
+              accessibilityLabel={tr('حذف الكل نهائياً', 'Delete all for good')}
+              style={({ pressed }) => pressed && styles.pressed}>
+              <AppText size={16} weight="bold" color={colors.danger}>
+                {tr('حذف الكل', 'Delete all')}
+              </AppText>
+            </Pressable>
+          ) : undefined
+        }
+      />
+      <ScrollView contentContainerStyle={[styles.content, { paddingHorizontal: NB_EDGE, paddingBottom: insets.bottom + 32 }]}>
         <View style={styles.inner}>
-          <NbScreenHeader
-            title={tr('المحذوفة مؤخراً', 'Recently deleted')}
-            subtitle={countLabel(list.length, 'notebook', lang)}
-            onBack={back}
-            actions={
-              list.length > 0 ? (
-                <Pressable
-                  onPress={() => setEmptyAsk(true)}
-                  disabled={busy}
-                  hitSlop={10}
-                  accessibilityRole="button"
-                  accessibilityLabel={tr('حذف الكل نهائياً', 'Delete all for good')}
-                  style={({ pressed }) => pressed && styles.pressed}>
-                  <AppText size={16} weight="bold" color={colors.danger}>
-                    {tr('حذف الكل', 'Delete all')}
-                  </AppText>
-                </Pressable>
-              ) : undefined
-            }
-          />
           <InfoBanner
             text={tr(
               'تُحذف المذكرات نهائياً بعد 30 يوماً من حذفها. يمكنك استعادتها قبل ذلك.',
@@ -218,8 +218,8 @@ export default function DeletedScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
-  content: { paddingTop: 12 },
-  inner: { width: '100%', maxWidth: 1240, alignSelf: 'center', gap: 22 },
+  content: { paddingTop: 4 },
+  inner: { width: '100%', gap: 22 },
   card: { gap: 10 },
   left: {
     alignItems: 'center',

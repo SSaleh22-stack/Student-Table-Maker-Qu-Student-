@@ -2,11 +2,11 @@
  * The scientific calculator panel (NB-47a; Figma 22 docked, 23 floating).
  *
  * Header: 'الحاسبة العلمية', then 'عائمة' (docked: turn into a floating window) or 'تثبيت'
- * (floating: dock it again), and close. Under it the calculator body (LCD + keypad) and, when docked,
- * the short history 'السجل'. It only calculates; nothing is written onto the page.
+ * (floating: dock it again), and close. Under it the calculator body (LCD + keypad). There is no
+ * history list. It only calculates; nothing is written onto the page.
  *
- * - docked: fills its parent (P29 places it with editorFrames: the physical left in Arabic, the
- *   physical right in English, CALC_DOCK_WIDTH wide). The border is on the edge that faces the page.
+ * - docked: fills its parent (the editor docks it on the PHYSICAL LEFT in every language, full height,
+ *   CALC_DOCK_WIDTH wide). The border is on the edge that faces the page (its physical right).
  *   Phones (compact): P29 gives it the bottom CALC_PHONE_DOCK_FRACTION of the height; the keys
  *   squeeze to fit and the rest scrolls.
  * - floating: render it in an overlay that fills the editor (it fills its parent itself, with
@@ -28,10 +28,9 @@ import { CALC_COLORS, nbColors, nbRadius } from '@/notebook/theme';
 import { CircleButton, PHYSICAL_ORIGIN, PHYSICAL_SWAP, physicalSides, useWidthClass } from '@/notebook/ui';
 import { tr } from '@/lib/i18n';
 import { useScreenInsets } from '@/lib/insets';
-import { isRTL, row } from '@/lib/rtl';
+import { row } from '@/lib/rtl';
 import { shadow } from '@/lib/theme';
 
-import { CalcHistory } from './CalcHistory';
 import { Keypad } from './Keypad';
 import { Lcd, lcdGeometry } from './Lcd';
 import { useCalculator } from './useCalculator';
@@ -116,11 +115,6 @@ function BodyKeys({ width, maxHeight }: { width: number; maxHeight?: number }) {
   );
 }
 
-function History() {
-  const calc = useCalculator();
-  return <CalcHistory history={calc.machine.history} setup={calc.machine.ctx.setup} onRecall={calc.recall} />;
-}
-
 function Handle() {
   return (
     <View style={styles.handleRow}>
@@ -138,13 +132,9 @@ function DockedPanel(props: CalculatorPanelProps) {
     const { width, height } = e.nativeEvent.layout;
     setSize((p) => (p && p.w === width && p.h === height ? p : { w: width, h: height }));
   };
-  // Border on the edge facing the page: physical right in Arabic (dock on the left), left in English.
-  const facePageOnRight = isRTL;
-  const border = compact
-    ? { borderTopWidth: 1 }
-    : facePageOnRight !== PHYSICAL_SWAP
-      ? { borderRightWidth: 1 }
-      : { borderLeftWidth: 1 };
+  // Border on the edge facing the page: the dock is on the physical left, so its physical right edge
+  // (the logical 'right' style edge is swapped in RTL when the platform swaps left and right).
+  const border = compact ? { borderTopWidth: 1 } : PHYSICAL_SWAP ? { borderLeftWidth: 1 } : { borderRightWidth: 1 };
   const bodyW = size ? size.w - 2 * PANEL_PAD : 0;
   // Phones: the keys should fit under the header and the LCD; they squeeze down to 72 percent and
   // the rest scrolls under the LCD, which stays in view.
@@ -156,9 +146,6 @@ function DockedPanel(props: CalculatorPanelProps) {
         <ScrollView style={styles.scroll} contentContainerStyle={{ paddingBottom: 4 }} stickyHeaderIndices={[0]} showsVerticalScrollIndicator={false}>
           <BodyTop width={bodyW} dense={compact} />
           <BodyKeys width={bodyW} maxHeight={keysMax} />
-          <View style={{ paddingTop: GAP }}>
-            <History />
-          </View>
         </ScrollView>
       ) : null}
     </View>

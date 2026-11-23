@@ -58,6 +58,17 @@ export function beginPress(s: PressState, x: number, y: number, t: number): void
   s.lastForward = -Infinity;
 }
 
+/** Time passed without a move: 'long-press' once a pending press was held LONG_PRESS_MS. */
+export function tickPress(s: PressState, t: number): PressEvent {
+  'worklet';
+  if (s.phase !== 'pending') return 'none';
+  if (t - s.t0 >= LONG_PRESS_MS) {
+    s.phase = 'long';
+    return 'long-press';
+  }
+  return 'none';
+}
+
 /** A move: 'drag-start' on the move that turns a pending press into a drag. */
 export function movePress(s: PressState, x: number, y: number, t: number): PressEvent {
   'worklet';
@@ -71,17 +82,6 @@ export function movePress(s: PressState, x: number, y: number, t: number): Press
     return 'drag-start';
   }
   return tickPress(s, t);
-}
-
-/** Time passed without a move: 'long-press' once a pending press was held LONG_PRESS_MS. */
-export function tickPress(s: PressState, t: number): PressEvent {
-  'worklet';
-  if (s.phase !== 'pending') return 'none';
-  if (t - s.t0 >= LONG_PRESS_MS) {
-    s.phase = 'long';
-    return 'long-press';
-  }
-  return 'none';
 }
 
 /** The pointer lifted at time t. */

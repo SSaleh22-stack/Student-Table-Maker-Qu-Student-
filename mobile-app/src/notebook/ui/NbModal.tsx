@@ -7,6 +7,10 @@
  * - compact (< 600 pt): a full-height bottom sheet (it shrinks above the keyboard) with a top grabber, safe-area padding, the same
  *   header, a scrolling body and a sticky footer for the primary button above the home indicator.
  *
+ * The scrolling body gets an EXPLICIT width (nbModalBodyWidth): on the iPad the body's content was
+ * laid out at its own content width instead of the card's, which squashed rows whose children grow to
+ * fill them (the setup's two choice cards). Rows can rely on the full width with this.
+ *
  * Plain React Native Modal (transparent), so Android back closes it (unless dismissable is false).
  * The sheet moves up over the keyboard (the title field of Figma 04).
  */
@@ -38,6 +42,18 @@ import { physicalPadding } from './physical';
 
 /** Figma modal width on tablets. */
 export const NB_MODAL_WIDTH = 620;
+/** Card padding on tablets and the sheet's side padding on phones. */
+const CARD_PAD = 28;
+const SHEET_PAD_X = 20;
+
+/**
+ * Width of the modal's content column (inside the padding): the card's inner width on regular windows,
+ * the sheet's inner width on compact ones.
+ */
+export function nbModalBodyWidth(o: { compact: boolean; windowWidth: number; insetLeft: number; insetRight: number; width?: number }): number {
+  if (o.compact) return Math.max(0, o.windowWidth - o.insetLeft - o.insetRight - 2 * SHEET_PAD_X);
+  return Math.max(0, Math.min(o.width ?? NB_MODAL_WIDTH, o.windowWidth - 48) - 2 * CARD_PAD);
+}
 
 export interface NbModalProps {
   visible: boolean;
@@ -96,17 +112,20 @@ export function NbModal({
     if (dismissable) onClose();
   };
   const showClose = !hideClose && dismissable;
+  const bodyW = nbModalBodyWidth({ compact, windowWidth: win.width, insetLeft: insets.left, insetRight: insets.right, width });
+  // The content column's full width, padding included (compact pads inside the scroll content).
+  const contentW = compact ? bodyW + 2 * SHEET_PAD_X : bodyW;
   const body = scroll ? (
     <ScrollView
       style={compact ? styles.flex : styles.shrink}
-      contentContainerStyle={compact ? styles.bodyCompact : styles.bodyRegular}
+      contentContainerStyle={[compact ? styles.bodyCompact : styles.bodyRegular, { width: contentW }]}
       bounces={false}
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled">
       {visible ? children : null}
     </ScrollView>
   ) : (
-    <View style={compact ? [styles.flex, styles.bodyCompact] : [styles.shrink, styles.bodyRegular]}>{visible ? children : null}</View>
+    <View style={[compact ? [styles.flex, styles.bodyCompact] : [styles.shrink, styles.bodyRegular], { width: contentW }]}>{visible ? children : null}</View>
   );
 
   return (
@@ -171,8 +190,8 @@ const styles = StyleSheet.create({
   shrink: { flexShrink: 1 },
   // flexShrink: with the keyboard up (the title field of Figma 04) the card shrinks to the room left
   // and the body scrolls, instead of running off the top of the screen.
-  card: { flexShrink: 1, backgroundColor: colors.surface, borderRadius: nbRadius.modal, padding: 28, gap: 20 },
-  bodyRegular: { gap: 20 },
+  card: { flexShrink: 1, backgroundColor: colors.surface, borderRadius: nbRadius.modal, padding: CARD_PAD, gap: 20 },
+  bodyRegular: { gap: 20, alignItems: 'stretch' },
   footerRegular: { gap: 12 },
   sheet: {
     flex: 1,
@@ -185,7 +204,7 @@ const styles = StyleSheet.create({
   sheetHead: { paddingHorizontal: 20, paddingTop: 10, paddingBottom: 12 },
   head: { alignItems: 'center', gap: 12 },
   headText: { flex: 1, gap: 2 },
-  bodyCompact: { paddingHorizontal: 20, paddingBottom: 16, gap: 18 },
+  bodyCompact: { paddingHorizontal: SHEET_PAD_X, paddingBottom: 16, gap: 18, alignItems: 'stretch' },
   footerCompact: {
     paddingHorizontal: 20,
     paddingTop: 12,

@@ -21,7 +21,8 @@
  * calls onDone right away and renders nothing.
  */
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Platform, Pressable, StyleSheet, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/AppText';
 import { Icon, type IconName } from '@/components/Icon';
@@ -38,7 +39,7 @@ import { PillButton } from '@/notebook/ui/CircleButton';
 import { InfoBanner } from '@/notebook/ui/InfoBanner';
 import { useWidthClass } from '@/notebook/ui/layout';
 import { ChipGroup } from '@/notebook/ui/LocationChips';
-import { NbModal } from '@/notebook/ui/NbModal';
+import { NbModal, nbModalBodyWidth } from '@/notebook/ui/NbModal';
 import { PAPER_STYLE_ORDER, PaperTileArt, paperStyleLabel } from '@/notebook/ui/PaperPicker';
 import { ToggleRow } from '@/notebook/ui/ToggleRow';
 
@@ -59,6 +60,7 @@ type BackupNote = EnableBackupResult | 'off-later' | null;
 
 /** Figma choice card width on regular windows (two of them + the 20 pt gap fill the 564 pt body). */
 const CHOICE_W = 272;
+const CHOICE_GAP = 20;
 const PRIMARY_W = 220;
 
 export function SetupModal(props: SetupModalFullProps) {
@@ -104,6 +106,12 @@ interface SetupBodyProps extends SetupModalFullProps {
 
 function SetupBody({ enableBackup, isTablet, backupUi, settings, setSettings, onFinished }: SetupBodyProps) {
   const compact = useWidthClass() === 'compact';
+  const win = useWindowDimensions();
+  const safe = useSafeAreaInsets();
+  // Explicit widths: the choice cards never depend on a parent stretching them (they were squashed to
+  // their padding on the iPad).
+  const bodyW = nbModalBodyWidth({ compact, windowWidth: win.width, insetLeft: safe.left, insetRight: safe.right });
+  const choiceW = compact ? bodyW : Math.floor(Math.min(CHOICE_W, (bodyW - CHOICE_GAP) / 2));
   const [step, setStep] = useState<1 | 2>(1);
   // Start from the current settings: the device defaults on first run, the student's own choices on
   // a replay. isTablet only matters if the store could not tell the device class.
@@ -241,7 +249,7 @@ function SetupBody({ enableBackup, isTablet, backupUi, settings, setSettings, on
                 )}
                 selected={input === 'pen'}
                 onPress={() => setInput('pen')}
-                compact={compact}
+                width={choiceW}
               />
               <ChoiceCard
                 icon="hand"
@@ -252,7 +260,7 @@ function SetupBody({ enableBackup, isTablet, backupUi, settings, setSettings, on
                 )}
                 selected={input === 'finger'}
                 onPress={() => setInput('finger')}
-                compact={compact}
+                width={choiceW}
               />
             </View>
           </SetupRow>
@@ -413,14 +421,15 @@ function ChoiceCard({
   sub,
   selected,
   onPress,
-  compact,
+  width,
 }: {
   icon: IconName;
   title: string;
   sub: string;
   selected: boolean;
   onPress: () => void;
-  compact: boolean;
+  /** The card's width (half the body on tablets, the whole body on phones). */
+  width: number;
 }) {
   return (
     <Pressable
@@ -430,7 +439,7 @@ function ChoiceCard({
       accessibilityState={{ checked: selected }}
       style={({ pressed }) => [
         styles.choice,
-        compact ? styles.choiceCompact : styles.choiceRegular,
+        { width },
         selected ? styles.choiceOn : styles.choiceOff,
         pressed && !selected && { backgroundColor: colors.surfaceMuted },
       ]}>
@@ -476,14 +485,11 @@ function LinkButton({ label, onPress, center, disabled }: { label: string; onPre
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  setupRow: { gap: 10 },
+  setupRow: { gap: 10, alignSelf: 'stretch' },
   rowText: { gap: 2 },
-  choices: { gap: 20 },
+  choices: { gap: CHOICE_GAP },
   choicesCompact: { gap: 12 },
   choice: { padding: 18, gap: 10, borderRadius: nbRadius.folder },
-  choiceCompact: { alignSelf: 'stretch' },
-  // 272 pt side by side; both shrink together on a window just over 600 pt where the modal is narrower.
-  choiceRegular: { flex: 1, maxWidth: CHOICE_W },
   choiceOn: { borderWidth: 2, borderColor: colors.accent, backgroundColor: colors.accentTint },
   choiceOff: { borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
   choiceTop: { alignItems: 'flex-start' },

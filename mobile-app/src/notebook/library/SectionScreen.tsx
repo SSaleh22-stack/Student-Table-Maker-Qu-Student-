@@ -28,7 +28,7 @@ import { goBackOr, openLibrary, openNotebook, openSection } from '@/notebook/nav
 import { useNotebooks } from '@/notebook/store/hooks';
 import { CircleButton } from '@/notebook/ui/CircleButton';
 import { EmptyState } from '@/notebook/ui/EmptyState';
-import { useWidthClass } from '@/notebook/ui/layout';
+import { NB_EDGE, useWidthClass } from '@/notebook/ui/layout';
 import type { AnchorRect } from '@/notebook/ui/Popover';
 import { TextPromptDialog } from '@/notebook/ui/TextPromptDialog';
 import { showToast } from '@/notebook/ui/toast';
@@ -121,7 +121,7 @@ export default function SectionScreen() {
   }
 
   const columns = gridColumns(width);
-  const pad = compact ? 16 : 32;
+  const pad = NB_EDGE;
   const openEntry = (e: IndexEntry) => openNotebook(e.id);
   const openActions = (e: IndexEntry, anchor: AnchorRect | null) => setActions({ entry: e, anchor });
   const openFolder = (t: FolderTarget) => openSection(t.kind === 'course' ? encodeLoc({ kind: 'course', code: t.code }) : encodeLoc({ kind: 'folder', id: t.id }));
@@ -205,18 +205,18 @@ export default function SectionScreen() {
 
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
+      <NbScreenHeader
+        title={title}
+        subtitle={store.loaded ? subtitle : undefined}
+        onBack={back}
+        actions={
+          showMore && target ? (
+            <CircleButton icon="more" label={tr('خيارات المجلد', 'Folder options')} onPress={() => setFolderActs({ ...target })} />
+          ) : undefined
+        }
+      />
       <ScrollView contentContainerStyle={[styles.content, { paddingHorizontal: pad, paddingBottom: insets.bottom + (fab ? 120 : 32) }]}>
         <View style={styles.inner}>
-          <NbScreenHeader
-            title={title}
-            subtitle={store.loaded ? subtitle : undefined}
-            onBack={back}
-            actions={
-              showMore && target ? (
-                <CircleButton icon="more" label={tr('خيارات المجلد', 'Folder options')} onPress={() => setFolderActs({ ...target })} />
-              ) : undefined
-            }
-          />
           {store.loaded && !missing && parsed.kind !== 'courses' ? (
             <SortChips value={sort} onChange={(k) => store.setSettings({ sort: k })} />
           ) : null}
@@ -266,7 +266,7 @@ export default function SectionScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
-  content: { paddingTop: 12 },
-  inner: { width: '100%', maxWidth: 1240, alignSelf: 'center', gap: 22 },
+  content: { paddingTop: 4 },
+  inner: { width: '100%', gap: 22 },
   loading: { marginTop: 60 },
 });

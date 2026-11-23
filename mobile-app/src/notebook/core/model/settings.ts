@@ -48,10 +48,12 @@ function buildDefaults(isTablet: boolean): NotebookSettings {
     hand: 'right',
     pencilDoubleTap: 'eraser',
     pencilSqueeze: 'eraser',
-    pressure: true,
+    // Even width (a ballpoint) by default; pressure stays a switch in the pen options.
+    pressure: false,
     defaultPaper: { style: DEFAULT_PAPER.style, color: DEFAULT_PAPER.color, size: DEFAULT_PAPER.size },
     toolbarPos: 'top',
-    shapeSnap: true,
+    // Hold-to-snap was removed from the app; the setting is kept only so old files still read.
+    shapeSnap: false,
     snapHintsShown: 0,
     rulerHintShown: false,
     pen: {

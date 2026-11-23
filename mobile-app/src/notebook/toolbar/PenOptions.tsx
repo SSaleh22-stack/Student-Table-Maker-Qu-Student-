@@ -329,12 +329,6 @@ function PenOptionsBody({ paperColor, colorsFirst }: { paperColor: PaperColor; c
           value={settings.fingerDraws}
           onChange={(v) => setSettings({ fingerDraws: v })}
         />
-        <OptionSwitch
-          title={tr('تحويل الأشكال عند التوقف', 'Snap shapes when you hold')}
-          subtitle={tr('أبقِ القلم ثابتاً في نهاية الشكل', 'Hold the pen still at the end of the shape')}
-          value={state.shapeSnap}
-          onChange={actions.setShapeSnap}
-        />
       </View>
 
       <TextPromptDialog

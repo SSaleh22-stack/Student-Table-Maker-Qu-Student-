@@ -8,6 +8,8 @@
  *   on iOS / no animation on Android (the opaque Skia canvas is a SurfaceView, which tears during a
  *   slide).
  * - 'receive' and 'import': transparent modals over the screen below, fading in.
+ * - 'pages/[id]': a transparent modal over the notebook too; PagesScreen draws the dimmed notebook and
+ *   slides its sidebar in from the right.
  */
 import { Stack, type NativeStackNavigationOptions } from 'expo-router';
 import { Platform, StyleSheet, View } from 'react-native';
@@ -26,6 +28,7 @@ function screenOptions({ route }: { route: { name: string } }): NativeStackNavig
       };
     case 'receive':
     case 'import':
+    case 'pages/[id]':
       return {
         headerShown: false,
         presentation: 'transparentModal',

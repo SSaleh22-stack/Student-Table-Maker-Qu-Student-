@@ -199,6 +199,24 @@ export function isErasable(item: PageItem, highlighterOnly: boolean): boolean {
   return false;
 }
 
+/** Exact test: is the item within radius of the segment? */
+export function segmentHitsItem(item: PageItem, x0: number, y0: number, x1: number, y1: number, radius: number): boolean {
+  'worklet';
+  if (item.kind === 'stroke') {
+    const r = radius + strokeHalfWidth(item);
+    return polylineSegmentDistanceSq(item.pts, 3, false, x0, y0, x1, y1) <= r * r;
+  }
+  if (item.kind === 'shape') {
+    const s = shapeOutline(item);
+    if (item.fill && s.closed && (pointInPolygon(s.pts, x0, y0) || pointInPolygon(s.pts, x1, y1))) return true;
+    const r = radius + item.width / 2;
+    return polylineSegmentDistanceSq(s.pts, 2, s.closed, x0, y0, x1, y1) <= r * r;
+  }
+  const c = boxCorners(item.box);
+  if (pointInPolygon(c, x0, y0) || pointInPolygon(c, x1, y1)) return true;
+  return polylineSegmentDistanceSq(c, 2, true, x0, y0, x1, y1) <= radius * radius;
+}
+
 /**
  * Ids of items within radius of the segment (x0, y0)-(x1, y1), in item order. A bounding-box test
  * runs before the exact geometry.
@@ -228,22 +246,16 @@ export function itemsIntersectingSegment(
   return out;
 }
 
-/** Exact test: is the item within radius of the segment? */
-export function segmentHitsItem(item: PageItem, x0: number, y0: number, x1: number, y1: number, radius: number): boolean {
+/** x, y of a stroke's points (pressure dropped). */
+export function strokeXY(s: Pick<StrokeItem, 'pts'>): number[] {
   'worklet';
-  if (item.kind === 'stroke') {
-    const r = radius + strokeHalfWidth(item);
-    return polylineSegmentDistanceSq(item.pts, 3, false, x0, y0, x1, y1) <= r * r;
+  const n = Math.floor(s.pts.length / 3);
+  const out: number[] = new Array(n * 2);
+  for (let i = 0; i < n; i++) {
+    out[i * 2] = s.pts[i * 3];
+    out[i * 2 + 1] = s.pts[i * 3 + 1];
   }
-  if (item.kind === 'shape') {
-    const s = shapeOutline(item);
-    if (item.fill && s.closed && (pointInPolygon(s.pts, x0, y0) || pointInPolygon(s.pts, x1, y1))) return true;
-    const r = radius + item.width / 2;
-    return polylineSegmentDistanceSq(s.pts, 2, s.closed, x0, y0, x1, y1) <= r * r;
-  }
-  const c = boxCorners(item.box);
-  if (pointInPolygon(c, x0, y0) || pointInPolygon(c, x1, y1)) return true;
-  return polylineSegmentDistanceSq(c, 2, true, x0, y0, x1, y1) <= radius * radius;
+  return out;
 }
 
 /** One item in the mirror format: its polyline bbox + half width, and its polyline. */
@@ -267,18 +279,6 @@ export function flatEntry(item: PageItem): { bbox: number[]; pts: number[] } {
   }
   const b = boundsOfPoints(pts, 2);
   return { bbox: [b[0], b[1], b[2], b[3], half], pts };
-}
-
-/** x, y of a stroke's points (pressure dropped). */
-export function strokeXY(s: Pick<StrokeItem, 'pts'>): number[] {
-  'worklet';
-  const n = Math.floor(s.pts.length / 3);
-  const out: number[] = new Array(n * 2);
-  for (let i = 0; i < n; i++) {
-    out[i * 2] = s.pts[i * 3];
-    out[i * 2 + 1] = s.pts[i * 3 + 1];
-  }
-  return out;
 }
 
 /** Even-odd test against the closed ring pts[start .. end) (its last point repeats the first). */

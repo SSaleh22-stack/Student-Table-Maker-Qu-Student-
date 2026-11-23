@@ -58,7 +58,7 @@ import { isOverlayBusy } from '@/notebook/canvas/overlayContext';
 import type { MirrorRecord } from '@/notebook/canvas/pageMirror';
 import { getRuler, RULER_LENGTH, RULER_WIDTH } from '@/notebook/canvas/ruler';
 import { getSelection } from '@/notebook/canvas/selection';
-import { clampViewport, screenToPage, screenToPageOf, translateBounds, zoomAbout } from '@/notebook/core/canvas/viewport';
+import { clampViewport, minZoomFor, screenToPage, screenToPageOf, translateBounds, zoomAbout } from '@/notebook/core/canvas/viewport';
 import { layoutContentH, layoutContentW, layoutScale } from '@/notebook/core/canvas/layout';
 import { mirrorHits } from '@/notebook/core/canvas/eraseMirror';
 import { ignoreTouch, palmZone, pointerName, shouldDraw, yieldsToNav, type PointerName } from '@/notebook/core/canvas/palm';
@@ -1092,8 +1092,11 @@ export function useCanvasGestures(
         core.moving.set(true);
       }
       const vp = viewportOf(core);
-      const next = zoomAbout(vp, e.focalX, e.focalY, vp.scale * e.scaleChange);
-      setViewport(core, clampViewport(next, core.layout.get(), viewOf(core), insetsOf(core)));
+      const layout = core.layout.get();
+      const view = viewOf(core);
+      const ins = insetsOf(core);
+      const next = zoomAbout(vp, e.focalX, e.focalY, vp.scale * e.scaleChange, minZoomFor(layout, view, ins));
+      setViewport(core, clampViewport(next, layout, view, ins));
     },
     onFinalize: () => {
       'worklet';

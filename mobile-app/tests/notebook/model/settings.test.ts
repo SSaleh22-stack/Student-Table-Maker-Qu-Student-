@@ -22,8 +22,9 @@ describe('defaults', () => {
     assert.equal(s.pencilSqueeze, 'eraser');
     assert.deepEqual(s.defaultPaper, { style: 'lined', color: 'white', size: 'a4' });
     assert.equal(s.toolbarPos, 'top');
-    assert.equal(s.shapeSnap, true);
-    assert.equal(s.pressure, true);
+    // Hold-to-snap was removed; the pen is an even-width line unless pressure is switched on.
+    assert.equal(s.shapeSnap, false);
+    assert.equal(s.pressure, false);
     assert.deepEqual(s.backup, { enabled: false, wifiOnly: true });
     assert.deepEqual(s.tours, { library: 'unseen', setup: 'unseen', editor: 'unseen' });
     assert.equal(s.eraser.mode, 'stroke');

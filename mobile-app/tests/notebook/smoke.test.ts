@@ -93,7 +93,9 @@ describe('app.json', () => {
     assert.ok(container in expo.ios.infoPlist.NSUbiquitousContainers);
     assert.deepEqual(expo.ios.entitlements['com.apple.developer.icloud-services'], ['CloudDocuments']);
     assert.deepEqual(expo.ios.entitlements['com.apple.developer.ubiquity-container-identifiers'], [container]);
-    assert.deepEqual(expo.extra.notebook, { googleWebClientId: '', icloudContainer: container });
+    assert.equal(expo.extra.notebook.icloudContainer, container);
+    // The Google Cloud Web OAuth client (Android Drive sign-in).
+    assert.match(expo.extra.notebook.googleWebClientId, /^\d+-[a-z0-9]+\.apps\.googleusercontent\.com$/);
   });
 });
 

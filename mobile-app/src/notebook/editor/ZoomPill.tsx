@@ -1,7 +1,7 @@
 /**
  * The zoom pill (Figma 06 pageFooter: '100%' and the zoom icon, the reading-end bottom corner).
- * It shows the canvas zoom (PageCanvas onZoomChange, 100 % to 400 %, NB-49). A tap goes back to
- * 100 % when zoomed in.
+ * It shows the canvas zoom (PageCanvas onZoomChange: from "the whole page fits" up to 400 %, NB-49). A tap goes back to
+ * 100 % when zoomed in or out.
  */
 import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 

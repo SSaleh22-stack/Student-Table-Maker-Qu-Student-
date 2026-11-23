@@ -1,5 +1,6 @@
 /**
- * The canvas view transform (P22, NB-49): zoom 1 to 4 (100% to 400%) and pan.
+ * The canvas view transform (P22, NB-49): zoom from "the tallest page fits the band" (minZoomFor, at
+ * most 1) up to 4 (400%), and pan. Zoom 1 (100%) is the column filling the band's width.
  *
  *   screen = content x scale + (tx, ty)          content = layout.ts content space (zoom-1 px)
  *   page point (x, y) of page i = content (rect.x + x k, rect.y + y k)   k = layout fit scale
@@ -8,17 +9,23 @@
  * x / y on the canvas detector and as the overlay host above it.
  *
  * Bounds: the pages stay inside the band between the physical insets. At zoom 1 the column fills the
- * band exactly; zoomed in, it can be panned until its edges reach the band edges. Vertically the first
- * page can come down to the top inset and the last one up to the bottom inset; a column shorter than
- * the band stays at the top.
+ * band exactly; zoomed in, it can be panned until its edges reach the band edges; zoomed out, it is
+ * centered across the band. Vertically the first page can come down to the top inset and the last one
+ * up to the bottom inset; a column shorter than the band stays at the top at zoom 1 and is centered
+ * when zoomed out (both are the same where the column is exactly the band's height).
  *
  * Every function is a worklet (the gestures run them on the UI runtime).
  */
 import type { LayoutInsets } from './layout.ts';
 import { LAYOUT_HEADER, layoutContentH, layoutContentW, layoutCount, layoutScale, nearestPageIndex, pageIndexAt, visibleRange } from './layout.ts';
 
+/** 100%: the column fills the band's width. Zooming out goes below it only as far as minZoomFor. */
 export const MIN_ZOOM = 1;
 export const MAX_ZOOM = 4;
+/** The smallest zoom ever allowed, whatever the page shape. */
+export const MIN_ZOOM_FLOOR = 0.1;
+/** Room kept above and below the tallest page at the smallest zoom (screen px). */
+export const FIT_MARGIN = 16;
 
 export interface Viewport {
   scale: number;
@@ -38,10 +45,32 @@ export interface PageHit {
   y: number;
 }
 
-export function clampZoom(s: number): number {
+/** Clamps a zoom to [min, MAX_ZOOM]; min defaults to 100% (pass minZoomFor to allow zooming out). */
+export function clampZoom(s: number, min: number = MIN_ZOOM): number {
   'worklet';
   if (!Number.isFinite(s)) return MIN_ZOOM;
-  return s < MIN_ZOOM ? MIN_ZOOM : s > MAX_ZOOM ? MAX_ZOOM : s;
+  const lo = min > MAX_ZOOM ? MAX_ZOOM : min;
+  return s < lo ? lo : s > MAX_ZOOM ? MAX_ZOOM : s;
+}
+
+/**
+ * The smallest zoom for this layout and view: the tallest page fits the band from top to bottom with
+ * FIT_MARGIN above and below it. Never above 1 (a page that already fits at 100% cannot zoom out) and
+ * never below MIN_ZOOM_FLOOR.
+ */
+export function minZoomFor(layout: ArrayLike<number>, view: ViewSize, insets: LayoutInsets): number {
+  'worklet';
+  const n = layoutCount(layout);
+  let tallest = 0;
+  for (let i = 0; i < n; i++) {
+    const h = layout[LAYOUT_HEADER + i * 4 + 3];
+    if (h > tallest) tallest = h;
+  }
+  if (!(tallest > 0)) return MIN_ZOOM;
+  const bandH = view.h - Math.max(0, insets.top) - Math.max(0, insets.bottom) - 2 * FIT_MARGIN;
+  if (!(bandH > 0)) return MIN_ZOOM;
+  const fit = bandH / tallest;
+  return fit >= MIN_ZOOM ? MIN_ZOOM : fit < MIN_ZOOM_FLOOR ? MIN_ZOOM_FLOOR : fit;
 }
 
 /** [minTx, maxTx, minTy, maxTy] for a scale (min === max when the content fits that axis). */
@@ -65,8 +94,9 @@ export function translateBounds(scale: number, contentW: number, contentH: numbe
   let minTy: number;
   let maxTy: number;
   if (ch <= bandH) {
-    minTy = top;
-    maxTy = top;
+    // Zoomed out, a column shorter than the band sits in its middle; at 100% it stays at the top.
+    minTy = scale < MIN_ZOOM ? top + (bandH - ch) / 2 : top;
+    maxTy = minTy;
   } else {
     minTy = top + bandH - ch;
     maxTy = top;
@@ -79,18 +109,21 @@ function clampTo(v: number, lo: number, hi: number): number {
   return v < lo ? lo : v > hi ? hi : v;
 }
 
-/** The viewport with its scale clamped to 1..4 and its translation inside the bounds. */
+/** The viewport with its scale clamped to minZoomFor..4 and its translation inside the bounds. */
 export function clampViewport(vp: Viewport, layout: ArrayLike<number>, view: ViewSize, insets: LayoutInsets): Viewport {
   'worklet';
-  const scale = clampZoom(vp.scale);
+  const scale = clampZoom(vp.scale, minZoomFor(layout, view, insets));
   const b = translateBounds(scale, layoutContentW(layout), layoutContentH(layout), view, insets);
   return { scale, tx: clampTo(vp.tx, b[0], b[1]), ty: clampTo(vp.ty, b[2], b[3]) };
 }
 
-/** Zooms to newScale (clamped) keeping the screen point (fx, fy) over the same content point. */
-export function zoomAbout(vp: Viewport, fx: number, fy: number, newScale: number): Viewport {
+/**
+ * Zooms to newScale (clamped to [minScale, 4]) keeping the screen point (fx, fy) over the same content
+ * point. Pass minZoomFor(...) as minScale to allow zooming out below 100%.
+ */
+export function zoomAbout(vp: Viewport, fx: number, fy: number, newScale: number, minScale: number = MIN_ZOOM): Viewport {
   'worklet';
-  const s = clampZoom(newScale);
+  const s = clampZoom(newScale, minScale);
   const r = vp.scale > 0 ? s / vp.scale : 1;
   return { scale: s, tx: fx - (fx - vp.tx) * r, ty: fy - (fy - vp.ty) * r };
 }
@@ -212,5 +245,5 @@ export function zoomToCenter(vp: Viewport, newScale: number, layout: ArrayLike<n
   'worklet';
   const fx = (Math.max(0, insets.left) + view.w - Math.max(0, insets.right)) / 2;
   const fy = (Math.max(0, insets.top) + view.h - Math.max(0, insets.bottom)) / 2;
-  return clampViewport(zoomAbout(vp, fx, fy, newScale), layout, view, insets);
+  return clampViewport(zoomAbout(vp, fx, fy, newScale, minZoomFor(layout, view, insets)), layout, view, insets);
 }

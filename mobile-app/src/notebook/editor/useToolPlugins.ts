@@ -8,7 +8,7 @@
  * Plugins:
  * - P27 useSelectionTool (the lasso: handler + SelectionOverlay, mounted for every tool) and
  *   useImageTool (an ACTION: openSource for the toolbar's onImage, plus its sheets to render).
- * - P28 useShapeTool (handler + live preview), useShapeSnap (onShapeSnap for the canvas + SnapHint),
+ * - P28 useShapeTool (handler + live preview). (Hold-to-snap was removed: a pen stroke stays as drawn.)
  *   useRulerTool (exactly one per editor; the sole writer of ruler.visible) and useTextTool (handler +
  *   the text editor overlay).
  * Every overlay is rendered all the time, in OverlayHost (absolute fill, box-none); each one draws
@@ -26,7 +26,7 @@
 import { createElement, Fragment, useCallback, useEffect, useMemo, useRef, type ReactNode } from 'react';
 
 import { recorder } from '@/notebook/audio/recorder';
-import type { PageCanvasHandle, PageCanvasProps } from '@/notebook/contracts/canvas';
+import type { PageCanvasHandle } from '@/notebook/contracts/canvas';
 import type { ToolContext, ToolId, ToolPlugin, ToolPointerHandler } from '@/notebook/contracts/tools';
 import type { RecMark } from '@/notebook/core/model';
 import type { NotebookSession } from '@/notebook/core/session/types';
@@ -34,7 +34,6 @@ import { getToolState, subscribeToolState, toolActions } from '@/notebook/toolba
 import { useImageTool } from '@/notebook/tools/image/useImageTool';
 import { useRulerTool } from '@/notebook/tools/ruler/useRulerTool';
 import { useSelectionTool } from '@/notebook/tools/selection/useSelectionTool';
-import { useShapeSnap } from '@/notebook/tools/shapes/useShapeSnap';
 import { useShapeTool } from '@/notebook/tools/shapes/useShapeTool';
 import { useTextTool } from '@/notebook/tools/text/useTextTool';
 
@@ -49,7 +48,6 @@ export interface EditorTools {
   toolHandlers: Partial<Record<ToolId, ToolPointerHandler>>;
   /** Every tool overlay, for PageCanvas `overlays`. */
   overlays: ReactNode;
-  onShapeSnap: PageCanvasProps['onShapeSnap'];
   onPencilAction: (a: 'eraser' | 'lastTool') => void;
   /** The toolbar's image button. */
   openImage: () => void;
@@ -76,7 +74,6 @@ export function useToolPlugins(
   const selection = useSelectionTool(ctx);
   const image = useImageTool(ctx);
   const shapes = useShapeTool(ctx);
-  const snap = useShapeSnap(ctx);
   const ruler = useRulerTool(ctx, { hintTop: o.rulerHintTop });
   const text = useTextTool(ctx);
 
@@ -118,7 +115,7 @@ export function useToolPlugins(
     return h;
   }, [readOnly, selection.handler, shapes.handler, text.handler]);
 
-  // Bottom to top: shape preview, ruler, selection (handles and menu), snap hint, text editor.
+  // Bottom to top: shape preview, ruler, selection (handles and menu), text editor.
   const overlays = useMemo(
     () =>
       createElement(
@@ -127,10 +124,9 @@ export function useToolPlugins(
         createElement(Fragment, { key: 'shapes' }, shapes.overlay),
         createElement(Fragment, { key: 'ruler' }, ruler.overlay),
         createElement(Fragment, { key: 'selection' }, selection.overlay),
-        createElement(Fragment, { key: 'snap' }, readOnly ? null : snap.overlay),
         createElement(Fragment, { key: 'text' }, text.overlay),
       ),
-    [shapes.overlay, ruler.overlay, selection.overlay, snap.overlay, text.overlay, readOnly],
+    [shapes.overlay, ruler.overlay, selection.overlay, text.overlay],
   );
 
   const onPencilAction = useCallback((a: 'eraser' | 'lastTool') => toolActions.toggleEraser(a), []);
@@ -140,7 +136,6 @@ export function useToolPlugins(
     recMark,
     toolHandlers,
     overlays,
-    onShapeSnap: readOnly ? undefined : snap.onShapeSnap,
     onPencilAction,
     openImage: image.openSource,
     sheets: image.sheets,

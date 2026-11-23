@@ -529,6 +529,9 @@ export function getStroke(pts: ArrayLike<number>, o?: FreehandOptions): number[]
 
 /** Thinning of pressure pen strokes: the width runs from 0.5x (no pressure) to 1.5x (full pressure). */
 export const PEN_THINNING = 0.5;
+/** How much the pen's input is smoothed (0 = raw points). Low, so the ink stays at the pen tip. */
+export const PEN_STREAMLINE = 0.2;
+export const HL_STREAMLINE = 0.5;
 
 /**
  * Freehand options for a stroke item. Wet ink passes last=false while the pen is down; everything
@@ -541,7 +544,8 @@ export function strokeOptions(s: Pick<StrokeItem, 'tool' | 'width' | 'pressure'>
     size: s.width,
     thinning: pressure ? PEN_THINNING : 0,
     smoothing: 0.5,
-    streamline: 0.5,
+    // The pen follows the tip closely (handwriting keeps its shape); the highlighter stays smoother.
+    streamline: s.tool === 'pen' ? PEN_STREAMLINE : HL_STREAMLINE,
     simulatePressure: false,
     taperStart: 0,
     taperEnd: 0,

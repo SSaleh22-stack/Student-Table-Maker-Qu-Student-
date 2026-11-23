@@ -12,14 +12,16 @@
  * LAYOUT (everything over one full-size PageCanvas; physical placement only)
  * - editorFrames (P13) with { screen: the editor box, insets: the safe area (physical), toolbarPos
  *   (a portrait phone falls back from left / right to top), barThickness, dock: calc open and docked
- *   on a regular window ? { side: isRTL ? 'left' : 'right', width: 360 } : null }. It gives the
+ *   on a regular window ? { side: 'left', width: 360 } : null } (the physical left in every language). It gives the
  *   toolbar slot (MovableToolbar), the dock rect (CalculatorDock) and the canvas contentInsets. A left
  *   toolbar next to a left dock sits at the dock's inner edge (ruling (f)).
  * - Compact windows: the docked calculator is a bottom panel (P24, 45 % of the height). The frames are
  *   computed for the area above it and the canvas keeps its height clear too.
- * - The docked panel starts under the 60 pt header band (Figma 22), so the header pill stays visible.
+ * - The docked panel runs the full height of the editor (top safe area inside it); the header buttons
+ *   on its side move to its inner edge.
  * - EditorHeader: back at the reading-start top corner, the 'ed.actions' pill (pages, share, more) at
- *   the other one. PageCounter and ZoomPill sit in the footer band at the bottom corners (Figma 06;
+ *   the other one. On regular windows a TOP toolbar sits in that same row, between them
+ *   (editorFrames headerReserve); on phones it keeps its own row under the header. PageCounter and ZoomPill sit in the footer band at the bottom corners (Figma 06;
  *   a bottom toolbar sits above that band, Figma 20).
  *
  * TOOLS: useToolPlugins (lasso, image action, shapes, snap, ruler, text). The toolbar's record slot is
@@ -29,6 +31,9 @@
  * RECORDING AND PLAYBACK: useEditorLifecycle (grace stop on unmount, recovery on open),
  * ContinueRecordingBanner (only for this notebook's recording paused by a leave), usePlaybackFlow
  * (recordings panel, player bar, the 'play' pointer tool and back).
+ *
+ * AUTO PAGE (core/pages/autoPage.ts): once the last page is a paper page with something on it, a blank
+ * page with the same paper is added after it (no undo entry), so writing never runs out of pages.
  *
  * FIRST OPEN: SetupModal (tours.setup 'unseen'; backup through useEnableBackupFlow, its 'restore'
  * answer opens the restore screen), then EditorTour.
@@ -52,7 +57,8 @@ import { useEnableBackupFlow } from '@/notebook/backup/useEnableBackupFlow';
 import { CALC_DOCK_WIDTH, CALC_PHONE_DOCK_FRACTION } from '@/notebook/calc/CalculatorPanel';
 import { PageCanvas } from '@/notebook/canvas/PageCanvas';
 import type { CanvasInput, PageCanvasHandle } from '@/notebook/contracts/canvas';
-import type { Id } from '@/notebook/core/model';
+import { newId, type Id } from '@/notebook/core/model';
+import { autoPageAfter, needsAutoPage } from '@/notebook/core/pages/autoPage';
 import type { NotebookSession } from '@/notebook/core/session/types';
 import { BAR, FRAME, barThickness, editorFrames, type DockSpec, type Insets, type Rect } from '@/notebook/core/toolbar/dock';
 import { ExportSheet } from '@/notebook/export/ExportSheet';
@@ -73,7 +79,7 @@ import { useTourTarget } from '@/notebook/ui/tourTargets';
 
 import { CalculatorDock } from './CalculatorDock';
 import { EditorError } from './EditorError';
-import { EditorHeader, HEADER_SIDE } from './EditorHeader';
+import { EditorHeader, HEADER_SIDE, headerReserve } from './EditorHeader';
 import { EditorMoreMenu, type EditorMoreAction } from './EditorMoreMenu';
 import { PageCounter } from './PageCounter';
 import { useEditorLifecycle, type EditorLifecycle } from './useEditorLifecycle';
@@ -176,10 +182,16 @@ function EditorBody({ session, canvasRef, getCanvas, life }: EditorBodyProps) {
   const phoneDock = compact && calcOpen && calcDocked;
   const panelH = phoneDock ? Math.round(H * CALC_PHONE_DOCK_FRACTION) : 0;
   const dockSpec: DockSpec | null = useMemo(
-    () => (calcOpen && calcDocked && !compact ? { side: isRTL ? 'left' : 'right', width: CALC_DOCK_WIDTH } : null),
+    () => (calcOpen && calcDocked && !compact ? { side: 'left', width: CALC_DOCK_WIDTH } : null),
     [calcOpen, calcDocked, compact],
   );
   const frameScreen = useMemo(() => ({ width: W, height: H - panelH }), [W, H, panelH]);
+  // Tablets: a top toolbar goes into the header row, between the back button and the actions pill.
+  const headerRoom = useMemo(() => {
+    if (compact || readOnly) return null;
+    const r = headerReserve(40);
+    return isRTL ? { left: r.end, right: r.start } : { left: r.start, right: r.end };
+  }, [compact, readOnly]);
   const frameInsets: Insets = useMemo(() => (phoneDock ? { ...insets, bottom: 0 } : insets), [phoneDock, insets]);
   const frames = useMemo(
     () =>
@@ -189,8 +201,9 @@ function EditorBody({ session, canvasRef, getCanvas, life }: EditorBodyProps) {
         toolbarPos: readOnly ? 'top' : settings.toolbarPos,
         barThickness: readOnly ? 0 : barThickness(compact ? BAR.compactButton : BAR.button),
         dock: dockSpec,
+        headerReserve: headerRoom,
       }),
-    [frameScreen, frameInsets, readOnly, settings.toolbarPos, compact, dockSpec],
+    [frameScreen, frameInsets, readOnly, settings.toolbarPos, compact, dockSpec, headerRoom],
   );
 
   // Read-only banner (measured, so the page starts under it).
@@ -213,12 +226,12 @@ function EditorBody({ session, canvasRef, getCanvas, life }: EditorBodyProps) {
   const dockFrame: Rect | null = useMemo(() => {
     if (phoneDock) return { x: 0, y: H - panelH, width: W, height: panelH };
     if (!frames.dock) return null;
-    const top = insets.top + FRAME.header;
-    return { x: frames.dock.x, y: top, width: frames.dock.width, height: Math.max(0, H - top) };
-  }, [phoneDock, H, W, panelH, frames.dock, insets.top]);
+    // Full height: from the very top of the editor to the bottom.
+    return { x: frames.dock.x, y: 0, width: frames.dock.width, height: H };
+  }, [phoneDock, H, W, panelH, frames.dock]);
   const dockPad = phoneDock
     ? { bottom: insets.bottom, left: insets.left, right: insets.right }
-    : { bottom: insets.bottom, left: dockLeft ? insets.left : 0, right: dockRight ? insets.right : 0 };
+    : { top: insets.top, bottom: insets.bottom, left: dockLeft ? insets.left : 0, right: dockRight ? insets.right : 0 };
 
   /** Distance from the box bottom to the bottom of the footer band (the pills sit in it). */
   const footerBase = phoneDock ? panelH : insets.bottom;
@@ -245,6 +258,16 @@ function EditorBody({ session, canvasRef, getCanvas, life }: EditorBodyProps) {
   const currentPage = usePage(session, page.id);
   const paperColor = paperColorOf(currentPage);
 
+  // ----- auto page: writing on the last paper page adds the next page
+  const lastId = notebook.pageIds[notebook.pageIds.length - 1] ?? null;
+  const lastPage = usePage(session, lastId);
+  useEffect(() => {
+    if (readOnly || !lastPage || lastPage.id !== lastId || !needsAutoPage(lastPage)) return;
+    const ids = session.notebook.pageIds;
+    if (ids[ids.length - 1] !== lastPage.id) return;
+    session.insertPages(ids.length, [autoPageAfter(lastPage, newId())], { history: false });
+  }, [readOnly, session, lastPage, lastId]);
+
   // ----- tools
   const editorTools = useToolPlugins(session, getCanvas, settings.hand, { rulerHintTop: contentInsets.top + 12 });
   const playback = usePlaybackFlow(session);
@@ -255,9 +278,10 @@ function EditorBody({ session, canvasRef, getCanvas, life }: EditorBodyProps) {
       hand: settings.hand,
       pencilDoubleTap: settings.pencilDoubleTap,
       pencilSqueeze: settings.pencilSqueeze,
-      shapeSnap: settings.shapeSnap,
+      // Hold-to-snap was removed: a pen stroke always stays as drawn.
+      shapeSnap: false,
     }),
-    [settings.input, settings.fingerDraws, settings.hand, settings.pencilDoubleTap, settings.pencilSqueeze, settings.shapeSnap],
+    [settings.input, settings.fingerDraws, settings.hand, settings.pencilDoubleTap, settings.pencilSqueeze],
   );
   const onUndo = useCallback(() => {
     if (!session.readOnly) session.undo();
@@ -337,7 +361,6 @@ function EditorBody({ session, canvasRef, getCanvas, life }: EditorBodyProps) {
           recMark={editorTools.recMark}
           playback={playback.playback}
           toolHandlers={editorTools.toolHandlers}
-          onShapeSnap={editorTools.onShapeSnap}
           onPlayFrom={playback.onPlayFrom}
           onUndo={onUndo}
           onRedo={onRedo}
@@ -424,8 +447,8 @@ function EditorBody({ session, canvasRef, getCanvas, life }: EditorBodyProps) {
 
       <EditorHeader
         top={insets.top + (FRAME.header - (compact ? 36 : 40)) / 2}
-        left={insets.left}
-        right={insets.right}
+        left={sideLeft}
+        right={sideRight}
         onBack={onBack}
         onPages={onPages}
         onShare={() => setExportOpen(true)}

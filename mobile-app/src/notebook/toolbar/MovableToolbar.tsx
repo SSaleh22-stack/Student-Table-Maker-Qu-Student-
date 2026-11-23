@@ -13,8 +13,9 @@
  * a short tap never activates it, so the buttons keep working; once active it cancels their touch.
  * Worklets never call JS directly: every hop is scheduleOnRN with a plain payload.
  *
- * Compact: the bar uses the phone layout when `compact` is set OR the full bar does not fit its slot
- * (dock.ts fitsInline), and the buttons shrink (fitButtonSize) unless `buttonSize` is given. When even
+ * Layout (dock.ts chooseBarLayout): the phone layout when `compact` is set; otherwise the full bar when
+ * it fits its slot, the medium bar (no color dots) when that fits, else the phone layout. The buttons
+ * shrink (fitButtonSize) unless `buttonSize` is given. When even
  * the smallest compact bar is longer than its slot (a vertical bar on a landscape phone), the bar
  * scrolls along its axis inside the slot, so every button stays reachable and nothing covers the
  * header or the page counter.
@@ -37,9 +38,9 @@ import { colors } from '@/lib/theme';
 import {
   allowedPositions,
   barLength,
+  chooseBarLayout,
   dropZones,
   fitButtonSize,
-  fitsInline,
   isVertical,
   posIndex,
   zoneAt,
@@ -80,14 +81,16 @@ export interface MovableToolbarProps extends Omit<ToolbarProps, 'onMoveTo' | 'po
 
 export function MovableToolbar({ frame, screen, insets, dock = null, onPosChange, onLiftChange, ...toolbar }: MovableToolbarProps) {
   const pos = toolbar.pos;
-  // Phone rules also apply when the full bar does not fit its slot (a docked calculator, a landscape
-  // iPad's vertical bar): compact layout, and buttons shrunk to fit when even that is too long.
+  // Where the full bar does not fit its slot (a header-row bar on a portrait iPad, a docked calculator,
+  // a landscape iPad's vertical bar): the medium bar (no color dots), else the phone layout, with the
+  // buttons shrunk to fit.
   const room = isVertical(pos) ? frame.height : frame.width;
-  const compact = toolbar.compact || !fitsInline(room);
-  const buttonSize = toolbar.buttonSize ?? fitButtonSize(room, compact ? 'compact' : 'full');
+  const layout = chooseBarLayout(room, toolbar.compact);
+  const compact = layout === 'compact';
+  const buttonSize = toolbar.buttonSize ?? fitButtonSize(room, layout);
   const vertical = isVertical(pos);
   // Smallest buttons and still too long: scroll inside the slot instead of spilling out of it.
-  const overflows = room > 0 && barLength(compact ? 'compact' : 'full', { button: buttonSize }) > room;
+  const overflows = room > 0 && barLength(layout, { button: buttonSize }) > room;
   const allowed = useMemo(() => allowedPositions(screen), [screen]);
   const zones = useMemo(() => dropZones(screen, insets, { dock, allowed }), [screen, insets, dock, allowed]);
   const [lifted, setLifted] = useState(false);
@@ -237,7 +240,15 @@ export function MovableToolbar({ frame, screen, insets, dock = null, onPosChange
   const overlayStyle = useAnimatedStyle(() => ({ opacity: lift.get() }));
 
   const bar = (
-    <Toolbar {...toolbar} compact={compact} buttonSize={buttonSize} onMoveTo={commit} positions={allowed} style={styles.noShadow} />
+    <Toolbar
+      {...toolbar}
+      compact={compact}
+      hideColors={layout === 'medium'}
+      buttonSize={buttonSize}
+      onMoveTo={commit}
+      positions={allowed}
+      style={styles.noShadow}
+    />
   );
 
   const hintTop = (zones.top ? zones.top.y + zones.top.height : insets.top + 60) + 22;

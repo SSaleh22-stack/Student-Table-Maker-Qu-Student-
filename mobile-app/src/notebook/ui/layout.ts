@@ -34,6 +34,15 @@ export const MODAL_ORIENTATIONS: NonNullable<ModalProps['supportedOrientations']
 /** Windows narrower than this are compact (phone layouts). */
 export const COMPACT_BELOW = 600;
 
+/**
+ * Every notebook screen's header matches the editor's: buttons NB_EDGE from the screen edge, centered
+ * in an NB_HEADER_BAND band under the top safe area, NB_HEADER_BUTTON (compact: 36) wide.
+ */
+export const NB_EDGE = 16;
+export const NB_HEADER_BAND = 60;
+export const NB_HEADER_BUTTON = 40;
+export const NB_HEADER_BUTTON_COMPACT = 36;
+
 /** Pure form of useWidthClass, for code that already has the width. */
 export function widthClassOf(windowWidth: number): WidthClass {
   return windowWidth < COMPACT_BELOW ? 'compact' : 'regular';

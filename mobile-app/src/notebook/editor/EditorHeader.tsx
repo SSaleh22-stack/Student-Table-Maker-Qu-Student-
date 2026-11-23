@@ -10,6 +10,9 @@
  * - Compact windows: 36 pt buttons. The top follows the safe area (`top` is computed by the editor
  *   from the safe inset and the 60 pt header band of editorFrames).
  *
+ * A top toolbar on a tablet sits in this same row, between the back button and the pill (headerReserve
+ * gives the room they take).
+ *
  * Placement is physical: the editor passes the physical left / right offsets (safe insets, or a
  * docked calculator's width on its side), and this file decides which corner is the reading start.
  */
@@ -22,13 +25,28 @@ import { shadow } from '@/lib/theme';
 import { measureAnchor, type ViewNode } from '@/notebook/toolbar/ToolButton';
 import { nbColors } from '@/notebook/theme';
 import { CircleButton } from '@/notebook/ui/CircleButton';
-import { useIsCompact } from '@/notebook/ui/layout';
+import { NB_EDGE, useIsCompact } from '@/notebook/ui/layout';
 import { physicalLeft, physicalRight } from '@/notebook/ui/physical';
 import type { AnchorRect } from '@/notebook/ui/Popover';
 import { useTourTarget } from '@/notebook/ui/tourTargets';
 
-/** Distance of the buttons from the screen (or dock) edge (Figma: 16). */
-export const HEADER_SIDE = 16;
+/** Distance of the buttons from the screen (or dock) edge (Figma: 16; the same on every notebook screen). */
+export const HEADER_SIDE = NB_EDGE;
+/** Gap between the header buttons and a toolbar in the same row. */
+export const HEADER_BAR_GAP = 12;
+const PILL_PAD = 4;
+const PILL_GAP = 2;
+
+/**
+ * Room the back button (start, reading side) and the actions pill (end) take along the header row,
+ * edge gap and the gap to a toolbar in the same row included.
+ */
+export function headerReserve(size: number): { start: number; end: number } {
+  return {
+    start: HEADER_SIDE + size + HEADER_BAR_GAP,
+    end: HEADER_SIDE + 2 * PILL_PAD + 3 * size + 2 * PILL_GAP + HEADER_BAR_GAP,
+  };
+}
 
 export interface EditorHeaderProps {
   /** y of the buttons' top edge in the editor container. */
@@ -105,8 +123,8 @@ const styles = StyleSheet.create({
   round: { backgroundColor: nbColors.surface, ...shadow },
   pill: {
     alignItems: 'center',
-    gap: 2,
-    paddingHorizontal: 4,
+    gap: PILL_GAP,
+    paddingHorizontal: PILL_PAD,
     borderRadius: 999,
     backgroundColor: nbColors.surface,
     ...shadow,

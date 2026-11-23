@@ -2,6 +2,11 @@
  * The pages view (Figma 13; NB-23, NB-24, NB-25, NB-49a): every page of the open notebook as a PNG
  * thumbnail, to jump to, reorder, add, duplicate, re-paper, insert a PDF into, or delete.
  *
+ * It opens as a SIDEBAR on the physical right edge (in Arabic and in English) over the notebook,
+ * which stays visible and dimmed behind it; a tap on the dimmed notebook closes it. The route is a
+ * transparent modal (src/app/notebook/_layout.tsx); the panel slides in from the right. Inside the
+ * panel the grid has two columns and the phone-size header and action bar.
+ *
  *   (back)  صفحات المذكرة                                  تحديد   تم
  *           <notebook title> · 8 صفحات
  *   [grid of pages, 3 / 4 / 6 columns; 'الحالية' under the current page; dashed 'صفحة جديدة' last]
@@ -22,10 +27,10 @@
  */
 import { useCallback, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
+import Animated, { SlideInRight } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/AppText';
-import { SafeAreaView } from '@/components/SafeAreaView';
 import { getLang, tr, useLang } from '@/lib/i18n';
 import { row } from '@/lib/rtl';
 import type { Id, PageBackground, PaperSpec } from '@/notebook/core/model';
@@ -49,7 +54,7 @@ import {
   type PageActionId,
   type PagesView,
 } from '@/notebook/core/pages/pageSelection';
-import { gridColumns, gridMetrics } from '@/notebook/core/pages/reorder';
+import { gridMetrics } from '@/notebook/core/pages/reorder';
 import type { NotebookSession } from '@/notebook/core/session/types';
 import { countLabel } from '@/notebook/core/text/labels';
 import { ImportProgress, importingPagesText, useImportUi } from '@/notebook/import/ImportProgress';
@@ -63,6 +68,7 @@ import { CircleButton } from '@/notebook/ui/CircleButton';
 import { ConfirmDialog } from '@/notebook/ui/ConfirmDialog';
 import { EmptyState } from '@/notebook/ui/EmptyState';
 import { useWidthClass } from '@/notebook/ui/layout';
+import { physicalPadding, physicalRight } from '@/notebook/ui/physical';
 import { Popover, type AnchorRect } from '@/notebook/ui/Popover';
 import { showToast } from '@/notebook/ui/toast';
 
@@ -78,6 +84,40 @@ export interface PagesScreenProps {
 
 /** How long a paper change may wait for pages that had to be loaded before the undo group closes. */
 const GROUP_WAIT_MS = 8000;
+/** Sidebar width on tablets; phones use most of the screen width (PHONE_PANEL_SHARE, at most 380). */
+const PANEL_W = 400;
+const PHONE_PANEL_SHARE = 0.88;
+/** Grid padding inside the panel. */
+const PANEL_PAD_X = 16;
+const GRID_COLUMNS = 2;
+
+function usePanelWidth(): number {
+  const { width } = useWindowDimensions();
+  const compact = useWidthClass() === 'compact';
+  return Math.round(compact ? Math.min(width * PHONE_PANEL_SHARE, 380) : Math.min(PANEL_W, width * 0.6));
+}
+
+/** The dimmed notebook (tap to close) and the panel on the physical right edge. */
+function SidePanel({ onClose, children }: { onClose: () => void; children: ReactNode }) {
+  const insets = useSafeAreaInsets();
+  const width = usePanelWidth();
+  return (
+    <View style={styles.overlay}>
+      <Pressable
+        style={[StyleSheet.absoluteFill, styles.backdrop]}
+        onPress={onClose}
+        accessibilityRole="button"
+        accessibilityLabel={tr('إغلاق الصفحات', 'Close pages')}
+      />
+      <Animated.View
+        entering={SlideInRight.duration(240)}
+        accessibilityViewIsModal
+        style={[styles.panel, { width, paddingTop: insets.top }, physicalPadding(0, insets.right), physicalRight(0)]}>
+        {children}
+      </Animated.View>
+    </View>
+  );
+}
 
 function closeTo(notebookId: string | null) {
   goBackOr(() => (notebookId ? openNotebook(notebookId, { replace: true }) : openLibrary()));
@@ -180,12 +220,13 @@ function Header({
   onDone: () => void;
   selectDisabled: boolean;
 }) {
-  const compact = useWidthClass() === 'compact';
+  // The panel is narrow on every device: phone-size texts.
+  const compact = true;
   return (
     <View style={[styles.header, { flexDirection: row }]}>
-      <CircleButton icon="back" label={tr('رجوع', 'Back')} onPress={onDone} size={compact ? 40 : 44} />
+      <CircleButton icon="x" label={tr('إغلاق', 'Close')} tone="muted" onPress={onDone} size={36} iconSize={18} />
       <View style={styles.headerTexts}>
-        <AppText size={compact ? 22 : 28} weight="bold" numberOfLines={1} accessibilityRole="header">
+        <AppText size={20} weight="bold" numberOfLines={1} accessibilityRole="header">
           {tr('صفحات المذكرة', 'Notebook pages')}
         </AppText>
         {subtitle ? (
@@ -228,7 +269,7 @@ export function PagesScreen({ notebookId, currentPageId }: PagesScreenProps) {
 
   if (!notebookId || error) {
     return (
-      <SafeAreaView style={styles.screen} edges={['top', 'left', 'right', 'bottom']}>
+      <SidePanel onClose={close}>
         <Centered>
           <EmptyState
             icon="alert"
@@ -241,19 +282,23 @@ export function PagesScreen({ notebookId, currentPageId }: PagesScreenProps) {
             primary={{ label: tr('رجوع', 'Back'), icon: 'back', onPress: close }}
           />
         </Centered>
-      </SafeAreaView>
+      </SidePanel>
     );
   }
   if (!session) {
     return (
-      <SafeAreaView style={styles.screen} edges={['top', 'left', 'right', 'bottom']}>
+      <SidePanel onClose={close}>
         <Centered>
           <ActivityIndicator color={nbColors.accent} accessibilityLabel={tr('جارٍ التحميل', 'Loading')} />
         </Centered>
-      </SafeAreaView>
+      </SidePanel>
     );
   }
-  return <PagesBody session={session} initialCurrent={currentPageId ?? null} onClose={close} />;
+  return (
+    <SidePanel onClose={close}>
+      <PagesBody session={session} initialCurrent={currentPageId ?? null} onClose={close} />
+    </SidePanel>
+  );
 }
 
 interface PaperSheetState {
@@ -270,7 +315,9 @@ function PagesBody({ session, initialCurrent, onClose }: { session: NotebookSess
   const readOnly = session.readOnly;
   const { width: winW } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const compact = useWidthClass() === 'compact';
+  const panelW = usePanelWidth();
+  // The sidebar is narrow on every device: phone-size grid, header and action bar.
+  const compact = true;
   const imp = useImportUi();
   const job = useJobOf(session.id);
 
@@ -301,12 +348,9 @@ function PagesBody({ session, initialCurrent, onClose }: { session: NotebookSess
 
   // ----- layout
 
-  const padX = compact ? 16 : 52;
-  const gridW = Math.max(120, winW - insets.left - insets.right - padX * 2);
-  const metrics = useMemo(
-    () => gridMetrics({ width: gridW, columns: gridColumns(winW), compact }),
-    [gridW, winW, compact],
-  );
+  const padX = PANEL_PAD_X;
+  const gridW = Math.max(120, panelW - insets.right - padX * 2);
+  const metrics = useMemo(() => gridMetrics({ width: gridW, columns: GRID_COLUMNS, compact }), [gridW, compact]);
   const bottomGap = Math.max(insets.bottom, 12) + (compact ? 8 : 24);
   const hintH = 34;
 
@@ -503,8 +547,8 @@ function PagesBody({ session, initialCurrent, onClose }: { session: NotebookSess
     mode === 'select' && selected.length ? tr('بعد الصفحات المحددة', 'After the selected pages') : tr('بعد الصفحة الحالية', 'After the current page');
 
   return (
-    <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
-      <View style={[styles.top, { paddingHorizontal: compact ? 16 : 32 }]}>
+    <View style={styles.body}>
+      <View style={[styles.top, { paddingHorizontal: PANEL_PAD_X }]}>
         <Header
           subtitle={subtitle}
           selectMode={mode === 'select'}
@@ -531,7 +575,7 @@ function PagesBody({ session, initialCurrent, onClose }: { session: NotebookSess
         initialPageId={current}
       />
 
-      <View pointerEvents="box-none" style={[styles.bottom, { paddingBottom: bottomGap, paddingHorizontal: compact ? 12 : 32 }]}>
+      <View pointerEvents="box-none" style={[styles.bottom, { paddingBottom: bottomGap, paddingHorizontal: 12 }]}>
         {inserting && imp.progress ? (
           <View style={styles.progressCard}>
             <ImportProgress info={imp.progress} hint={false} />
@@ -610,12 +654,25 @@ function PagesBody({ session, initialCurrent, onClose }: { session: NotebookSess
       />
 
       {imp.dialogs}
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: nbColors.bg },
+  overlay: { flex: 1 },
+  backdrop: { backgroundColor: 'rgba(27, 37, 51, 0.28)' },
+  panel: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    backgroundColor: nbColors.bg,
+    shadowColor: '#1B2533',
+    shadowOpacity: 0.18,
+    shadowRadius: 24,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 16,
+  },
+  body: { flex: 1 },
   top: { paddingTop: 12, paddingBottom: 8 },
   header: { alignItems: 'center', gap: 14, width: '100%', maxWidth: 1180, alignSelf: 'center' },
   headerTexts: { flex: 1, gap: 2 },
