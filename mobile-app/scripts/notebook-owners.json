@@ -1,0 +1,833 @@
+{
+  "P01": {
+    "title": "Foundation config: deps, app.json/eas/tsconfig/eslint, autolinking verification, config plugin, gate script, icons, notebook theme/flags/nav, WebUnsupported, PRD note",
+    "wave": 1,
+    "files": [
+      "package.json",
+      "package-lock.json",
+      "app.json",
+      "eas.json",
+      "tsconfig.json",
+      "tsconfig.core.json",
+      "eslint.config.js",
+      "react-native.config.js",
+      "plugins/withNotebookNative.ts",
+      "scripts/notebook-gate.mjs",
+      "scripts/notebook-owners.json",
+      "docs/notebook-prd.md",
+      "src/components/Icon.tsx",
+      "src/notebook/theme.ts",
+      "src/notebook/flags.ts",
+      "src/notebook/nav.ts",
+      "src/notebook/WebUnsupported.tsx",
+      "tests/notebook/smoke.test.ts"
+    ],
+    "tests": [
+      "tests/notebook/smoke.test.ts"
+    ]
+  },
+  "P02": {
+    "title": "Data core: model types + barrel, paper + shared paper pattern, ids, location codec, stroke codec, versioned readers (index with courseNames/purged), migrations, patches/history (tombstone pages, byte cap), settings defaults + deepMerge, journal with repair flag, expoFs, memfs",
+    "wave": 1,
+    "files": [
+      "src/notebook/core/model/types.ts",
+      "src/notebook/core/model/paper.ts",
+      "src/notebook/core/model/ids.ts",
+      "src/notebook/core/model/location.ts",
+      "src/notebook/core/model/codec.ts",
+      "src/notebook/core/model/readers.ts",
+      "src/notebook/core/model/migrate.ts",
+      "src/notebook/core/model/patches.ts",
+      "src/notebook/core/model/history.ts",
+      "src/notebook/core/model/settings.ts",
+      "src/notebook/core/model/index.ts",
+      "src/notebook/core/paper/pattern.ts",
+      "src/notebook/core/fs/adapter.ts",
+      "src/notebook/core/fs/journal.ts",
+      "src/notebook/core/fs/layout.ts",
+      "src/notebook/fs/expoFs.ts",
+      "tests/notebook/helpers/memfs.ts",
+      "tests/notebook/model/codec.test.ts",
+      "tests/notebook/model/readers.test.ts",
+      "tests/notebook/model/migrate.test.ts",
+      "tests/notebook/model/patches.test.ts",
+      "tests/notebook/model/history.test.ts",
+      "tests/notebook/model/settings.test.ts",
+      "tests/notebook/model/location.test.ts",
+      "tests/notebook/fs/journal.test.ts",
+      "tests/notebook/fs/layout.test.ts",
+      "tests/notebook/paper/pattern.test.ts"
+    ],
+    "tests": [
+      "tests/notebook/model/codec.test.ts",
+      "tests/notebook/model/readers.test.ts",
+      "tests/notebook/model/migrate.test.ts",
+      "tests/notebook/model/patches.test.ts",
+      "tests/notebook/model/history.test.ts",
+      "tests/notebook/model/settings.test.ts",
+      "tests/notebook/model/location.test.ts",
+      "tests/notebook/fs/journal.test.ts",
+      "tests/notebook/fs/layout.test.ts",
+      "tests/notebook/paper/pattern.test.ts"
+    ]
+  },
+  "P03": {
+    "title": "Core session + library engine (pure, injected deps): docState, autosave, serial write queue, session with LRU/history/undoIfTop/withWriteLock/cached snapshot, registry with grace, recovery, library ops incl. purged tombstones + course-folder conversion, derive/search/reconcile, clipboard staging, usage",
+    "wave": 1,
+    "files": [
+      "src/notebook/core/session/types.ts",
+      "src/notebook/core/session/docState.ts",
+      "src/notebook/core/session/autosave.ts",
+      "src/notebook/core/session/writeQueue.ts",
+      "src/notebook/core/session/session.ts",
+      "src/notebook/core/session/registry.ts",
+      "src/notebook/core/session/recover.ts",
+      "src/notebook/core/library/derive.ts",
+      "src/notebook/core/library/search.ts",
+      "src/notebook/core/library/reconcile.ts",
+      "src/notebook/core/library/ops.ts",
+      "src/notebook/core/library/clipboard.ts",
+      "src/notebook/core/library/usage.ts",
+      "tests/notebook/session/docState.test.ts",
+      "tests/notebook/session/autosave.test.ts",
+      "tests/notebook/session/writeQueue.test.ts",
+      "tests/notebook/session/session.test.ts",
+      "tests/notebook/session/registry.test.ts",
+      "tests/notebook/session/recover.test.ts",
+      "tests/notebook/library/derive.test.ts",
+      "tests/notebook/library/search.test.ts",
+      "tests/notebook/library/reconcile.test.ts",
+      "tests/notebook/library/ops.test.ts",
+      "tests/notebook/library/clipboard.test.ts"
+    ],
+    "tests": [
+      "tests/notebook/session/docState.test.ts",
+      "tests/notebook/session/autosave.test.ts",
+      "tests/notebook/session/writeQueue.test.ts",
+      "tests/notebook/session/session.test.ts",
+      "tests/notebook/session/registry.test.ts",
+      "tests/notebook/session/recover.test.ts",
+      "tests/notebook/library/derive.test.ts",
+      "tests/notebook/library/search.test.ts",
+      "tests/notebook/library/reconcile.test.ts",
+      "tests/notebook/library/ops.test.ts",
+      "tests/notebook/library/clipboard.test.ts"
+    ]
+  },
+  "P03B": {
+    "title": "Store bindings + root layout: NotebooksProvider (outside View key={lang}), AsyncStorage index/settings stores (deep-merge), session registry binding with AppState flush, library/clipboard/events/hooks",
+    "wave": 1,
+    "files": [
+      "src/app/_layout.tsx",
+      "src/notebook/store/NotebooksProvider.tsx",
+      "src/notebook/store/deps.ts",
+      "src/notebook/store/indexStore.ts",
+      "src/notebook/store/settingsStore.ts",
+      "src/notebook/store/sessions.ts",
+      "src/notebook/store/library.ts",
+      "src/notebook/store/clipboard.ts",
+      "src/notebook/store/events.ts",
+      "src/notebook/store/hooks.ts"
+    ],
+    "tests": []
+  },
+  "P04": {
+    "title": "Contracts (pure core/contracts + app contracts), shared canvas stores (overlay busy, selection, ruler with hitTest, holdSignal), labels/bidi, ruler hit geometry, pdf-render native types, font weight table, notebook route layout",
+    "wave": 1,
+    "files": [
+      "src/notebook/core/contracts/pdf.ts",
+      "src/notebook/core/contracts/backup.ts",
+      "src/notebook/core/contracts/importing.ts",
+      "src/notebook/core/contracts/tools.ts",
+      "src/notebook/contracts/canvas.ts",
+      "src/notebook/contracts/tools.ts",
+      "src/notebook/contracts/pdf.ts",
+      "src/notebook/contracts/audio.ts",
+      "src/notebook/contracts/importing.ts",
+      "src/notebook/contracts/export.ts",
+      "src/notebook/contracts/backup.ts",
+      "src/notebook/contracts/tours.ts",
+      "src/notebook/contracts/fonts.ts",
+      "src/notebook/core/text/labels.ts",
+      "src/notebook/core/text/bidi.ts",
+      "src/notebook/core/geom/rulerHit.ts",
+      "tests/notebook/text/labels.test.ts",
+      "tests/notebook/text/bidi.test.ts",
+      "tests/notebook/geom/rulerHit.test.ts",
+      "src/notebook/canvas/overlayContext.ts",
+      "src/notebook/canvas/selection.ts",
+      "src/notebook/canvas/ruler.ts",
+      "src/notebook/canvas/holdSignal.ts",
+      "modules/pdf-render/src/PdfRender.types.ts",
+      "src/app/notebook/_layout.tsx"
+    ],
+    "tests": [
+      "tests/notebook/text/labels.test.ts",
+      "tests/notebook/text/bidi.test.ts",
+      "tests/notebook/geom/rulerHit.test.ts"
+    ]
+  },
+  "P04U": {
+    "title": "UI kit with phone (compact) layouts, LowStorageWarning, physical placement helpers, shareFile, tour target registry, toast host",
+    "wave": 1,
+    "files": [
+      "src/notebook/ui/NbModal.tsx",
+      "src/notebook/ui/NbSheet.tsx",
+      "src/notebook/ui/Group.tsx",
+      "src/notebook/ui/ListRow.tsx",
+      "src/notebook/ui/ToggleRow.tsx",
+      "src/notebook/ui/RadioRow.tsx",
+      "src/notebook/ui/SectionTitle.tsx",
+      "src/notebook/ui/BetaBadge.tsx",
+      "src/notebook/ui/ProgressBar.tsx",
+      "src/notebook/ui/ColorDot.tsx",
+      "src/notebook/ui/Popover.tsx",
+      "src/notebook/ui/ConfirmDialog.tsx",
+      "src/notebook/ui/TextPromptDialog.tsx",
+      "src/notebook/ui/LowStorageWarning.tsx",
+      "src/notebook/ui/Toggle.tsx",
+      "src/notebook/ui/CircleButton.tsx",
+      "src/notebook/ui/InfoBanner.tsx",
+      "src/notebook/ui/EmptyState.tsx",
+      "src/notebook/ui/PaperPicker.tsx",
+      "src/notebook/ui/LocationChips.tsx",
+      "src/notebook/ui/CardRow.tsx",
+      "src/notebook/ui/NbToastHost.tsx",
+      "src/notebook/ui/toast.ts",
+      "src/notebook/ui/tourTargets.ts",
+      "src/notebook/ui/layout.ts",
+      "src/notebook/ui/physical.ts",
+      "src/notebook/ui/shareFile.ts",
+      "src/notebook/ui/index.ts"
+    ],
+    "tests": []
+  },
+  "P05": {
+    "title": "Ink geometry core: vendored freehand + incremental wet outline, smoothing, simplify, matrices, bounds, hit test, stroke+pixel erase, lasso, transforms, ruler snap, straighten",
+    "wave": 2,
+    "files": [
+      "src/notebook/core/ink/freehand.ts",
+      "src/notebook/core/ink/wetOutline.ts",
+      "src/notebook/core/ink/outline.ts",
+      "src/notebook/core/ink/smooth.ts",
+      "src/notebook/core/ink/resample.ts",
+      "src/notebook/core/ink/matrix.ts",
+      "src/notebook/core/ink/bounds.ts",
+      "src/notebook/core/ink/hittest.ts",
+      "src/notebook/core/ink/erase.ts",
+      "src/notebook/core/ink/lasso.ts",
+      "src/notebook/core/ink/ruler.ts",
+      "src/notebook/core/ink/transform.ts",
+      "tests/notebook/ink/freehand.test.ts",
+      "tests/notebook/ink/wetOutline.test.ts",
+      "tests/notebook/ink/hittest.test.ts",
+      "tests/notebook/ink/erase.test.ts",
+      "tests/notebook/ink/lasso.test.ts",
+      "tests/notebook/ink/transform.test.ts",
+      "tests/notebook/ink/ruler.test.ts"
+    ],
+    "tests": [
+      "tests/notebook/ink/freehand.test.ts",
+      "tests/notebook/ink/wetOutline.test.ts",
+      "tests/notebook/ink/hittest.test.ts",
+      "tests/notebook/ink/erase.test.ts",
+      "tests/notebook/ink/lasso.test.ts",
+      "tests/notebook/ink/transform.test.ts",
+      "tests/notebook/ink/ruler.test.ts"
+    ]
+  },
+  "P06": {
+    "title": "Shape recognition core and hold detector (fires once at 500 ms, resets on movement before firing, inert after firing)",
+    "wave": 2,
+    "files": [
+      "src/notebook/core/shapes/recognize.ts",
+      "src/notebook/core/shapes/fit.ts",
+      "src/notebook/core/shapes/corners.ts",
+      "src/notebook/core/shapes/hold.ts",
+      "src/notebook/core/shapes/names.ts",
+      "tests/notebook/shapes/recognize.test.ts",
+      "tests/notebook/shapes/hold.test.ts",
+      "tests/notebook/shapes/fixtures.ts"
+    ],
+    "tests": [
+      "tests/notebook/shapes/recognize.test.ts",
+      "tests/notebook/shapes/hold.test.ts"
+    ]
+  },
+  "P07": {
+    "title": "Calculator engine core + COMPLETE calculator type contract (types.ts with FN_NAMES, POST_OPS, STAT_VARS, KeyId, ModeOps, ModeHooks, MachineState, DisplayModel)",
+    "wave": 2,
+    "files": [
+      "src/notebook/core/calc/types.ts",
+      "src/notebook/core/calc/num/rational.ts",
+      "src/notebook/core/calc/num/complex.ts",
+      "src/notebook/core/calc/num/value.ts",
+      "src/notebook/core/calc/eval.ts",
+      "src/notebook/core/calc/functions.ts",
+      "src/notebook/core/calc/numeric.ts",
+      "src/notebook/core/calc/exact.ts",
+      "src/notebook/core/calc/format.ts",
+      "src/notebook/core/calc/dms.ts",
+      "src/notebook/core/calc/random.ts",
+      "src/notebook/core/calc/context.ts",
+      "src/notebook/core/calc/errors.ts",
+      "src/notebook/core/calc/registry.ts",
+      "tests/notebook/calc/engine/eval.test.ts",
+      "tests/notebook/calc/engine/exact.test.ts",
+      "tests/notebook/calc/engine/numeric.test.ts",
+      "tests/notebook/calc/engine/format.test.ts",
+      "tests/notebook/calc/engine/functions.test.ts"
+    ],
+    "tests": [
+      "tests/notebook/calc/engine/eval.test.ts",
+      "tests/notebook/calc/engine/exact.test.ts",
+      "tests/notebook/calc/engine/numeric.test.ts",
+      "tests/notebook/calc/engine/format.test.ts",
+      "tests/notebook/calc/engine/functions.test.ts"
+    ]
+  },
+  "P08": {
+    "title": ".qunote format: manifest with CRCs, fflate streaming writer, OWN central-directory zip reader with per-entry CRC/size checks, pack (reads open notebooks under write lock), unpack, remap, estimate, export/import glue",
+    "wave": 2,
+    "files": [
+      "src/notebook/core/qunote/manifest.ts",
+      "src/notebook/core/qunote/zipWrite.ts",
+      "src/notebook/core/qunote/zipRead.ts",
+      "src/notebook/core/qunote/crc32.ts",
+      "src/notebook/core/qunote/pack.ts",
+      "src/notebook/core/qunote/unpack.ts",
+      "src/notebook/core/qunote/remap.ts",
+      "src/notebook/core/qunote/estimate.ts",
+      "src/notebook/qunote/index.ts",
+      "tests/notebook/qunote/zipRead.test.ts",
+      "tests/notebook/qunote/pack.test.ts",
+      "tests/notebook/qunote/unpack.test.ts",
+      "tests/notebook/qunote/estimate.test.ts"
+    ],
+    "tests": [
+      "tests/notebook/qunote/zipRead.test.ts",
+      "tests/notebook/qunote/pack.test.ts",
+      "tests/notebook/qunote/unpack.test.ts",
+      "tests/notebook/qunote/estimate.test.ts"
+    ]
+  },
+  "P09": {
+    "title": "Backup core: manifest merge per device, tombstone-only deletes, conflict skip, Wi-Fi policy, Drive v3 client (expo/fetch injected, binary bodies), resumable chunked upload",
+    "wave": 2,
+    "files": [
+      "src/notebook/core/backup/manifest.ts",
+      "src/notebook/core/backup/plan.ts",
+      "src/notebook/core/backup/policy.ts",
+      "src/notebook/core/backup/drive.ts",
+      "src/notebook/core/backup/resumable.ts",
+      "src/notebook/core/backup/fetchTypes.ts",
+      "tests/notebook/backup/plan.test.ts",
+      "tests/notebook/backup/policy.test.ts",
+      "tests/notebook/backup/drive.test.ts",
+      "tests/notebook/backup/resumable.test.ts"
+    ],
+    "tests": [
+      "tests/notebook/backup/plan.test.ts",
+      "tests/notebook/backup/policy.test.ts",
+      "tests/notebook/backup/drive.test.ts",
+      "tests/notebook/backup/resumable.test.ts"
+    ]
+  },
+  "P10": {
+    "title": "PDF: iOS PDFKit native (serial queue, render journal) + JS PdfEngine, tile math, tile cache, crash-journal consumer",
+    "wave": 2,
+    "files": [
+      "modules/pdf-render/expo-module.config.json",
+      "modules/pdf-render/index.ts",
+      "modules/pdf-render/ios/PdfRender.podspec",
+      "modules/pdf-render/ios/PdfRenderModule.swift",
+      "modules/pdf-render/ios/PdfDocumentStore.swift",
+      "modules/pdf-render/ios/RenderJournal.swift",
+      "src/notebook/core/pdf/tiles.ts",
+      "tests/notebook/pdf/tiles.test.ts",
+      "src/notebook/pdf/engine.ts",
+      "src/notebook/pdf/tileCache.ts",
+      "src/notebook/pdf/crashJournal.ts"
+    ],
+    "tests": [
+      "tests/notebook/pdf/tiles.test.ts"
+    ]
+  },
+  "P10A": {
+    "title": "PDF Android native: bundled PDFium inside a separate ':pdf' process service, Messenger client, crash -> ERR_PDF_CRASHED",
+    "wave": 2,
+    "files": [
+      "modules/pdf-render/android/build.gradle",
+      "modules/pdf-render/android/src/main/AndroidManifest.xml",
+      "modules/pdf-render/android/src/main/java/net/qustudent/pdfrender/PdfRenderModule.kt",
+      "modules/pdf-render/android/src/main/java/net/qustudent/pdfrender/PdfServiceClient.kt",
+      "modules/pdf-render/android/src/main/java/net/qustudent/pdfrender/PdfRenderService.kt",
+      "modules/pdf-render/android/src/main/java/net/qustudent/pdfrender/PdfiumWorker.kt"
+    ],
+    "tests": []
+  },
+  "P11": {
+    "title": "iOS native modules: iCloud Drive ubiquity container (NSMetadataQuery on main queue) + Apple Pencil interaction",
+    "wave": 2,
+    "files": [
+      "modules/icloud-drive/expo-module.config.json",
+      "modules/icloud-drive/index.ts",
+      "modules/icloud-drive/ios/ICloudDrive.podspec",
+      "modules/icloud-drive/ios/ICloudDriveModule.swift",
+      "modules/icloud-drive/ios/UbiquityQuery.swift",
+      "modules/pencil-interaction/expo-module.config.json",
+      "modules/pencil-interaction/index.ts",
+      "modules/pencil-interaction/ios/PencilInteraction.podspec",
+      "modules/pencil-interaction/ios/PencilInteractionModule.swift"
+    ],
+    "tests": []
+  },
+  "P12": {
+    "title": "Audio: non-hook recorder singleton (or RecorderHost fallback), segments, crash journal, AppState + interruption pause, editor-unmount stop with grace, same-notebook marks, low-storage continue path, playback, recordings UI (prop-driven)",
+    "wave": 2,
+    "files": [
+      "src/notebook/core/audio/timeline.ts",
+      "tests/notebook/audio/timeline.test.ts",
+      "src/notebook/audio/presets.ts",
+      "src/notebook/audio/recorder.ts",
+      "src/notebook/audio/RecorderHost.tsx",
+      "src/notebook/audio/interruptions.ts",
+      "src/notebook/audio/player.ts",
+      "src/notebook/audio/recovery.ts",
+      "src/notebook/audio/permissions.ts",
+      "src/notebook/audio/useRecording.ts",
+      "src/notebook/audio/usePlayback.ts",
+      "src/notebook/audio/RecordButton.tsx",
+      "src/notebook/audio/ContinueRecordingBanner.tsx",
+      "src/notebook/audio/PlayerBar.tsx",
+      "src/notebook/audio/RecordingsPanel.tsx",
+      "src/notebook/audio/RecordPermissionSheet.tsx"
+    ],
+    "tests": [
+      "tests/notebook/audio/timeline.test.ts"
+    ]
+  },
+  "P13": {
+    "title": "Toolbar: tool state, layouts + phone rules, current-color dots, drag-to-dock with dimmed drop zones + hint, named presets with edit mode, option popovers placed away from the writing hand, color picker, more menu, editorFrames (toolbar x dock x position)",
+    "wave": 2,
+    "files": [
+      "src/notebook/core/toolbar/dock.ts",
+      "src/notebook/core/toolbar/colors.ts",
+      "src/notebook/core/toolbar/hand.ts",
+      "tests/notebook/toolbar/dock.test.ts",
+      "tests/notebook/toolbar/colors.test.ts",
+      "tests/notebook/toolbar/hand.test.ts",
+      "src/notebook/toolbar/toolState.ts",
+      "src/notebook/toolbar/toolMeta.ts",
+      "src/notebook/toolbar/Toolbar.tsx",
+      "src/notebook/toolbar/ToolButton.tsx",
+      "src/notebook/toolbar/MovableToolbar.tsx",
+      "src/notebook/toolbar/DropZones.tsx",
+      "src/notebook/toolbar/PenOptions.tsx",
+      "src/notebook/toolbar/HighlighterOptions.tsx",
+      "src/notebook/toolbar/EraserOptions.tsx",
+      "src/notebook/toolbar/ShapeOptions.tsx",
+      "src/notebook/toolbar/ColorPicker.tsx",
+      "src/notebook/toolbar/MoreToolsMenu.tsx"
+    ],
+    "tests": [
+      "tests/notebook/toolbar/dock.test.ts",
+      "tests/notebook/toolbar/colors.test.ts",
+      "tests/notebook/toolbar/hand.test.ts"
+    ]
+  },
+  "P14": {
+    "title": "Home entry (Figma 01 layout: 4 columns 4+4+1, badge at reading-end top corner), notebook announcement slide behind flag (X slide unchanged), More tab note, feedback topic",
+    "wave": 2,
+    "files": [
+      "src/app/(tabs)/index.tsx",
+      "src/app/(tabs)/more.tsx",
+      "src/app/feedback.tsx",
+      "src/lib/feedback.ts",
+      "src/components/Announcements.tsx",
+      "../feedback-worker/src/index.js"
+    ],
+    "tests": []
+  },
+  "P15": {
+    "title": "Tours (library welcome + 4 steps with renumbering, editor 5 steps with RTL-aware undo text, unioned targets) and first-time setup modal (stacked choice cards on phones, backup via injected flow)",
+    "wave": 2,
+    "files": [
+      "src/notebook/core/tours/placement.ts",
+      "src/notebook/core/tours/steps.ts",
+      "tests/notebook/tours/placement.test.ts",
+      "tests/notebook/tours/steps.test.ts",
+      "src/notebook/tours/stepText.ts",
+      "src/notebook/tours/tourState.ts",
+      "src/notebook/tours/TourOverlay.tsx",
+      "src/notebook/tours/Spotlight.tsx",
+      "src/notebook/tours/TourCard.tsx",
+      "src/notebook/tours/WelcomeCard.tsx",
+      "src/notebook/tours/LibraryTour.tsx",
+      "src/notebook/tours/EditorTour.tsx",
+      "src/notebook/tours/SetupModal.tsx"
+    ],
+    "tests": [
+      "tests/notebook/tours/placement.test.ts",
+      "tests/notebook/tours/steps.test.ts"
+    ]
+  },
+  "P16": {
+    "title": "Skia painter (JS-runtime objects, 48 MB budget, highlighter group), PDF previews/tiles, images, fonts 500/700, text layout, offscreen render, cached page PNG thumbnails, Phase 0 spike screen",
+    "wave": 3,
+    "files": [
+      "src/notebook/ink/paper.ts",
+      "src/notebook/ink/items.ts",
+      "src/notebook/ink/pictures.ts",
+      "src/notebook/ink/pdfTiles.ts",
+      "src/notebook/ink/images.ts",
+      "src/notebook/ink/imageBudget.ts",
+      "src/notebook/ink/fonts.ts",
+      "src/notebook/ink/textLayout.ts",
+      "src/notebook/ink/paintPage.ts",
+      "src/notebook/ink/pageThumbs.ts",
+      "src/notebook/ink/index.ts",
+      "src/notebook/spike/SpikeScreen.tsx",
+      "src/app/notebook/spike.tsx",
+      "src/app/notebook/spike.web.tsx"
+    ],
+    "tests": []
+  },
+  "P17": {
+    "title": "Import pipeline: incoming stash without early clear, receive screen with searchable existing-notebook picker, password prompt (privacy text), background PDF import with probe + render crash journal, scan/photos, thumb request",
+    "wave": 3,
+    "files": [
+      "src/app/+native-intent.tsx",
+      "src/app/notebook/receive.tsx",
+      "src/app/notebook/receive.web.tsx",
+      "src/app/notebook/import.tsx",
+      "src/app/notebook/import.web.tsx",
+      "src/notebook/core/importing/plan.ts",
+      "src/notebook/core/importing/sniff.ts",
+      "tests/notebook/importing/plan.test.ts",
+      "tests/notebook/importing/sniff.test.ts",
+      "src/notebook/import/incoming.ts",
+      "src/notebook/import/pickPdf.ts",
+      "src/notebook/import/pickPhotos.ts",
+      "src/notebook/import/scan.ts",
+      "src/notebook/import/importFromSource.ts",
+      "src/notebook/import/importPdf.ts",
+      "src/notebook/import/decryptFallback.ts",
+      "src/notebook/import/importImages.ts",
+      "src/notebook/import/insertPdf.ts",
+      "src/notebook/import/jobs.ts",
+      "src/notebook/import/ReceiveScreen.tsx",
+      "src/notebook/import/NotebookPickerSheet.tsx",
+      "src/notebook/import/ImportScreen.tsx",
+      "src/notebook/import/ImportProgress.tsx",
+      "src/notebook/import/PasswordPrompt.tsx"
+    ],
+    "tests": [
+      "tests/notebook/importing/plan.test.ts",
+      "tests/notebook/importing/sniff.test.ts"
+    ]
+  },
+  "P18": {
+    "title": "Calculator modes core + modeHooks adapter (MATRIX, VECTOR, CMPLX, BASE-N, STAT/regressions/distributions, EQN, INEQ, TABLE, RATIO, CONST, CONV, DRG)",
+    "wave": 3,
+    "files": [
+      "src/notebook/core/calc/modes/index.ts",
+      "src/notebook/core/calc/modes/hooks.ts",
+      "src/notebook/core/calc/modes/matrix.ts",
+      "src/notebook/core/calc/modes/vector.ts",
+      "src/notebook/core/calc/modes/cmplx.ts",
+      "src/notebook/core/calc/modes/basen.ts",
+      "src/notebook/core/calc/modes/stat.ts",
+      "src/notebook/core/calc/modes/regression.ts",
+      "src/notebook/core/calc/modes/distr.ts",
+      "src/notebook/core/calc/modes/eqn.ts",
+      "src/notebook/core/calc/modes/ineq.ts",
+      "src/notebook/core/calc/modes/table.ts",
+      "src/notebook/core/calc/modes/ratio.ts",
+      "src/notebook/core/calc/modes/const.ts",
+      "src/notebook/core/calc/modes/conv.ts",
+      "src/notebook/core/calc/modes/drg.ts",
+      "tests/notebook/calc/modes/matrix.test.ts",
+      "tests/notebook/calc/modes/stat.test.ts",
+      "tests/notebook/calc/modes/eqn.test.ts",
+      "tests/notebook/calc/modes/basen.test.ts",
+      "tests/notebook/calc/modes/misc.test.ts"
+    ],
+    "tests": [
+      "tests/notebook/calc/modes/matrix.test.ts",
+      "tests/notebook/calc/modes/stat.test.ts",
+      "tests/notebook/calc/modes/eqn.test.ts",
+      "tests/notebook/calc/modes/basen.test.ts",
+      "tests/notebook/calc/modes/misc.test.ts"
+    ]
+  },
+  "P19": {
+    "title": "Calculator key machine + natural-display layout (codes against P07 types + a stub ModeHooks; persist encodes bigint)",
+    "wave": 3,
+    "files": [
+      "src/notebook/core/calc/keys/keymap.ts",
+      "src/notebook/core/calc/keys/editor.ts",
+      "src/notebook/core/calc/keys/machine.ts",
+      "src/notebook/core/calc/keys/menus.ts",
+      "src/notebook/core/calc/keys/modeScreens.ts",
+      "src/notebook/core/calc/keys/display.ts",
+      "src/notebook/core/calc/keys/history.ts",
+      "tests/notebook/calc/keys/stubHooks.ts",
+      "tests/notebook/calc/keys/editor.test.ts",
+      "tests/notebook/calc/keys/machine.test.ts",
+      "tests/notebook/calc/keys/menus.test.ts",
+      "tests/notebook/calc/keys/display.test.ts",
+      "tests/notebook/calc/keys/persist.test.ts"
+    ],
+    "tests": [
+      "tests/notebook/calc/keys/editor.test.ts",
+      "tests/notebook/calc/keys/machine.test.ts",
+      "tests/notebook/calc/keys/menus.test.ts",
+      "tests/notebook/calc/keys/display.test.ts",
+      "tests/notebook/calc/keys/persist.test.ts"
+    ]
+  },
+  "P20": {
+    "title": "Backup service: providers (iCloud, Drive Android-only via file split), enable flow with remote check + restore offer, purged tombstones, device id, expo/fetch uploads, revocation rule, BackupSection (Figma 15 strings), RestoreScreen",
+    "wave": 3,
+    "files": [
+      "src/app/notebook/restore.tsx",
+      "src/app/notebook/restore.web.tsx",
+      "src/notebook/backup/service.ts",
+      "src/notebook/backup/backupStore.ts",
+      "src/notebook/backup/icloudProvider.ts",
+      "src/notebook/backup/driveProvider.ts",
+      "src/notebook/backup/googleAuth.ts",
+      "src/notebook/backup/googleAuth.android.ts",
+      "src/notebook/backup/snapshot.ts",
+      "src/notebook/backup/network.ts",
+      "src/notebook/backup/useBackup.ts",
+      "src/notebook/backup/useEnableBackupFlow.tsx",
+      "src/notebook/backup/RemoteFoundDialog.tsx",
+      "src/notebook/backup/BackupSection.tsx",
+      "src/notebook/backup/RestoreScreen.tsx"
+    ],
+    "tests": []
+  },
+  "P21": {
+    "title": "Library screens: section rules (empty rules, orphan course folders), section lists, new notebook modal (compact sheet), card actions incl. orphan rename-as-folder, search/sort, recently deleted, empty + low storage, Beta banner, tour host",
+    "wave": 4,
+    "files": [
+      "src/app/notebook/index.tsx",
+      "src/app/notebook/index.web.tsx",
+      "src/app/notebook/section/[key].tsx",
+      "src/app/notebook/section/[key].web.tsx",
+      "src/app/notebook/deleted.tsx",
+      "src/app/notebook/deleted.web.tsx",
+      "src/notebook/library/LibraryScreen.tsx",
+      "src/notebook/library/SectionScreen.tsx",
+      "src/notebook/library/DeletedScreen.tsx",
+      "src/notebook/library/NotebookCard.tsx",
+      "src/notebook/library/FolderCard.tsx",
+      "src/notebook/library/NewNotebookModal.tsx",
+      "src/notebook/library/NotebookActionsSheet.tsx",
+      "src/notebook/library/FolderActionsSheet.tsx",
+      "src/notebook/library/MoveSheet.tsx",
+      "src/notebook/library/SortControl.tsx",
+      "src/notebook/library/SearchField.tsx",
+      "src/notebook/library/BetaFeedbackBanner.tsx",
+      "src/notebook/library/LowStorageBanner.tsx",
+      "src/notebook/library/Thumb.tsx"
+    ],
+    "tests": []
+  },
+  "P22": {
+    "title": "Canvas view and input: virtualized pages, zoom 400%, manual-gesture draw locked to one pointer, wet ink with frozen outline, hold-to-snap at fire time, highlighter hold-straighten, UI-runtime eraser mirror with live feedback, gesture arbitration with overlays/ruler, palm zone after lift, 2/3-finger taps, Pencil, playback dimming, explicit thread boundary",
+    "wave": 4,
+    "files": [
+      "src/notebook/core/canvas/layout.ts",
+      "src/notebook/core/canvas/viewport.ts",
+      "src/notebook/core/canvas/palm.ts",
+      "src/notebook/core/canvas/taps.ts",
+      "src/notebook/core/canvas/eraseMirror.ts",
+      "tests/notebook/canvas/layout.test.ts",
+      "tests/notebook/canvas/viewport.test.ts",
+      "tests/notebook/canvas/palm.test.ts",
+      "tests/notebook/canvas/eraseMirror.test.ts",
+      "src/notebook/canvas/PageCanvas.tsx",
+      "src/notebook/canvas/PageLayer.tsx",
+      "src/notebook/canvas/OverlayHost.tsx",
+      "src/notebook/canvas/gestures.ts",
+      "src/notebook/canvas/wetInk.ts",
+      "src/notebook/canvas/pencil.ts",
+      "src/notebook/canvas/playback.ts",
+      "src/notebook/canvas/tiles.ts",
+      "src/notebook/canvas/pageMirror.ts",
+      "src/notebook/canvas/useCanvasApi.ts"
+    ],
+    "tests": [
+      "tests/notebook/canvas/layout.test.ts",
+      "tests/notebook/canvas/viewport.test.ts",
+      "tests/notebook/canvas/palm.test.ts",
+      "tests/notebook/canvas/eraseMirror.test.ts"
+    ]
+  },
+  "P22N": {
+    "title": "CONTINGENT: native ink input module (per-pointer tool type, palm rejection, coalesced/predicted samples) — built only if Phase 0 G-INK fails",
+    "wave": 4,
+    "files": [
+      "modules/ink-input/expo-module.config.json",
+      "modules/ink-input/index.ts",
+      "modules/ink-input/src/InkInput.types.ts",
+      "modules/ink-input/ios/InkInput.podspec",
+      "modules/ink-input/ios/InkInputView.swift",
+      "modules/ink-input/ios/InkInputModule.swift",
+      "modules/ink-input/android/build.gradle",
+      "modules/ink-input/android/src/main/java/net/qustudent/inkinput/InkInputView.kt",
+      "modules/ink-input/android/src/main/java/net/qustudent/inkinput/InkInputModule.kt"
+    ],
+    "tests": []
+  },
+  "P23": {
+    "title": "Export: vector PDF (highlighter as one transparency group), page PNG, sole cover-thumbnail worker (singleton, mutex, needsThumb), ExportSheet with range steppers and compact layout",
+    "wave": 4,
+    "files": [
+      "src/notebook/core/export/pageRange.ts",
+      "src/notebook/core/export/pdfOps.ts",
+      "tests/notebook/export/pageRange.test.ts",
+      "tests/notebook/export/pdfOps.test.ts",
+      "src/notebook/export/pdfExport.ts",
+      "src/notebook/export/pngExport.ts",
+      "src/notebook/export/thumbnails.ts",
+      "src/notebook/export/ExportSheet.tsx"
+    ],
+    "tests": [
+      "tests/notebook/export/pageRange.test.ts",
+      "tests/notebook/export/pdfOps.test.ts"
+    ]
+  },
+  "P24": {
+    "title": "Calculator UI + glue: installCalc (modes + hooks), keypad, LCD, history, docked/floating panel, persistence (bigint-safe), real-modes integration tests",
+    "wave": 4,
+    "files": [
+      "src/notebook/calc/installCalc.ts",
+      "src/notebook/calc/calcStore.ts",
+      "src/notebook/calc/useCalculator.ts",
+      "src/notebook/calc/CalculatorPanel.tsx",
+      "src/notebook/calc/Keypad.tsx",
+      "src/notebook/calc/Key.tsx",
+      "src/notebook/calc/KeyFace.tsx",
+      "src/notebook/calc/ReplayPad.tsx",
+      "src/notebook/calc/Lcd.tsx",
+      "src/notebook/calc/LcdMath.tsx",
+      "src/notebook/calc/StatusLine.tsx",
+      "src/notebook/calc/CalcHistory.tsx",
+      "tests/notebook/calc/integration/realModes.test.ts"
+    ],
+    "tests": [
+      "tests/notebook/calc/integration/realModes.test.ts"
+    ]
+  },
+  "P25": {
+    "title": "Pages view: PNG thumbnail grid (cached by page version), explicit select mode with 0/1/n action rules, dashed add tile, drag reorder, per-page paper, insert PDF, jump",
+    "wave": 4,
+    "files": [
+      "src/app/notebook/pages/[id].tsx",
+      "src/app/notebook/pages/[id].web.tsx",
+      "src/notebook/core/pages/reorder.ts",
+      "src/notebook/core/pages/pageSelection.ts",
+      "tests/notebook/pages/reorder.test.ts",
+      "tests/notebook/pages/pageSelection.test.ts",
+      "src/notebook/pages/PagesScreen.tsx",
+      "src/notebook/pages/PageThumb.tsx",
+      "src/notebook/pages/AddPageTile.tsx",
+      "src/notebook/pages/ReorderGrid.tsx",
+      "src/notebook/pages/PageActionsBar.tsx",
+      "src/notebook/pages/PagePaperSheet.tsx"
+    ],
+    "tests": [
+      "tests/notebook/pages/reorder.test.ts",
+      "tests/notebook/pages/pageSelection.test.ts"
+    ]
+  },
+  "P26": {
+    "title": "Notebook settings screen: backup section (+enable flow), writing options, storage usage, recently deleted, replay tours, feedback",
+    "wave": 4,
+    "files": [
+      "src/app/notebook/settings.tsx",
+      "src/app/notebook/settings.web.tsx",
+      "src/notebook/settings/SettingsScreen.tsx",
+      "src/notebook/settings/WritingSection.tsx",
+      "src/notebook/settings/StorageSection.tsx",
+      "src/notebook/settings/StorageBar.tsx",
+      "src/notebook/settings/PencilActionSheet.tsx",
+      "src/notebook/settings/HandSheet.tsx"
+    ],
+    "tests": []
+  },
+  "P27": {
+    "title": "Lasso selection (8 handles + rotate + size chip, presets 50-200%, menu away from hand, staged clipboard) and image tool (openSource action, crop sheet)",
+    "wave": 4,
+    "files": [
+      "src/notebook/core/tools/selection.ts",
+      "tests/notebook/tools/selection.test.ts",
+      "src/notebook/tools/selection/useSelectionTool.ts",
+      "src/notebook/tools/selection/SelectionOverlay.tsx",
+      "src/notebook/tools/selection/SelectionHandles.tsx",
+      "src/notebook/tools/selection/SelectionMenu.tsx",
+      "src/notebook/tools/image/useImageTool.ts",
+      "src/notebook/tools/image/insertImage.ts",
+      "src/notebook/tools/image/ImageSourceSheet.tsx",
+      "src/notebook/tools/image/ImageCropSheet.tsx"
+    ],
+    "tests": [
+      "tests/notebook/tools/selection.test.ts"
+    ]
+  },
+  "P28": {
+    "title": "Shape snap feedback (undoIfTop toast, hint placement away from hand), direct shape tool, ruler overlay (2-pointer-inside rule, sole mirror of rulerOn, Figma 09 hint), text boxes (500/700 weights, fontSize×zoom sizing, width reflow resize)",
+    "wave": 4,
+    "files": [
+      "src/notebook/tools/shapes/useShapeTool.ts",
+      "src/notebook/tools/shapes/useShapeSnap.ts",
+      "src/notebook/tools/shapes/SnapHint.tsx",
+      "src/notebook/tools/ruler/useRulerTool.ts",
+      "src/notebook/tools/ruler/RulerOverlay.tsx",
+      "src/notebook/tools/text/useTextTool.ts",
+      "src/notebook/tools/text/TextEditorOverlay.tsx",
+      "src/notebook/tools/text/TextFormatBar.tsx"
+    ],
+    "tests": []
+  },
+  "P29": {
+    "title": "Editor shell: route, error states (exact strings), icon header with ed.actions pill, editorFrames placement (toolbar x dock), tools wiring incl. image action, recording lifecycle + playback entry/exit, calculator dock, export sheet, setup + tour",
+    "wave": 5,
+    "files": [
+      "src/app/notebook/edit/[id].tsx",
+      "src/app/notebook/edit/[id].web.tsx",
+      "src/notebook/editor/EditorScreen.tsx",
+      "src/notebook/editor/EditorHeader.tsx",
+      "src/notebook/editor/PageCounter.tsx",
+      "src/notebook/editor/ZoomPill.tsx",
+      "src/notebook/editor/EditorMoreMenu.tsx",
+      "src/notebook/editor/CalculatorDock.tsx",
+      "src/notebook/editor/EditorError.tsx",
+      "src/notebook/editor/useEditorLifecycle.ts",
+      "src/notebook/editor/useToolPlugins.ts",
+      "src/notebook/editor/usePlaybackFlow.ts"
+    ],
+    "tests": []
+  },
+  "P30": {
+    "title": "Integration: NotebookServices in root layout, wiring/fix-ups, iOS google-signin import guard, web guard, config verification, end-to-end Node tests, scenario S1-S6 walkthrough + consolidated device checklist",
+    "wave": 6,
+    "files": [
+      "src/notebook/NotebookServices.tsx",
+      "tests/notebook/integration/flow.test.ts",
+      "tests/notebook/integration/qunoteRoundtrip.test.ts",
+      "tests/notebook/integration/backupPlanFlow.test.ts",
+      "tests/notebook/integration/clipboardFlow.test.ts"
+    ],
+    "tests": [
+      "tests/notebook/integration/flow.test.ts",
+      "tests/notebook/integration/qunoteRoundtrip.test.ts",
+      "tests/notebook/integration/backupPlanFlow.test.ts",
+      "tests/notebook/integration/clipboardFlow.test.ts"
+    ]
+  }
+}

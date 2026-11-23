@@ -6,6 +6,7 @@
  * never shipped inside the app.
  *
  * Request:  POST /  { type, message, contact?, meta? }   (JSON)
+ *           meta: app, platform, os, device, lang, and topic (the feature, e.g. 'notebook')
  * Response: { ok: true } or { ok: false, error }
  *
  * Secrets:  TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID   (see README.md)
@@ -22,7 +23,7 @@ const MAX_BODY_BYTES = 16_000;
 const MAX_MESSAGE = 2000;
 const MAX_CONTACT = 200;
 const MAX_META = 80;
-const META_FIELDS = ['app', 'platform', 'os', 'device', 'lang'];
+const META_FIELDS = ['app', 'platform', 'os', 'device', 'lang', 'topic'];
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',

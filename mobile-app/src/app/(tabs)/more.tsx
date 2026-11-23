@@ -15,6 +15,7 @@ import { isEnglish, tr } from '@/lib/i18n';
 import { useIsTablet } from '@/lib/layout';
 import { row } from '@/lib/rtl';
 import { colors } from '@/lib/theme';
+import { notebookSupported } from '@/notebook/flags';
 import { useAppData } from '@/store/AppData';
 
 const SITE_URL = 'https://qustudent.net';
@@ -47,6 +48,10 @@ export default function MoreScreen() {
 
   const confirmClear = () => {
     const run = () => clearAll();
+    // Notebooks live in their own files and are never touched by this (NB-84). Said wherever
+    // notebooks can exist (the iOS and Android apps): even while the Home cell is hidden, a PDF
+    // opened with the app becomes a notebook. The web app has none, so it reads as before.
+    const kept = notebookSupported ? ` ${tr('لا تُحذف المذكرات.', 'Notebooks are kept.')}` : '';
     if (Platform.OS === 'web') {
       // Alert buttons aren't supported on web
       if (
@@ -55,7 +60,7 @@ export default function MoreScreen() {
           tr(
             'حذف كل البيانات؟ سيُحذف جدولك ودرجاتك وغيابك من هذا الجهاز.',
             'Delete all data? Your timetable, grades and absences will be removed from this device.',
-          ),
+          ) + kept,
         )
       )
         run();
@@ -63,7 +68,7 @@ export default function MoreScreen() {
     }
     Alert.alert(
       tr('حذف كل البيانات؟', 'Delete all data?'),
-      tr('سيُحذف جدولك ودرجاتك وغيابك من هذا الجهاز.', 'Your timetable, grades and absences will be removed from this device.'),
+      tr('سيُحذف جدولك ودرجاتك وغيابك من هذا الجهاز.', 'Your timetable, grades and absences will be removed from this device.') + kept,
       [
       { text: tr('إلغاء', 'Cancel'), style: 'cancel' },
       { text: tr('حذف', 'Delete'), style: 'destructive', onPress: run },

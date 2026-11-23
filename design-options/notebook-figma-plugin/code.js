@@ -1170,7 +1170,7 @@ function sSetup2() {
     setupRow('النقر المزدوج على القلم', 'ماذا يحدث عند النقر مرتين على Apple Pencil؟', H([chip('التبديل إلى الممحاة', { on: true }), chip('آخر أداة'), chip('لا شيء')], { gap: 8 })),
     setupRow('الورق الافتراضي', 'للمذكرات الجديدة، وتستطيع تغييره لكل مذكرة.', H([smallPaper('مسطر', 'lined', true), smallPaper('فارغ', 'blank'), smallPaper('مربعات', 'grid'), smallPaper('نقاط', 'dotted')], { gap: 16 })),
     setupRow('مكان شريط الأدوات', 'تستطيع نقله لاحقاً بالضغط المطوّل عليه.', H([chip('أعلى', { on: true }), chip('أسفل'), chip('يمين'), chip('يسار')], { gap: 8 })),
-    H([toggle(true), spacer(), V([T('النسخ الاحتياطي إلى iCloud Drive', { size: 16, w: 'bold' }), T('تلقائياً عبر Wi-Fi، في مجلد QU Student', { size: 13, color: C.faint })], { gap: 2, cross: 'MAX' })], { w: 564, cross: 'CENTER', name: 'backup-row' }),
+    H([toggle(false), spacer(), V([T('النسخ الاحتياطي إلى iCloud Drive', { size: 16, w: 'bold' }), T('مغلق الآن — فعّله ليُنسخ تلقائياً عبر Wi-Fi', { size: 13, color: C.faint })], { gap: 2, cross: 'MAX' })], { w: 564, cross: 'CENTER', name: 'backup-row' }),
     divider(564),
     H([T('تجدها كلها لاحقاً في إعدادات المذكرات', { size: 13, color: C.faint }), spacer(), primaryBtn('ابدأ الكتابة', { icon: 'pen', w: 220 })], { w: 564, cross: 'CENTER' }),
   ], 620);

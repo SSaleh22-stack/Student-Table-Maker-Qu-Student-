@@ -1,0 +1,86 @@
+// PdfRender (Android, P10A): bundled PDFium inside a separate ':pdf' process service.
+//
+// PDFium artifact, verified 2026-11-23 against Maven Central and the GitHub sources at the release tags
+// (https://repo1.maven.org/maven2/io/legere/pdfiumandroid/, https://github.com/johngray1965/PdfiumAndroidKt):
+// - Coordinates: io.legere:pdfiumandroid (Kotlin/Java API, no .so inside) + io.legere:pdfiumandroid-core
+//   (JNI: libpdfium.so and libpdfiumandroid.so for arm64-v8a, armeabi-v7a, x86, x86_64) + pdfiumandroid-api
+//   (compile-scope dependency of both). Stable releases: 2.0.0, 2.0.1, 2.0.2, 2.0.3 (latest stable);
+//   3.0.x are alphas. minSdk 24 (same as the app).
+// - Pinned to 2.0.1 on purpose: 2.0.2 and 2.0.3 are built with Kotlin 2.4.10 (kotlin-stdlib 2.4.10 on the
+//   compile classpath, metadata 2.4), and this app compiles Kotlin with 2.2.0 (React Native 0.88 Gradle
+//   plugin), which reads metadata only one minor version ahead. 2.0.1 is built with Kotlin 2.3.21, which
+//   2.2.0 can read. When the app's Kotlin is 2.3 or newer, bump both lines below to 2.0.3 (same API, plus
+//   PdfDocument.getPageSize/getPageSizes).
+// - The library classes target JVM 21 bytecode. We call no inline function of the library, so a JVM 17
+//   Kotlin target compiles against it; D8 dexes Java 21 class files.
+// - Password open: PdfiumCore.newDocument(ParcelFileDescriptor, password: String?). A missing OR wrong
+//   password throws io.legere.pdfiumandroid.api.PdfPasswordException (FPDF_ERR_PASSWORD); other failures throw
+//   java.io.IOException("cannot create document: <FPDF_ERR text>"). The fd is read lazily with pread, so the
+//   ParcelFileDescriptor stays open for the document's life (PdfDocument.close() closes it).
+// - Save without security: PdfDocument.saveAsCopy(PdfWriteCallback, PdfDocument.FPDF_REMOVE_SECURITY = 3)
+//   wraps FPDF_SaveAsCopy; the callback's WriteBlock(ByteArray?): Int must return 1 for success, 0 for
+//   failure. PdfiumWorker re-opens the copy without a password to verify it. If saveAsCopy returns false or
+//   the copy is still locked, saveDecrypted rejects ERR_PDF_UNSUPPORTED and JS falls back to @cantoo/pdf-lib (P17).
+// - Rendering: PdfPage.renderPageBitmap(bitmap, startX, startY, drawSizeX, drawSizeY, renderAnnot, textMask,
+//   canvasColor, pageBackgroundColor) on ARGB_8888 (FPDF_REVERSE_BYTE_ORDER), negative start offsets allowed,
+//   which is how regions are rendered. Page sizes: PdfPage.getPageWidthPoint()/getPageHeightPoint() (Int
+//   points of FPDF_GetPageWidth/Height, crop box with /Rotate applied), refined to fractional points with
+//   getPageBoundingBox() (FPDF_GetPageBoundingBox, the same box unrotated, as floats) when the two agree, and
+//   getPageRotation() (0..3, -1 error).
+// - 16 KB pages: the core .so files are built with NDK 29 (16 KB LOAD alignment) since 2025-09 (issue #38,
+//   "The latest build does support 16K page sizes"). Issue #56 (closed 2026-11-10) reported a 4 KB GNU_RELRO end
+//   in 2.0.3; the maintainer showed the binaries meet the third rule of the Android 16 KB guide (no writable
+//   data after RELRO in the same LOAD segment). Checked 2026-11-23 in pdfiumandroid-core-2.0.1.aar itself (ELF
+//   program headers): arm64-v8a and x86_64 libpdfium.so and libpdfiumandroid.so have every LOAD Align 0x4000;
+//   armeabi-v7a and x86 have 0x1000, which is fine (16 KB pages apply to 64-bit devices only). DEVICE CHECKLIST: check the first Android build in Play
+//   Console (16 KB compliance) and with `zipalign -c -P 16 -v 4 app.apk` plus
+//   `llvm-readelf -lW lib/arm64-v8a/libpdfium.so` (LOAD align 0x4000). FALLBACK ARTIFACT if it fails:
+//   io.github.oothp:pdfium-android (barteksc API fork with 16 KB alignment; com.shockwave.pdfium.PdfiumCore,
+//   newDocument(fd, password)); it has no save-as-copy, so saveDecrypted would reject ERR_PDF_UNSUPPORTED there.
+//
+// Process model: PDFium never runs in the app process. PdfRenderService (android:process=':pdf') runs
+// PdfiumWorker on one HandlerThread; PdfServiceClient (app process) talks to it over a Messenger and turns a
+// dead ':pdf' process into ERR_PDF_CRASHED.
+//
+// DEVICE CHECKLIST (P10A, first Android development build; P30 consolidates it):
+// 1. 16 KB pages: Play Console 16 KB compliance of the first build, plus `zipalign -c -P 16 -v 4 app.apk` and
+//    `llvm-readelf -lW lib/arm64-v8a/libpdfium.so` / `libpdfiumandroid.so` (every LOAD Align 0x4000), and one
+//    PDF opened on a 16 KB emulator image (Android 15+ "16 KB page size" system image). If it fails, switch to the
+//    FALLBACK ARTIFACT io.github.oothp:pdfium-android (see above; saveDecrypted then rejects ERR_PDF_UNSUPPORTED
+//    and P17 uses @cantoo/pdf-lib).
+// 2. Isolation: while a PDF is open, `adb shell ps -A | grep net.qustudent.app` lists the app AND `net.qustudent.app:pdf`;
+//    `adb shell run-as net.qustudent.app cat /proc/<app pid>/maps | grep -i pdfium` is EMPTY for the app process (PDFium
+//    is only mapped in ':pdf').
+// 3. Crash -> ERR_PDF_CRASHED, next call works: start a renderPage/renderRegion of a large page and run
+//    `adb shell run-as net.qustudent.app kill -9 <pid of :pdf>` (or open a PDF known to crash PDFium). The call rejects
+//    ERR_PDF_CRASHED (JS 'renderer-crashed'), the app stays up, lastRenderCrash() returns {path, page} of that
+//    render (filesDir/pdf-crash.json) until clearRenderCrash(), and the next renderRegion with the SAME handle
+//    succeeds (the service is bound again and the document reopened without calling open()).
+// 4. Password PDFs on Android 8, 12, 14 and 15: inspect -> needsPassword; open(null) -> ERR_PDF_PASSWORD;
+//    open(wrong) -> ERR_PDF_WRONG_PASSWORD; saveDecrypted(right) writes dest, which opens with no password.
+// 5. Idle release: after 2 minutes without PDF calls the ':pdf' service is unbound (logcat: no error), and the
+//    next render binds again and works.
+
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+group = 'net.qustudent.pdfrender'
+version = '1.0.0'
+
+android {
+  namespace "net.qustudent.pdfrender"
+  defaultConfig {
+    versionCode 1
+    versionName '1.0.0'
+  }
+}
+
+dependencies {
+  // Kotlin API (PdfiumCore, PdfDocument, PdfPage; pdfiumandroid-api comes with it).
+  implementation 'io.legere:pdfiumandroid:2.0.1'
+  // The JNI payload. The POM of pdfiumandroid lists it as runtime scope only; declaring it here puts
+  // PdfiumCoreU (a default constructor argument of PdfiumCore) on the compile classpath too.
+  implementation 'io.legere:pdfiumandroid-core:2.0.1'
+}

@@ -26,6 +26,8 @@ export interface ToastData {
   detail?: string;
   tone: 'ok' | 'warn';
   undo?: () => void;
+  /** Text of the action button; defaults to "تراجع" (Undo) */
+  actionLabel?: string;
 }
 
 /**
@@ -123,7 +125,7 @@ export function Toast({
               style={[styles.undo, { flexDirection: row }]}>
               <Icon name="undo" size={15} color={colors.accentLight} />
               <AppText size={13} weight="bold" color={colors.accentLight}>
-                {tr('تراجع', 'Undo')}
+                {toast.actionLabel ?? tr('تراجع', 'Undo')}
               </AppText>
             </Pressable>
           ) : null}

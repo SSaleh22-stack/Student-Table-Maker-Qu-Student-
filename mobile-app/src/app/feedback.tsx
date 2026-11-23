@@ -10,15 +10,18 @@ import {
   CONTACT_MAX,
   FeedbackSendError,
   type FeedbackError,
+  type FeedbackTopic,
   type FeedbackType,
+  isFeedbackTopic,
   MESSAGE_MAX,
   MESSAGE_MIN,
   sendFeedback,
+  topicPrefix,
 } from '@/lib/feedback';
 import { tr } from '@/lib/i18n';
 import { useIsTablet } from '@/lib/layout';
 import { goBack } from '@/lib/nav';
-import { inputDir, ltr, row } from '@/lib/rtl';
+import { alignStart, inputDir, ltr, padEnd, padStart, row } from '@/lib/rtl';
 import { colors, fonts } from '@/lib/theme';
 
 const types = (): { key: FeedbackType; icon: IconName; label: string; hint: string }[] => [
@@ -54,13 +57,22 @@ const errorText = (reason: FeedbackError) =>
 
 const isType = (v: unknown): v is FeedbackType => v === 'problem' || v === 'suggestion' || v === 'question';
 
+/** The chip naming the feature a message is about. */
+const topicLabel = (topic: FeedbackTopic) => (topic === 'notebook' ? tr('المذكرات (تجريبي)', 'Notebook (beta)') : '');
+const topicIcon = (topic: FeedbackTopic): IconName => (topic === 'notebook' ? 'notebookPen' : 'message');
+
 /** "أرسل ملاحظة": a problem, suggestion or question, sent from inside the app. */
 export default function FeedbackScreen() {
   // Tablets get bigger text and use the width
   const tablet = useIsTablet();
   const t = (phone: number, tab: number) => (tablet ? tab : phone);
-  const params = useLocalSearchParams<{ type?: string }>();
+  const params = useLocalSearchParams<{ type?: string; topic?: string }>();
   const [type, setType] = useState<FeedbackType>(isType(params.type) ? params.type : 'problem');
+  // Opened from a feature (the notebook library's "Send feedback"): the message is about it, until
+  // the student removes the chip. Any other topic value is ignored.
+  const [topic, setTopic] = useState<FeedbackTopic | undefined>(isFeedbackTopic(params.topic) ? params.topic : undefined);
+  // The topic's prefix is added when sending and counts toward the limit.
+  const messageMax = MESSAGE_MAX - topicPrefix(topic).length;
   const [message, setMessage] = useState('');
   const [contact, setContact] = useState('');
   const [sending, setSending] = useState(false);
@@ -75,7 +87,7 @@ export default function FeedbackScreen() {
     setSending(true);
     setError(null);
     try {
-      await sendFeedback({ type, message, contact });
+      await sendFeedback({ type, message, contact, topic });
       setSent({ withContact: contact.trim().length > 0 });
       setMessage('');
       setContact('');
@@ -124,6 +136,30 @@ export default function FeedbackScreen() {
                 )}
               </AppText>
 
+              {topic ? (
+                <View
+                  style={[
+                    styles.topic,
+                    tablet && styles.topicTablet,
+                    { flexDirection: row, alignSelf: alignStart },
+                    padStart(t(12, 16)),
+                    padEnd(t(8, 10)),
+                  ]}>
+                  <Icon name={topicIcon(topic)} size={t(16, 19)} color={colors.accentDark} />
+                  <AppText size={t(13, 15.5)} weight="semibold" color={colors.accentDark}>
+                    {topicLabel(topic)}
+                  </AppText>
+                  <Pressable
+                    onPress={() => setTopic(undefined)}
+                    accessibilityRole="button"
+                    accessibilityLabel={tr(`إزالة الموضوع: ${topicLabel(topic)}`, `Remove the topic: ${topicLabel(topic)}`)}
+                    hitSlop={10}
+                    style={({ pressed }) => [styles.topicRemove, pressed && { opacity: 0.6 }]}>
+                    <Icon name="x" size={t(14, 16)} color={colors.accentDark} />
+                  </Pressable>
+                </View>
+              ) : null}
+
               <View style={[styles.types, tablet && { gap: 14 }, { flexDirection: row }]} accessibilityRole="radiogroup">
                 {types().map((ty) => {
                   const on = ty.key === type;
@@ -167,10 +203,10 @@ export default function FeedbackScreen() {
                     accessibilityLabel={tr('رسالتك', 'Your message')}
                     multiline
                     textAlignVertical="top"
-                    maxLength={MESSAGE_MAX}
+                    maxLength={messageMax}
                   />
                   <AppText size={t(11.5, 13.5)} color={colors.faint} align="end">
-                    {ltr(`${message.length} / ${MESSAGE_MAX}`)}
+                    {ltr(`${message.length} / ${messageMax}`)}
                   </AppText>
                 </Card>
 
@@ -248,6 +284,17 @@ const styles = StyleSheet.create({
   columns: { gap: 20, alignItems: 'flex-start' },
   cardTablet: { padding: 20, gap: 12 },
   types: { gap: 8 },
+  topic: {
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: colors.accentTint,
+    borderWidth: 1,
+    borderColor: colors.accentBorder,
+  },
+  topicTablet: { gap: 8, paddingVertical: 8 },
+  topicRemove: { padding: 2 },
   type: {
     flex: 1,
     alignItems: 'center',

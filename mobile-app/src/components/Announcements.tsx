@@ -8,6 +8,7 @@ import { Icon, type IconName } from '@/components/Icon';
 import { tr } from '@/lib/i18n';
 import { useIsTablet } from '@/lib/layout';
 import { ltr, row } from '@/lib/rtl';
+import { showNotebookOnHome } from '@/notebook/flags';
 
 /** Dark teal card: light text and see-through white boxes on it. */
 const DARK = {
@@ -76,6 +77,22 @@ const slides = (tablet: boolean): Slide[] => [
     href: '/contact',
     cta: tr('تواصل معنا', 'Contact us'),
   },
+  // The notebook (beta), after every other slide. Shown together with its Home cell: in store
+  // builds once NOTEBOOK_HOME_FLAG is on, always in development builds, never on the web.
+  ...(showNotebookOnHome()
+    ? [
+        {
+          id: 'notebook',
+          icon: 'notebookPen' as IconName,
+          title: tr('جديد: المذكرات', 'New: Notebook'),
+          text: tr(
+            'اكتب بالقلم، علّق على ملفات PDF، وسجّل المحاضرة — مجاناً.',
+            'Write with a pen, mark up PDFs and record lectures — free.',
+          ),
+          href: '/notebook' as string as Href,
+        },
+      ]
+    : []),
 ];
 
 /** Time each announcement stays before moving to the next. */

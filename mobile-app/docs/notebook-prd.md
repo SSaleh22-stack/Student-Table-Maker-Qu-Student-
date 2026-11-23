@@ -120,7 +120,7 @@ These were offered and not picked. They are not planned unless you decide otherw
 - **NB-32** **Camera scan:** scan paper pages with edge detection and cropping. Several pages become one notebook.
 - **NB-33** **Photos:** import one or more photos as pages.
 - **NB-34** The PDF is copied into app storage, so the notebook still works if the original is deleted.
-- **NB-35** Password-protected PDFs ask for the password once on import. Bad or damaged PDFs show a clear error and never crash the app.
+- **NB-35** Password-protected PDFs ask for the password once on import, on every supported Android and iOS version. Android uses a bundled PDFium engine (the built-in PdfRenderer only opens locked PDFs from Android 15). Bad or damaged PDFs show a clear error and never crash the app.
 - **NB-36** Large PDFs import in the background with a progress indicator, and the student can start writing on page 1 before the rest finishes. There is **no size or page limit**. Before an import (and before recording), the app checks free space and warns if the device is low on storage.
 
 ### 7.3 Tools
@@ -139,7 +139,7 @@ All tools sit in one toolbar, which mirrors for RTL.
 | NB-45 | **Ruler** | An on-screen ruler you can move and rotate with two fingers. Ink drawn along it snaps straight. Shows its angle. |
 | NB-46 | **Text box** | Type Arabic or English with automatic text direction per paragraph. Font size, color, bold. Uses IBM Plex Sans Arabic like the rest of the app. Text boxes can be moved and resized. |
 | NB-47 | **Image** | Insert from photos or the camera, then move, resize, rotate, crop and delete. |
-| NB-47a | **Scientific calculator** | A toolbar button opens a scientific calculator laid out like a classic exam calculator (the fx-991ES PLUS key set from the reference photo): an LCD-style display with natural math (fractions, integrals, powers); SHIFT and ALPHA keys with gold and pink second-function labels above each key; the round replay (cursor) pad; MODE/SETUP and ON; CALC/SOLVE, ∫ and d/dx, x⁻¹/x!, log with any base and Σ; fractions, √/∛, x²/x³, xⁿ/ⁿ√x, log/10ˣ, ln/eˣ; (−), ° ' ", hyp, sin/cos/tan and their inverses; RCL/STO, ENG, parentheses, S⇔D, M+/M−; the 0–9 keys with CONST, CONV, CLR, MATRIX, VECTOR, STAT, CMPLX, BASE, Rnd and Ran#; green DEL/AC; ×, ÷, +, − with nPr, nCr, Pol and Rec; ×10ˣ with π and e; Ans and =. A short history sits under it. It opens **docked** as a side panel (the page shrinks beside it); a "floating" button turns it into a movable window, and a "dock" button puts it back. It only calculates and never writes onto the page. It copies the layout, colors and functions, but **not the brand name, logo, model name or solar panel** of the real calculator. |
+| NB-47a | **Scientific calculator** | A toolbar button opens a scientific calculator laid out like a classic exam calculator (the fx-991ES PLUS key set from the reference photo): an LCD-style display with natural math (fractions, integrals, powers); SHIFT and ALPHA keys with gold and pink second-function labels above each key; the round replay (cursor) pad; MODE/SETUP and ON; CALC/SOLVE, ∫ and d/dx, x⁻¹/x!, log with any base and Σ; fractions, √/∛, x²/x³, xⁿ/ⁿ√x, log/10ˣ, ln/eˣ; (−), ° ' ", hyp, sin/cos/tan and their inverses; RCL/STO, ENG, parentheses, S⇔D, M+/M−; the 0–9 keys with CONST, CONV, CLR, MATRIX, VECTOR, STAT, CMPLX, BASE, Rnd and Ran#; green DEL/AC; ×, ÷, +, − with nPr, nCr, Pol and Rec; ×10ˣ with π and e; Ans and =. A short history sits under it. It opens **docked** as a side panel (the page shrinks beside it); a "floating" button turns it into a movable window, and a "dock" button puts it back. It only calculates and never writes onto the page. It copies the layout, colors and functions, but **not the brand name, logo, model name or solar panel** of the real calculator. **Every mode of the reference calculator is in scope for the first release:** COMP (natural display), fractions and S⇔D, CALC and SOLVE, numeric ∫ and d/dx, Σ, statistics (1-variable and regression), base-N (DEC/HEX/BIN/OCT and logic), complex numbers, matrices, vectors, equation solving (linear systems, polynomials), inequalities, table (f(x) values), ratio, scientific constants (CONST) and unit conversions (CONV), random numbers, ENG notation, ° ' " and DRG conversion, and memory (A–F, X, Y, M with M+/M−, STO/RCL). The MODE and SETUP menus work as on the reference. |
 | NB-48 | **Undo / redo** | At least 50 steps per open notebook. In the right-to-left toolbar, **undo is the right button** (its arrow points right) and **redo is the left button** (its arrow points left); in a vertical toolbar, undo is on top. Two-finger tap to undo and three-finger tap to redo on tablets. |
 | NB-49 | **Navigation** | Pinch to zoom (up to 400%) and pan with two fingers. Scroll pages vertically. |
 | NB-49a | **Icons-only header** | The open notebook has no title bar. Only icon buttons float over the canvas: back (top right), and pages, share and more (top left). The page number stays in the counter at the bottom, and the notebook name shows in the pages view and the library. This gives the page about 10% more room. |
@@ -173,17 +173,17 @@ All tools sit in one toolbar, which mirrors for RTL.
 
 Each of these shows once per device. A "Show the tour again" row in the notebook settings replays them.
 
-- **NB-80a Library tour.** It starts the first time the student opens المذكرات. A welcome card ("ابدأ الجولة" / "لاحقاً") comes first, then 4 steps. Each step dims the screen, highlights one area and shows a card with "N من 4", a title, one or two lines, progress dots, "التالي" and "تخطي الجولة":
+- **NB-T1 Library tour.** It starts the first time the student opens المذكرات. A welcome card ("ابدأ الجولة" / "لاحقاً") comes first, then 4 steps. Each step dims the screen, highlights one area and shows a card with "N من 4", a title, one or two lines, progress dots, "التالي" and "تخطي الجولة":
   1. The course folders, created from the timetable.
   2. My folders, with "Show all" and "New folder".
   3. The "New notebook" button.
   4. Search, sort and settings. The last button is "تم، لنبدأ".
-- **NB-80b First-time writing setup.** The first time the student opens any notebook, before the notebook tour, a 2-step popup asks for the important settings:
+- **NB-T2 First-time writing setup.** The first time the student opens any notebook, before the notebook tour, a 2-step popup asks for the important settings:
   1. **How do you write?** Pen (Apple Pencil / S Pen; the finger only scrolls and zooms) or Finger. **Which hand?** Right or left, used for palm rejection and to keep the toolbar away from the writing hand.
-  2. **Important settings:** what double-tapping the Apple Pencil does (eraser / last tool / nothing; shown only when "Pen" is chosen), the default paper, the toolbar position (top / bottom / right / left), and iCloud Drive backup (on by default, Wi-Fi only).
+  2. **Important settings:** what double-tapping the Apple Pencil does (eraser / last tool / nothing; shown only when "Pen" is chosen), the default paper, the toolbar position (top / bottom / right / left), and iCloud Drive backup (**off** by default, as NB-85 says; the student can switch it on here, Wi-Fi only).
 
-  "Skip setup" keeps the defaults: Pen, right hand, double-tap to eraser, lined paper, toolbar on top, and backup **on**. Every choice can be changed later in the notebook settings. On Android the backup row is Google Drive and starts **off**, because turning it on needs a Google sign-in (NB-86a).
-- **NB-80c Notebook tour.** It runs right after the setup, with 5 steps in the same style:
+  "Skip setup" keeps the defaults: Pen, right hand, double-tap to eraser, lined paper, toolbar on top, and backup **off**. Every choice can be changed later in the notebook settings. On Android the backup row is Google Drive; turning it on asks the student to sign in with Google (NB-86a). On phones, Skip keeps Finger with finger drawing on (NB-51).
+- **NB-T3 Notebook tour.** It runs right after the setup, with 5 steps in the same style:
   1. The toolbar.
   2. The grip: long-press to move the toolbar.
   3. Undo (right) and redo (left).
@@ -301,3 +301,10 @@ Each page is saved as its own file, so a change on one page doesn't rewrite the 
 Approved on 2026-11-22. Every product question is answered, and the earlier proposals are accepted: the technical approach (section 10), the performance targets (section 9), keeping the screen awake while recording (NB-68), the Google Drive `drive.file` permission with a visible folder (NB-86a), and Wi-Fi-only backup by default (NB-86b).
 
 Before the Phase 0 code starts, check every library in section 10 against the Expo SDK 58 docs (see `AGENTS.md`).
+
+## Implementation notes
+
+Where the build differs from the Figma screens:
+
+- **Figma 05 (receive a PDF):** the file card drops the source-app part of its subtitle ("· من واتساب"). The app is not told which app shared the file, so it shows only the page count and size.
+- **"Show all" and tour steps:** when a library section is absent (for example, no course folders because the timetable is empty), its "Show all" link and its library tour step are left out, and the remaining steps renumber ("N من 3" instead of "N من 4").

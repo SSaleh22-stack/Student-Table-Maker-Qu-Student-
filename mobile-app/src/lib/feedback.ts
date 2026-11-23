@@ -5,7 +5,8 @@
  * which forwards them to the developer's Telegram. The bot token lives only on the Worker.
  *
  * Besides what the student types, each message carries the app version, platform, OS version,
- * device model and app language, so problems can be reproduced. Nothing else is sent.
+ * device model and app language, so problems can be reproduced. A message about one feature (the
+ * notebook beta) also carries that topic. Nothing else is sent, and nothing is tracked (NB-5).
  */
 import Constants from 'expo-constants';
 import * as Device from 'expo-device';
@@ -20,6 +21,19 @@ const TIMEOUT_MS = 15000;
 
 export type FeedbackType = 'problem' | 'suggestion' | 'question';
 
+/** A feature the message is about, from the screen's `topic` param (only these are accepted). */
+export const FEEDBACK_TOPICS = ['notebook'] as const;
+export type FeedbackTopic = (typeof FEEDBACK_TOPICS)[number];
+
+export const isFeedbackTopic = (v: unknown): v is FeedbackTopic =>
+  typeof v === 'string' && (FEEDBACK_TOPICS as readonly string[]).includes(v);
+
+/**
+ * Put in front of the message, so the developer sees the feature at a glance in Telegram. Always
+ * in Arabic, whatever the app language.
+ */
+export const topicPrefix = (topic?: FeedbackTopic): string => (topic === 'notebook' ? '[المذكرات] ' : '');
+
 export const MESSAGE_MAX = 2000;
 export const CONTACT_MAX = 200;
 /** The Worker rejects anything shorter. */
@@ -33,19 +47,22 @@ export class FeedbackSendError extends Error {
   }
 }
 
-/** What is attached to every message; also shown to the student on the screen. */
-export function feedbackMeta() {
+/** What is attached to every message, plus its topic when it has one. */
+export function feedbackMeta(topic?: FeedbackTopic) {
   return {
     app: `v${Constants.expoConfig?.version ?? '0.0.0'}`,
     platform: Platform.OS,
     os: Platform.OS === 'web' ? '' : String(Platform.Version ?? ''),
     device: Device.modelName ?? '',
     lang: getLang(),
+    ...(topic ? { topic } : {}),
   };
 }
 
 /** Resolves when the message reached the Worker and Telegram; throws FeedbackSendError otherwise. */
-export async function sendFeedback(input: { type: FeedbackType; message: string; contact: string }) {
+export async function sendFeedback(input: { type: FeedbackType; message: string; contact: string; topic?: FeedbackTopic }) {
+  const topic = isFeedbackTopic(input.topic) ? input.topic : undefined;
+  const prefix = topicPrefix(topic);
   if (!FEEDBACK_URL) throw new FeedbackSendError('not-configured');
 
   const controller = new AbortController();
@@ -58,9 +75,10 @@ export async function sendFeedback(input: { type: FeedbackType; message: string;
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify({
         type: input.type,
-        message: input.message.trim().slice(0, MESSAGE_MAX),
+        // The prefix counts toward the Worker's limit, so the text is cut to leave room for it.
+        message: prefix + input.message.trim().slice(0, MESSAGE_MAX - prefix.length),
         contact: input.contact.trim().slice(0, CONTACT_MAX),
-        meta: feedbackMeta(),
+        meta: feedbackMeta(topic),
       }),
     });
   } catch {

@@ -1,0 +1,9 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <application>
+    <!-- PDFium runs only in this separate, private process, so a renderer crash never takes the app down. -->
+    <service
+      android:name=".PdfRenderService"
+      android:process=":pdf"
+      android:exported="false" />
+  </application>
+</manifest>

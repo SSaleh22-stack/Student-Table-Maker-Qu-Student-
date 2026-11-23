@@ -24,10 +24,11 @@ import {
 } from '@/lib/courses';
 import { arabicDate } from '@/lib/export/dates';
 import { useIsTablet } from '@/lib/layout';
-import { alignStart, pushToEnd, row } from '@/lib/rtl';
+import { alignStart, fromEnd, pushToEnd, row } from '@/lib/rtl';
 import { conflictCodes } from '@/lib/schedule';
 import { colors } from '@/lib/theme';
 import type { Course } from '@/lib/types';
+import { showNotebookOnHome } from '@/notebook/flags';
 import { useAppData } from '@/store/AppData';
 
 const DAY_KEYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -37,6 +38,20 @@ const ROW_OF_8_MIN = 560;
 const ROW_OF_8_TABLET = 900;
 /** Border of the white services card (its cells are sized from the width inside it). */
 const CARD_BORDER = 1;
+/** Narrowest cell that still fits its icon and a short label, for a single row of more than 8. */
+const CELL_MIN = 64;
+const CELL_MIN_TABLET = 96;
+
+/**
+ * How many icons a row of the services card holds (NB-3). With the usual 8 services: 4 a row (two
+ * full rows), or all 8 in one row once the card is wide enough. With more (the notebook makes 9):
+ * all in one row when each cell still gets its minimum width, otherwise 4 a row, so 9 becomes
+ * 4 + 4 + 1 with the last one at the reading-start edge (Figma 01, iPad portrait and phones).
+ */
+function columnsFor(count: number, roomW: number, tablet: boolean): number {
+  if (count <= 8) return roomW >= (tablet ? ROW_OF_8_TABLET : ROW_OF_8_MIN) ? 8 : 4;
+  return roomW >= count * (tablet ? CELL_MIN_TABLET : CELL_MIN) ? count : 4;
+}
 
 /** Light text and see-through white boxes on the teal header. */
 const ON_TEAL = { title: '#FFFFFF', text: '#CFEAF0', soft: '#E6F6FA', glass: 'rgba(255,255,255,0.16)' };
@@ -70,6 +85,8 @@ interface Feature {
   title: string;
   text: string;
   href: Href;
+  /** Small tag on the icon's top corner at the reading end (the notebook's "Beta") */
+  badge?: string;
 }
 
 const features = (): Feature[] => [
@@ -129,7 +146,40 @@ const features = (): Feature[] => [
     text: tr('شرح مختصر لكل ميزة', 'A short guide to every feature'),
     href: '/tutorials',
   },
+  // The notebook (beta): store builds show it once NOTEBOOK_HOME_FLAG is on; development builds
+  // always do, and the web app never does (NB-1, NB-2).
+  ...(showNotebookOnHome()
+    ? [
+        {
+          icon: 'notebookPen' as IconName,
+          label: tr('المذكرات', 'Notebook'),
+          title: tr('المذكرات', 'Notebook'),
+          text: tr('اكتب بالقلم وعلّق على ملفات PDF وسجّل المحاضرة', 'Write with a pen, mark up PDFs and record lectures'),
+          href: '/notebook' as string as Href,
+          badge: tr('تجريبي', 'Beta'),
+        },
+      ]
+    : []),
 ];
+
+/** What a screen reader says for a service: its full name, and its tag when it has one. */
+const a11yLabel = (f: Feature) => (f.badge ? tr(`${f.title}، ${f.badge}`, `${f.title}, ${f.badge}`) : f.title);
+
+/**
+ * The "Beta" tag over a service icon, on its top corner at the reading end (the left in Arabic,
+ * the right in English), sticking out past the icon's edge as in Figma 01.
+ */
+function Badge({ label, tablet }: { label: string; tablet: boolean }) {
+  return (
+    <View
+      pointerEvents="none"
+      style={[styles.badge, tablet && styles.badgeTablet, { top: tablet ? -8 : -7 }, fromEnd(tablet ? -24 : -18)]}>
+      <AppText size={tablet ? 12 : 10} weight="semibold" color={colors.warning} numberOfLines={1}>
+        {label}
+      </AppText>
+    </View>
+  );
+}
 
 /**
  * Main page: a teal header (with today's next class when turned on in settings), a white card
@@ -148,12 +198,12 @@ export default function HomeScreen() {
   const sidePad = Math.max(tablet ? 24 : 16, (width - 1100) / 2);
   // Cells get an exact width from the card's measured width, so the rows line up on every screen.
   const [gridW, setGridW] = useState(0);
-  // 4 icons a row (two full rows); all 8 in one row once the card has room for them. Decided by
-  // the card's own width, not the screen's: iPhone Duo's unfolded screen is tablet-sized but
-  // narrower than an iPad, and its side bar takes part of the width.
+  // 4 icons a row; all of them in one row once the card has room for them. Decided by the card's
+  // own width, not the screen's: iPhone Duo's unfolded screen is tablet-sized but narrower than
+  // an iPad, and its side bar takes part of the width.
   const roomW = gridW || width - 2 * sidePad - 2 * cardPad - 2 * CARD_BORDER;
-  // The iPad layout keeps two rows of 4 until the card is landscape-wide.
-  const columns = roomW >= (tablet ? ROW_OF_8_TABLET : ROW_OF_8_MIN) ? 8 : 4;
+  // The iPad layout keeps rows of 4 until the card is landscape-wide.
+  const columns = columnsFor(features().length, roomW, tablet);
   const cellW = gridW ? Math.floor(gridW / columns) : undefined;
 
   // White status bar text over the teal header, dark again on the other tabs and pages. When the
@@ -360,15 +410,16 @@ export default function HomeScreen() {
                 key={f.href as string}
                 onPress={() => router.push(f.href)}
                 accessibilityRole="button"
-                accessibilityLabel={f.title}
+                accessibilityLabel={a11yLabel(f)}
                 accessibilityHint={f.text}
                 style={({ pressed }) => [
                   styles.cell,
                   cellW ? { width: cellW } : { width: `${100 / columns}%` },
                   pressed && { opacity: 0.6 },
                 ]}>
-                <View style={[styles.iconCircle, tablet && styles.iconCircleTablet]}>
-                  <Icon name={f.icon} size={t(22, 28)} color={colors.accentDark} />
+                <View style={[styles.iconCircle, tablet && styles.iconCircleTablet, f.badge ? styles.iconNew : null]}>
+                  <Icon name={f.icon} size={t(22, 28)} color={f.badge ? '#FFFFFF' : colors.accentDark} />
+                  {f.badge ? <Badge label={f.badge} tablet={tablet} /> : null}
                 </View>
                 <AppText size={t(11.5, 14)} weight="semibold" align="center" numberOfLines={2}>
                   {f.label}
@@ -501,15 +552,16 @@ function TabletHome({
                 key={f.href as string}
                 onPress={() => router.push(f.href)}
                 accessibilityRole="button"
-                accessibilityLabel={f.title}
+                accessibilityLabel={a11yLabel(f)}
                 accessibilityHint={f.text}
                 style={({ pressed }) => [
                   tabStyles.cell,
                   cellW ? { width: cellW } : { width: `${100 / columns}%` },
                   pressed && { opacity: 0.6 },
                 ]}>
-                <View style={tabStyles.iconSquare}>
-                  <Icon name={f.icon} size={34} color={colors.accentDark} />
+                <View style={[tabStyles.iconSquare, f.badge ? styles.iconNew : null]}>
+                  <Icon name={f.icon} size={34} color={f.badge ? '#FFFFFF' : colors.accentDark} />
+                  {f.badge ? <Badge label={f.badge} tablet /> : null}
                 </View>
                 <AppText size={16.5} weight="semibold" align="center" numberOfLines={2}>
                   {f.label}
@@ -654,6 +706,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   iconCircleTablet: { width: 64, height: 64, borderRadius: 32 },
+  // A new service (the notebook beta): a filled icon, as in Figma 01
+  iconNew: { backgroundColor: colors.accent },
+  badge: {
+    position: 'absolute',
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 999,
+    backgroundColor: colors.warningSoft,
+  },
+  badgeTablet: { paddingHorizontal: 9, paddingVertical: 2 },
   feedback: {
     alignItems: 'center',
     gap: 12,

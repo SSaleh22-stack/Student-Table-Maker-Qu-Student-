@@ -18,6 +18,8 @@ import { UpdateGate } from '@/components/UpdateGate';
 import { useLang, useLanguageBoot } from '@/lib/i18n';
 import { setupReminders } from '@/lib/reminders';
 import { colors } from '@/lib/theme';
+import { NotebookServices } from '@/notebook/NotebookServices';
+import { NotebooksProvider } from '@/notebook/store/NotebooksProvider';
 import { AppDataProvider } from '@/store/AppData';
 import { TasksProvider, useTasks } from '@/store/Tasks';
 
@@ -73,30 +75,36 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <AppDataProvider>
           <TasksProvider>
-            <TaskReminderActions />
-            <StatusBar style="dark" />
-            {/* Changing the language remounts every screen so text and layout direction update. */}
-            <View key={lang} style={{ flex: 1 }}>
-            <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
-              <Stack.Screen name="(tabs)" />
-              <Stack.Screen name="import" options={{ presentation: 'fullScreenModal' }} />
-              <Stack.Screen name="summary" />
-              <Stack.Screen name="export" />
-              <Stack.Screen name="calendar" />
-              <Stack.Screen name="gpa" />
-              <Stack.Screen name="absence" />
-              <Stack.Screen name="tutorials" />
-              <Stack.Screen name="contact" />
-              <Stack.Screen name="feedback" />
-              <Stack.Screen name="reviews" />
-              <Stack.Screen
-                name="task"
-                options={{ presentation: 'modal', contentStyle: { backgroundColor: colors.surface } }}
-              />
-            </Stack>
-            </View>
-            <UpdateGate />
-            {introDone ? null : <IntroAnimation onDone={() => setIntroDone(true)} />}
+            {/* The notebook store sits outside <View key={lang}>: a language switch keeps the library and open notebooks. */}
+            <NotebooksProvider>
+              {/* The notebook's app-wide services (recorder host, cover worker, backup, boot steps); null on web. */}
+              <NotebookServices />
+              <TaskReminderActions />
+              <StatusBar style="dark" />
+              {/* Changing the language remounts every screen so text and layout direction update. */}
+              <View key={lang} style={{ flex: 1 }}>
+                <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
+                  <Stack.Screen name="(tabs)" />
+                  <Stack.Screen name="import" options={{ presentation: 'fullScreenModal' }} />
+                  <Stack.Screen name="summary" />
+                  <Stack.Screen name="export" />
+                  <Stack.Screen name="calendar" />
+                  <Stack.Screen name="gpa" />
+                  <Stack.Screen name="absence" />
+                  <Stack.Screen name="tutorials" />
+                  <Stack.Screen name="contact" />
+                  <Stack.Screen name="feedback" />
+                  <Stack.Screen name="reviews" />
+                  <Stack.Screen name="notebook" />
+                  <Stack.Screen
+                    name="task"
+                    options={{ presentation: 'modal', contentStyle: { backgroundColor: colors.surface } }}
+                  />
+                </Stack>
+              </View>
+              <UpdateGate />
+              {introDone ? null : <IntroAnimation onDone={() => setIntroDone(true)} />}
+            </NotebooksProvider>
           </TasksProvider>
         </AppDataProvider>
       </SafeAreaProvider>

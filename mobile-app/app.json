@@ -16,6 +16,60 @@
         "ExpoLocalization_forcesRTL": true,
         "CFBundleLocalizations": [
           "ar"
+        ],
+        "CFBundleDocumentTypes": [
+          {
+            "CFBundleTypeName": "PDF",
+            "CFBundleTypeRole": "Viewer",
+            "LSHandlerRank": "Alternate",
+            "LSItemContentTypes": [
+              "com.adobe.pdf"
+            ]
+          },
+          {
+            "CFBundleTypeName": "QU Student Notebook",
+            "CFBundleTypeRole": "Editor",
+            "LSHandlerRank": "Owner",
+            "LSItemContentTypes": [
+              "net.qustudent.qunote"
+            ]
+          }
+        ],
+        "UTExportedTypeDeclarations": [
+          {
+            "UTTypeIdentifier": "net.qustudent.qunote",
+            "UTTypeDescription": "QU Student Notebook",
+            "UTTypeConformsTo": [
+              "public.data",
+              "public.content"
+            ],
+            "UTTypeTagSpecification": {
+              "public.filename-extension": [
+                "qunote"
+              ],
+              "public.mime-type": [
+                "application/vnd.qustudent.qunote"
+              ]
+            }
+          }
+        ],
+        "NSUbiquitousContainers": {
+          "iCloud.net.qustudent.app": {
+            "NSUbiquitousContainerIsDocumentScopePublic": true,
+            "NSUbiquitousContainerName": "QU Student",
+            "NSUbiquitousContainerSupportedFolderLevels": "Any"
+          }
+        }
+      },
+      "entitlements": {
+        "com.apple.developer.icloud-container-identifiers": [
+          "iCloud.net.qustudent.app"
+        ],
+        "com.apple.developer.ubiquity-container-identifiers": [
+          "iCloud.net.qustudent.app"
+        ],
+        "com.apple.developer.icloud-services": [
+          "CloudDocuments"
         ]
       }
     },
@@ -30,9 +84,50 @@
       "blockedPermissions": [
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.WRITE_EXTERNAL_STORAGE",
-        "android.permission.SYSTEM_ALERT_WINDOW"
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK",
+        "android.permission.FOREGROUND_SERVICE_MICROPHONE"
       ],
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "category": [
+            "DEFAULT",
+            "BROWSABLE"
+          ],
+          "data": [
+            {
+              "scheme": "content",
+              "mimeType": "application/pdf"
+            },
+            {
+              "scheme": "file",
+              "mimeType": "application/pdf"
+            }
+          ]
+        },
+        {
+          "action": "VIEW",
+          "category": [
+            "DEFAULT"
+          ],
+          "data": [
+            {
+              "scheme": "content",
+              "mimeType": "application/vnd.qustudent.qunote"
+            },
+            {
+              "scheme": "content",
+              "mimeType": "application/octet-stream"
+            },
+            {
+              "scheme": "content",
+              "mimeType": "application/zip"
+            }
+          ]
+        }
+      ]
     },
     "web": {
       "output": "single",
@@ -57,7 +152,25 @@
           ]
         }
       ],
-      "expo-sharing",
+      [
+        "expo-sharing",
+        {
+          "android": {
+            "enabled": true,
+            "singleShareMimeTypes": [
+              "application/pdf",
+              "image/*",
+              "application/octet-stream",
+              "application/zip",
+              "application/vnd.qustudent.qunote"
+            ],
+            "multipleShareMimeTypes": [
+              "image/*",
+              "application/pdf"
+            ]
+          }
+        }
+      ],
       "expo-image",
       "expo-status-bar",
       "expo-web-browser",
@@ -68,7 +181,40 @@
           "color": "#0E7490",
           "enableRemoteNotifications": false
         }
-      ]
+      ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "يستخدم QU Student الميكروفون لتسجيل المحاضرة أثناء كتابة ملاحظاتك في المذكرات.",
+          "recordAudioAndroid": true,
+          "enableBackgroundRecording": false,
+          "enableBackgroundPlayback": false
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "يستخدم QU Student الكاميرا لمسح الأوراق وإضافة الصور إلى مذكراتك.",
+          "microphonePermission": "يستخدم QU Student الميكروفون لتسجيل المحاضرة أثناء كتابة ملاحظاتك في المذكرات.",
+          "recordAudioAndroid": true,
+          "barcodeScannerEnabled": false
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "يحتاج QU Student إلى صورك لإضافتها كصفحات أو صور داخل المذكرات.",
+          "cameraPermission": "يستخدم QU Student الكاميرا لمسح الأوراق وإضافة الصور إلى مذكراتك.",
+          "microphonePermission": "يستخدم QU Student الميكروفون لتسجيل المحاضرة أثناء كتابة ملاحظاتك في المذكرات."
+        }
+      ],
+      [
+        "expo-dev-client",
+        {
+          "launchMode": "most-recent"
+        }
+      ],
+      "./plugins/withNotebookNative"
     ],
     "experiments": {
       "typedRoutes": true,
@@ -83,6 +229,10 @@
       "forcesRTL": true,
       "eas": {
         "projectId": "30a9ef7c-fda2-4f9a-a273-6f809c0ed6c2"
+      },
+      "notebook": {
+        "googleWebClientId": "",
+        "icloudContainer": "iCloud.net.qustudent.app"
       }
     },
     "owner": "week86874"
