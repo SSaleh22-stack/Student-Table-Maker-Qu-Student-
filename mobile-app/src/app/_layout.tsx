@@ -16,6 +16,8 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { IntroAnimation } from '@/components/IntroAnimation';
 import { UpdateGate } from '@/components/UpdateGate';
 import { useLang, useLanguageBoot } from '@/lib/i18n';
+import { markIntroDone } from '@/lib/appTours';
+import { useIsTablet } from '@/lib/layout';
 import { setupReminders } from '@/lib/reminders';
 import { colors } from '@/lib/theme';
 import { NotebookServices } from '@/notebook/NotebookServices';
@@ -61,6 +63,8 @@ export default function RootLayout() {
   });
   const langReady = useLanguageBoot();
   const lang = useLang();
+  // On an iPad the task editor fills the screen (a page sheet there is a small card in the middle).
+  const tablet = useIsTablet();
   // The opening animation plays once per app start (not when the language changes).
   const [introDone, setIntroDone] = useState(false);
 
@@ -98,12 +102,22 @@ export default function RootLayout() {
                   <Stack.Screen name="notebook" />
                   <Stack.Screen
                     name="task"
-                    options={{ presentation: 'modal', contentStyle: { backgroundColor: colors.surface } }}
+                    options={{
+                      presentation: tablet ? 'fullScreenModal' : 'modal',
+                      contentStyle: { backgroundColor: colors.surface },
+                    }}
                   />
                 </Stack>
               </View>
               <UpdateGate />
-              {introDone ? null : <IntroAnimation onDone={() => setIntroDone(true)} />}
+              {introDone ? null : (
+                <IntroAnimation
+                  onDone={() => {
+                    setIntroDone(true);
+                    markIntroDone();
+                  }}
+                />
+              )}
             </NotebooksProvider>
           </TasksProvider>
         </AppDataProvider>

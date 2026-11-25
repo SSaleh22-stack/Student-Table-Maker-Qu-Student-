@@ -214,7 +214,8 @@
           "launchMode": "most-recent"
         }
       ],
-      "./plugins/withNotebookNative"
+      "./plugins/withNotebookNative",
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true,
@@ -232,6 +233,8 @@
       },
       "notebook": {
         "googleWebClientId": "585597264059-2lt29h5b8opddgqrf4uhsj8oggto9i0m.apps.googleusercontent.com",
+        "googleIosClientId": "585597264059-hk34fgva6dc4q5l37c0g7gvgts84t1fi.apps.googleusercontent.com",
+        "onedriveClientId": "54efe03e-7d85-401e-9e96-64fd2b21fe8a",
         "icloudContainer": "iCloud.net.qustudent.app"
       }
     },

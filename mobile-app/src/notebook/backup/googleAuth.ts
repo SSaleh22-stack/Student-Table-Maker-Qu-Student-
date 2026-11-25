@@ -1,10 +1,8 @@
 /**
- * Google sign-in for the Drive backup (NB-86a): the STUB used on iOS and web.
+ * Google sign-in for the Drive backup (NB-86a): the STUB used on web.
  *
- * Metro picks googleAuth.android.ts on Android; every other platform gets this file, which never
- * imports the Google sign-in package (only googleAuth.android.ts does), so it is never bundled for
- * iOS (its iOS native side is also excluded from autolinking, see package.json expo.autolinking).
- * Every function resolves 'unavailable'.
+ * Metro picks googleAuth.native.ts on Android and iOS; web gets this file, which never imports the
+ * Google sign-in package. Every function resolves 'unavailable'.
  *
  * TypeScript always resolves './googleAuth' to this file, so the types below are THE API: the
  * Android file imports them and must export the same functions.
@@ -22,7 +20,7 @@ export type GoogleSignInResult =
 
 export type GoogleSilentResult = { ok: true; account: string } | { ok: false; error: 'unavailable' | 'revoked' | 'network' | 'signed-out' };
 
-/** True only in the Android file. */
+/** True only in the native file. */
 export const googleAuthSupported = false;
 
 /**

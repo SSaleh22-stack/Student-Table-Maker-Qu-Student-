@@ -1,10 +1,10 @@
 /**
  * The editor's 'more' menu (the ⋮ button of the header pill, NB-49a): a popover card under the
  * button with
- * - 'التسجيلات' (NB-63; the count at the end): opens the recordings panel, the entry to playback;
  * - 'إضافة صفحة' (NB-24): a new page after the one on screen, with the notebook's default paper;
  * - 'إعدادات المذكرات': the notebook settings screen.
- * A read-only notebook (made by a newer app version) gets no 'إضافة صفحة'.
+ * A read-only notebook (made by a newer app version) gets no 'إضافة صفحة'. The recordings are not in
+ * this menu: they open from the button beside the mic in the toolbar (RecordingsButton).
  *
  * The card is an RN Modal (Popover). Each row closes it first and runs its action once the Modal has
  * gone, because iOS cannot present or push while a Modal is still being dismissed.
@@ -13,7 +13,6 @@ import { useEffect, useRef } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 
 import { tr } from '@/lib/i18n';
-import { ltr } from '@/lib/rtl';
 import { ListRow } from '@/notebook/ui/ListRow';
 import { Popover, type AnchorRect } from '@/notebook/ui/Popover';
 
@@ -21,18 +20,17 @@ import { Popover, type AnchorRect } from '@/notebook/ui/Popover';
 const AFTER_CLOSE_MS = Platform.OS === 'ios' ? 350 : 60;
 const MENU_W = 280;
 
-export type EditorMoreAction = 'recordings' | 'addPage' | 'settings';
+export type EditorMoreAction = 'addPage' | 'settings';
 
 export interface EditorMoreMenuProps {
   visible: boolean;
   anchor: AnchorRect | null;
   onClose: () => void;
   onAction: (a: EditorMoreAction) => void;
-  recordingCount: number;
   readOnly: boolean;
 }
 
-export function EditorMoreMenu({ visible, anchor, onClose, onAction, recordingCount, readOnly }: EditorMoreMenuProps) {
+export function EditorMoreMenu({ visible, anchor, onClose, onAction, readOnly }: EditorMoreMenuProps) {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(
     () => () => {
@@ -61,13 +59,6 @@ export function EditorMoreMenu({ visible, anchor, onClose, onAction, recordingCo
       gap={8}
       accessibilityLabel={tr('المزيد', 'More')}>
       <View style={styles.list}>
-        <ListRow
-          icon="wave"
-          title={tr('التسجيلات', 'Recordings')}
-          value={recordingCount > 0 ? ltr(recordingCount) : undefined}
-          chevron={false}
-          onPress={() => pick('recordings')}
-        />
         {readOnly ? null : (
           <ListRow icon="plus" title={tr('إضافة صفحة', 'Add page')} chevron={false} onPress={() => pick('addPage')} />
         )}

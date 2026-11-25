@@ -12,77 +12,29 @@
  *   ellipse, triangle). A rectangle becomes a square, an ellipse a circle, when the sides are within
  *   10 percent of each other. On release the shape is added in ONE history entry ('shape'), in the
  *   pen's color and width (the Shapes card says so), with the recording mark.
- * - overlay: the live preview while dragging (a Skia path in page points under the page transform, so
- *   it stays sharp at any zoom). It renders nothing unless 'shapes' is the current tool.
+ * - The live preview while dragging is drawn by the canvas itself, on the UI runtime, from the same
+ *   geometry (core/shapes/drag.ts; canvas/gestures.ts previewShape), in the pen's colour and width, so
+ *   it follows the pencil with no delay. It stays until the added shape is on screen.
  *
- * The drag and its preview live in a small store per hook, so a 60 Hz drag re-renders only the
- * preview, never the editor.
+ * The drag lives in a small store per hook, so a handler rebuilt for a new recMark keeps it.
  *
  * Color: the pen color as it shows on this page (core/toolbar/colors.ts effectivePenColor), so a black
  * pen on dark paper draws a visible light shape, like the pen's own ink.
  */
-import { Canvas, Group, Path } from '@shopify/react-native-skia';
-import { createElement, useMemo, useSyncExternalStore } from 'react';
-import { StyleSheet, View } from 'react-native';
-import { useDerivedValue } from 'react-native-reanimated';
+import { useMemo } from 'react';
 
-import { useOverlay } from '@/notebook/canvas/overlayContext';
-import type { PagePoint, ToolContext, ToolPlugin, ToolState, UseShapeTool } from '@/notebook/contracts/tools';
-import { newId, type Hex, type Id, type Page, type PaperColor, type RecMark, type ShapeItem } from '@/notebook/core/model';
+import type { PagePoint, ToolContext, ToolPlugin, UseShapeTool } from '@/notebook/contracts/tools';
+import { newId, type Id, type Page, type PaperColor, type RecMark, type ShapeItem } from '@/notebook/core/model';
 import type { NotebookSession } from '@/notebook/core/session/types';
+import { shapeFromDrag, type ShapeStyleInput } from '@/notebook/core/shapes/drag';
 import { shapeOutline } from '@/notebook/core/shapes/recognize';
 import { effectivePenColor } from '@/notebook/core/toolbar/colors';
-import { getToolState, useToolState } from '@/notebook/toolbar/toolState';
+import { getToolState } from '@/notebook/toolbar/toolState';
 
-/** A drag shorter than this (page points, on both axes / along the line) adds nothing. */
-export const SHAPE_MIN_DRAG = 4;
-
-/** Sides within this fraction of the longer one make a square or a circle. */
-export const SHAPE_EQUAL_RATIO = 0.1;
+export { SHAPE_EQUAL_RATIO, SHAPE_MIN_DRAG, shapeFromDrag, type ShapeStyleInput } from '@/notebook/core/shapes/drag';
 
 /** History label of a drawn shape. */
 export const SHAPE_HISTORY_LABEL = 'shape';
-
-type ShapeToolKind = ToolState['shapeKind'];
-
-export interface ShapeStyleInput {
-  color: Hex;
-  width: number;
-}
-
-/**
- * The shape for a drag from (x0, y0) to (x1, y1) in page points, or null when the drag is too short.
- * - line, arrow: pts [x0, y0, x1, y1] (an arrow points at the release point).
- * - rect, ellipse: the dragged box (rot 0); within SHAPE_EQUAL_RATIO it becomes a square or circle
- *   whose side is the longer one, growing from the start corner in the drag direction.
- * - triangle: the dragged box's isosceles triangle (apex at the top middle) as 3 vertices.
- */
-export function shapeFromDrag(kind: ShapeToolKind, x0: number, y0: number, x1: number, y1: number, style: ShapeStyleInput, id: Id): ShapeItem | null {
-  if (![x0, y0, x1, y1].every(Number.isFinite)) return null;
-  const base = { id, kind: 'shape' as const, color: style.color, width: style.width, fill: null };
-  const dx = x1 - x0;
-  const dy = y1 - y0;
-  if (kind === 'line' || kind === 'arrow') {
-    if (Math.hypot(dx, dy) < SHAPE_MIN_DRAG) return null;
-    return { ...base, shape: kind, pts: [x0, y0, x1, y1] };
-  }
-  let w = Math.abs(dx);
-  let h = Math.abs(dy);
-  if (Math.max(w, h) < SHAPE_MIN_DRAG) return null;
-  if (kind !== 'triangle') {
-    const long = Math.max(w, h);
-    if (long - Math.min(w, h) <= SHAPE_EQUAL_RATIO * long) {
-      w = long;
-      h = long;
-    }
-  }
-  const x = dx >= 0 ? x0 : x0 - w;
-  const y = dy >= 0 ? y0 : y0 - h;
-  if (kind === 'triangle') {
-    return { ...base, shape: 'triangle', pts: [x + w / 2, y, x + w, y + h, x, y + h] };
-  }
-  return { ...base, shape: kind, box: { x, y, w, h, rot: 0 } };
-}
 
 /** The paper color of a page (PDF pages count as white). */
 export function paperColorOf(page: Page | undefined): PaperColor {
@@ -177,9 +129,8 @@ function makeHandler(session: NotebookSession, recMark: () => RecMark | undefine
     onUpdate(p: PagePoint) {
       const start = drag.start;
       if (!start || p.pageId !== start.pageId) return;
+      // The live preview is drawn by the canvas gesture on the UI runtime (wetInk setShapePreview).
       drag.last = p;
-      const item = build('preview');
-      store.set(item ? { pageId: start.pageId, item } : null);
     },
     onEnd(p: PagePoint, cancelled: boolean) {
       if (drag.start && p.pageId === drag.start.pageId) drag.last = p;
@@ -197,62 +148,14 @@ function makeHandler(session: NotebookSession, recMark: () => RecMark | undefine
   };
 }
 
-// ===== preview overlay
-
-interface ShapePreviewProps {
-  store: DraftStore;
-}
-
-function PreviewPath({ draft }: { draft: ShapeDraft }) {
-  const { scale, tx, ty, pageOrigin } = useOverlay();
-  const pageId = draft.pageId;
-  const transform = useDerivedValue(() => {
-    // Read the view transform explicitly so the preview follows zoom and scroll.
-    scale.get();
-    tx.get();
-    ty.get();
-    const o = pageOrigin(pageId);
-    if (!o) return [{ translateX: -100000 }, { translateY: -100000 }, { scale: 1 }];
-    return [{ translateX: o.x }, { translateY: o.y }, { scale: o.k }];
-  }, [pageId]);
-  const d = shapePathString(draft.item);
-  if (!d) return null;
-  return createElement(
-    Group,
-    { transform },
-    createElement(Path, {
-      path: d,
-      style: 'stroke',
-      strokeWidth: draft.item.width,
-      strokeCap: 'round',
-      strokeJoin: 'round',
-      color: draft.item.color,
-    }),
-  );
-}
-
-/** The live preview of the shape being dragged (only while 'shapes' is the tool). */
-export function ShapePreview({ store }: ShapePreviewProps) {
-  const { state } = useToolState();
-  const draft = useSyncExternalStore(store.subscribe, store.get, store.get);
-  if (state.tool !== 'shapes') return null;
-  return createElement(
-    View,
-    { pointerEvents: 'none', style: StyleSheet.absoluteFill },
-    createElement(Canvas, { style: StyleSheet.absoluteFill }, draft ? createElement(PreviewPath, { draft }) : null),
-  );
-}
-
 export const useShapeTool: UseShapeTool = (ctx: ToolContext): ToolPlugin => {
   const { session, recMark } = ctx;
   const store = useMemo(() => createDraftStore(), []);
   // The drag in progress lives in the store, so rebuilding the handler (a new recMark) keeps it.
   const handler = useMemo(() => makeHandler(session, recMark, store), [session, recMark, store]);
-  const overlay = useMemo(() => createElement(ShapePreview, { store }), [store]);
   return {
     tool: 'shapes',
     handler,
-    overlay,
     // A tool change ends any drag in progress: a late onUpdate / onEnd then finds no start and adds nothing.
     onDeactivate: () => store.reset(),
   };

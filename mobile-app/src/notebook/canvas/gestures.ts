@@ -9,8 +9,8 @@
  *           none (Phase 0 spike).
  *   nav     a pan (one or two fingers) plus a pinch, simultaneous: zoom 1 to 4 about the focal
  *           point, pan, fling. One finger pans only when that finger does not draw.
- *   taps    3-finger tap = redo, 2-finger tap = undo (exclusive, MULTI_TAP_MAX_MS), and the play
- *           tool's one-finger tap (exclusive after them).
+ *   taps    3-finger tap = redo, 2-finger tap = undo (exclusive, MULTI_TAP_MAX_MS), the play
+ *           tool's one-finger tap and the text tool's one-finger tap (exclusive after them).
  *
  * ARBITRATION (ruling (p)):
  * - Every canvas gesture fails in onBegin while overlayBusy > 0 (an overlay gesture owns the touch).
@@ -70,7 +70,9 @@ import { createHoldState, holdTolerance, resetHold, tickHold, updateHold, type H
 import { recognizeShape, type ShapeCandidate } from '@/notebook/core/shapes/recognize';
 
 import { insetsOf, setViewport, stopMotion, viewOf, viewportOf, type CanvasCore } from './useCanvasApi';
-import { clearEraserPath, setEraserPath, setPreview, wetAdd, wetBegin, wetDiscard, wetEnd, wetReplace, type WetInk, type WetStyle } from './wetInk';
+import { shapeFromDrag, type ShapeDragKind } from '@/notebook/core/shapes/drag';
+
+import { clearEraserPath, clearShapePreview, setEraserPath, setPreview, setShapePreview, wetAdd, wetBegin, wetDiscard, wetEnd, wetReplace, type WetInk, type WetStyle } from './wetInk';
 
 // ===== tuning
 
@@ -160,6 +162,8 @@ export interface GestureConfig {
   eraserHlOnly: boolean;
   /** Eraser diameter in page points. */
   eraserSize: number;
+  /** The shape tool's shape (its live preview is drawn on the UI runtime). */
+  shapeKind: ShapeDragKind;
 }
 
 export const DEFAULT_GESTURE_CONFIG: GestureConfig = {
@@ -180,6 +184,7 @@ export const DEFAULT_GESTURE_CONFIG: GestureConfig = {
   eraserMode: 'stroke',
   eraserHlOnly: false,
   eraserSize: 20,
+  shapeKind: 'rect',
 };
 
 // ===== UI-runtime draw state
@@ -668,6 +673,15 @@ function cancelErase(x: Ctx, s: DrawState): void {
   clearEraserPath(x.wet);
 }
 
+/** The shape tool's live preview, drawn on the UI runtime from the start point to (px, py). */
+function previewShape(x: Ctx, s: DrawState, px: number, py: number): void {
+  'worklet';
+  const c = x.cfg.get();
+  const dark = (x.dark.get()[s.page] ?? 0) === 1;
+  const item = shapeFromDrag(c.shapeKind, s.startX, s.startY, px, py, { color: dark ? c.penColorDark : c.penColor, width: c.penWidth }, 'preview');
+  setShapePreview(x.wet, s.page, item);
+}
+
 function beginForward(x: Ctx, s: DrawState, js: Js, sx: number, sy: number, now: number): void {
   'worklet';
   const p = screenToPageOf(x.core.layout.get(), viewportOf(x.core), s.page, sx, sy);
@@ -698,15 +712,17 @@ function moveForward(x: Ctx, s: DrawState, js: Js, sx: number, sy: number, now: 
     return;
   }
   if (s.press.phase === 'drag' && shouldForward(s.press, now)) scheduleOnRN(js.forward, 'update', s.tool, pagePoint(s, p[0], p[1], pr), false);
+  if (s.tool === 'shapes' && s.press.phase === 'drag') previewShape(x, s, p[0], p[1]);
 }
 
-function endForward(s: DrawState, js: Js, now: number, cancelled: boolean): void {
+function endForward(x: Ctx, s: DrawState, js: Js, now: number, cancelled: boolean): void {
   'worklet';
   const wasDrag = s.press.phase === 'drag';
   const r = endPress(s.press, now);
   const pr = inkPressure(s);
   if (cancelled) {
     if (wasDrag) scheduleOnRN(js.forward, 'end', s.tool, pagePoint(s, s.lastX, s.lastY, pr), true);
+    if (s.tool === 'shapes') clearShapePreview(x.wet);
   } else if (r === 'tap') {
     scheduleOnRN(js.forward, 'tap', s.tool, pagePoint(s, s.startX, s.startY, pr), false);
   } else if (r === 'drag') {
@@ -734,7 +750,7 @@ function finishStroke(x: Ctx, s: DrawState, js: Js, now: number, discard: boolea
       else endErase(x, s, js);
       break;
     case 'forward':
-      endForward(s, js, now, discard);
+      endForward(x, s, js, now, discard);
       break;
     default:
       break;
@@ -954,7 +970,7 @@ export function useCanvasGestures(
       const js: Js = { commitStroke, commitErase, eraseOnJs, forward, setTicking };
       // The system took the touch: keep what was drawn (ink, eraser); a forwarded drag is cancelled.
       if (s.mode === 'forward') {
-        endForward(s, js, nowMs(), true);
+        endForward(x, s, js, nowMs(), true);
         unlock(s, nowMs());
       } else finishStroke(x, s, js, nowMs(), false);
     },
@@ -965,7 +981,7 @@ export function useCanvasGestures(
       const x: Ctx = { core, wet, ds, cfg, mirrors, dark, ringOn };
       const js: Js = { commitStroke, commitErase, eraseOnJs, forward, setTicking };
       if (s.mode === 'forward') {
-        endForward(s, js, nowMs(), true);
+        endForward(x, s, js, nowMs(), true);
         unlock(s, nowMs());
       } else finishStroke(x, s, js, nowMs(), false);
     },
@@ -1187,7 +1203,34 @@ export function useCanvasGestures(
     },
   });
 
-  const taps = useExclusiveGestures(redoTap, undoTap, playTap);
+  // The text tool with a finger: a tap places a text box even when fingers do not draw (Apple Pencil
+  // mode), so a box can be added and typed into without the pencil. A finger that does draw already
+  // reaches the text tool through the draw gesture, and so does the stylus: this tap skips both.
+  const textTap = useTapGesture({
+    maxDistance: TAP_SLOP,
+    onBegin: (e) => {
+      'worklet';
+      if (isOverlayBusy()) GestureStateManager.fail(e.handlerTag);
+    },
+    onActivate: (e) => {
+      'worklet';
+      if (isOverlayBusy()) return;
+      const c = cfg.get();
+      if (c.tool !== 'text' || c.readOnly) return;
+      if (pointerName(e.pointerType) !== 'touch') return;
+      const s = draw(ds);
+      if (s.drawLive || shouldDraw('touch', c.input, c.fingerDraws, s.stylusSeen || c.pencilOnly)) return;
+      const layout = core.layout.get();
+      const vp = viewportOf(core);
+      const hit = screenToPage(layout, vp, e.x, e.y, PAGE_SLOP);
+      if (!hit) return;
+      const pageId = core.pageIds.get()[hit.index];
+      if (pageId === undefined) return;
+      scheduleOnRN(forward, 'tap', 'text', { pageId, x: hit.x, y: hit.y, pressure: 0.5, pointer: 'touch' }, false);
+    },
+  });
+
+  const taps = useExclusiveGestures(redoTap, undoTap, playTap, textTap);
   const gesture = useSimultaneousGestures(drawGesture, stylusGesture, navPan, pinch, taps);
   return { gesture, ringOn };
 }

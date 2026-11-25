@@ -56,6 +56,7 @@ function buildDefaults(isTablet: boolean): NotebookSettings {
     shapeSnap: false,
     snapHintsShown: 0,
     rulerHintShown: false,
+    pagesPinned: false,
     pen: {
       presets: [{ ...DEFAULT_PRESETS[0] }, { ...DEFAULT_PRESETS[1] }, { ...DEFAULT_PRESETS[2] }],
       color: '#1B2533',

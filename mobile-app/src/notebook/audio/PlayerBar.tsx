@@ -2,18 +2,20 @@
  * Figma 11: the player bar for the loaded recording (NB-62).
  *
  * Reading order: play/pause, the title with '18:05 / 47:32' over the scrubber, the speed chips
- * 1x / 1.5x / 2x, the pointer ('play from here') button, then the recordings list and close buttons.
+ * 1x / 1.5x / 2x, the pointer ('play from here') button, then the ⋮ options of this recording
+ * (rename, delete: RecordingOptions) and the close button.
  * The scrubber fills from the reading side (the right in Arabic) and carries a tick wherever ink of
  * this recording was made. Tap or drag it to seek.
  *
- * Props only (the editor wires them): onPointer toggles the play-from tool, pointerActive is its
- * state, onOpenList shows RecordingsPanel, onClose leaves playback. While pointerActive, the tip
+ * The editor wires it: onPointer toggles the play-from tool, pointerActive is its state, onClose
+ * leaves playback; session is the notebook the loaded recording belongs to (for its options). The
+ * full list opens from the recordings button beside the mic. While pointerActive, the tip
  * 'اضغط على أي كتابة لتسمع ما قيل لحظتها' shows above the bar until the first play-from
  * (player.playFrom).
  *
  * Phones (compact): two rows, the controls under the scrubber.
  */
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ComponentRef } from 'react';
 import { Pressable, StyleSheet, View, type GestureResponderEvent, type LayoutChangeEvent, type StyleProp, type ViewStyle } from 'react-native';
 
 import { AppText } from '@/components/AppText';
@@ -21,6 +23,7 @@ import { Icon } from '@/components/Icon';
 import { tr } from '@/lib/i18n';
 import { isRTL, ltr, row } from '@/lib/rtl';
 import type { PlaybackRate } from '@/notebook/contracts/audio';
+import type { NotebookSession } from '@/notebook/core/session/types';
 import { fractionOf, msAtFraction } from '@/notebook/core/audio/timeline';
 import { durationLabel } from '@/notebook/core/text/labels';
 import { nbColors } from '@/notebook/theme';
@@ -30,13 +33,14 @@ import { NbChip } from '@/notebook/ui/LocationChips';
 import { physicalLeft, physicalRight } from '@/notebook/ui/physical';
 
 import { player } from './player';
+import { RecordingOptions, type RecordingOptionsTarget } from './RecordingOptions';
 import { usePlaybackSnapshot } from './usePlayback';
 
 export interface PlayerBarProps {
   onPointer: () => void;
   pointerActive: boolean;
   onClose: () => void;
-  onOpenList: () => void;
+  session: NotebookSession;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -118,9 +122,17 @@ function Scrubber({ positionMs, durationMs, ticks, disabled, onSeek }: ScrubberP
   );
 }
 
-export function PlayerBar({ onPointer, pointerActive, onClose, onOpenList, style }: PlayerBarProps) {
+export function PlayerBar({ onPointer, pointerActive, onClose, session, style }: PlayerBarProps) {
   const snap = usePlaybackSnapshot();
   const compact = useIsCompact();
+  const optionsRef = useRef<ComponentRef<typeof View>>(null);
+  const [options, setOptions] = useState<RecordingOptionsTarget | null>(null);
+  const openOptions = () => {
+    const id = snap.recordingId;
+    const node = optionsRef.current;
+    if (!id || !node) return;
+    node.measureInWindow((x, y, width, height) => setOptions({ id, anchor: { x, y, width, height } }));
+  };
 
   // The tip shows while the pointer tool is on, until the first play-from of this bar.
   const [tipDone, setTipDone] = useState(false);
@@ -184,7 +196,9 @@ export function PlayerBar({ onPointer, pointerActive, onClose, onOpenList, style
 
   const tools = (
     <View style={[styles.tools, { flexDirection: row }]}>
-      <CircleButton icon="list" tone="clear" size={36} label={tr('التسجيلات', 'Recordings')} onPress={onOpenList} />
+      <View ref={optionsRef} collapsable={false}>
+        <CircleButton icon="moreV" tone="clear" size={36} label={tr('خيارات التسجيل', 'Recording options')} onPress={openOptions} disabled={!snap.recordingId} />
+      </View>
       <CircleButton icon="x" tone="clear" size={36} label={tr('إغلاق المشغّل', 'Close player')} onPress={onClose} />
     </View>
   );
@@ -221,6 +235,7 @@ export function PlayerBar({ onPointer, pointerActive, onClose, onOpenList, style
           {tools}
         </View>
       )}
+      <RecordingOptions session={session} target={options} onClose={() => setOptions(null)} />
     </View>
   );
 }

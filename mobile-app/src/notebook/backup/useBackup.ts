@@ -32,6 +32,7 @@ export function useBackup(): BackupServiceImpl {
       signInAgain: backupService.signInAgain,
       cancel: backupService.cancel,
       startAutoRun: backupService.startAutoRun,
+      setProvider: backupService.setProvider,
     }),
     [status],
   );

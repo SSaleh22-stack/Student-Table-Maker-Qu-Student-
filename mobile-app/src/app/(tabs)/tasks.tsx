@@ -2,6 +2,7 @@ import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 
+import { TasksTour } from '@/components/AppTours';
 import { AppText } from '@/components/AppText';
 import { Icon } from '@/components/Icon';
 import { SafeAreaView } from '@/components/SafeAreaView';
@@ -25,11 +26,14 @@ import {
   type TaskSection,
 } from '@/lib/tasks';
 import { colors, shadow } from '@/lib/theme';
+import { TOUR_TARGETS } from '@/notebook/contracts/tours';
+import { useTourTarget } from '@/notebook/ui/tourTargets';
 import { useTasks } from '@/store/Tasks';
 
 const TOAST_MS = 5000;
-/** The content column on a tablet, so cards don't stretch across a wide iPad. */
-const TABLET_MAX = 760;
+/** Side margins on a tablet: the list uses the full width of the iPad. */
+const TABLET_PAD = 32;
+const TABLET_PAD_WIDE = 48;
 const DAY_KEYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 /** "الأحد، 22 نوفمبر" / "Sunday, 22 November" */
@@ -59,8 +63,11 @@ export default function TasksScreen() {
   const { tasks, loaded, toggleDone } = useTasks();
   const tablet = useIsTablet();
   const { width } = useWindowDimensions();
+  const summaryRef = useTourTarget(TOUR_TARGETS.tasksSummary);
+  const filtersRef = useTourTarget(TOUR_TARGETS.tasksFilters);
+  const newRef = useTourTarget(TOUR_TARGETS.tasksNew);
   const t = (phone: number, tab: number) => (tablet ? tab : phone);
-  const sidePad = tablet ? Math.max(32, (width - TABLET_MAX) / 2) : 16;
+  const sidePad = tablet ? (width >= 1100 ? TABLET_PAD_WIDE : TABLET_PAD) : 16;
 
   const [filter, setFilter] = useState<TaskFilter>('all');
 
@@ -133,21 +140,27 @@ export default function TasksScreen() {
           ]}>
           <ScreenHeader title={tr('مهامي', 'My tasks')} subtitle={longDate(now)} />
 
-          {loaded && tasks.length ? <TasksSummary tasks={tasks} now={now} tablet={tablet} /> : null}
+          {loaded && tasks.length ? (
+            <View ref={summaryRef} collapsable={false}>
+              <TasksSummary tasks={tasks} now={now} tablet={tablet} />
+            </View>
+          ) : null}
 
-          <View style={[styles.filters, { flexDirection: row }]}>
+          <View ref={filtersRef} collapsable={false} style={[styles.filters, { flexDirection: row }]}>
             {filters(loaded ? countForFilter(tasks, 'today', now) : 0).map((f) => (
               <Chip key={f.key} label={f.label} selected={filter === f.key} onPress={() => setFilter(f.key)} />
             ))}
           </View>
 
           {empty ? (
-            <EmptyTasks
-              filter={filter}
-              hasTasks={tasks.length > 0}
-              tablet={tablet}
-              onAdd={emptyAdds ? () => openTask() : undefined}
-            />
+            <View ref={emptyAdds ? newRef : undefined} collapsable={false}>
+              <EmptyTasks
+                filter={filter}
+                hasTasks={tasks.length > 0}
+                tablet={tablet}
+                onAdd={emptyAdds ? () => openTask() : undefined}
+              />
+            </View>
           ) : (
             sections
               .filter((s) => s.tasks.length)
@@ -192,6 +205,8 @@ export default function TasksScreen() {
 
       {loaded && !emptyAdds ? (
         <Pressable
+          ref={emptyAdds ? undefined : newRef}
+          collapsable={false}
           onPress={() => openTask()}
           accessibilityRole="button"
           accessibilityLabel={tr('مهمة جديدة', 'New task')}
@@ -210,6 +225,7 @@ export default function TasksScreen() {
         </Pressable>
       ) : null}
 
+      <TasksTour />
       {toast ? <Toast toast={toast} onDismiss={dismissToast} position="top" inset={tablet ? sidePad : 16} /> : null}
     </View>
   );

@@ -45,3 +45,6 @@ example
 # Local signing credentials downloaded from EAS (never commit)
 credentials.json
 credentials/
+
+# Gradle output of the local pdf-render module build
+modules/pdf-render/android/build/

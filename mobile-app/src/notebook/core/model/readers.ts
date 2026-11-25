@@ -666,6 +666,7 @@ export function readSettings(raw: unknown, isTablet: boolean): NotebookSettings 
   p.shapeSnap = optBool(raw.shapeSnap);
   p.snapHintsShown = nonNegInt(raw.snapHintsShown);
   p.rulerHintShown = optBool(raw.rulerHintShown);
+  p.pagesPinned = optBool(raw.pagesPinned);
 
   if (isRecord(raw.pen)) {
     const pen: DeepPartial<NotebookSettings['pen']> = {};
@@ -713,6 +714,7 @@ export function readSettings(raw: unknown, isTablet: boolean): NotebookSettings 
     if (lastCount !== undefined) backup.lastCount = lastCount;
     const lastBytes = nonNegInt(b.lastBytes);
     if (lastBytes !== undefined) backup.lastBytes = lastBytes;
+    if (b.provider === 'icloud' || b.provider === 'gdrive' || b.provider === 'onedrive') backup.provider = b.provider;
     p.backup = backup;
   }
   if (isRecord(raw.tours)) {

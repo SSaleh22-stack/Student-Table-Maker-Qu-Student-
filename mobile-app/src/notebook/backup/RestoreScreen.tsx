@@ -210,7 +210,7 @@ export default function RestoreScreen() {
       </View>
     );
   } else if (list.kind === 'error') {
-    const needsSignIn = drive && (list.error === 'signed-out' || list.error === 'revoked');
+    const needsSignIn = (drive || backup.status.provider === 'onedrive') && (list.error === 'signed-out' || list.error === 'revoked');
     const text = needsSignIn
       ? tr('سجّل الدخول إلى Google لعرض نسخك الاحتياطية في Google Drive', 'Sign in to Google to see your backups in Google Drive')
       : list.error === 'icloud-off'
@@ -306,7 +306,7 @@ export default function RestoreScreen() {
       <ScrollView contentContainerStyle={[styles.content, tablet && styles.contentTablet]}>
         <ScreenHeader
           title={tr('استعادة من النسخة الاحتياطية', 'Restore from backup')}
-          subtitle={drive ? 'Google Drive' : 'iCloud Drive'}
+          subtitle={drive ? 'Google Drive' : backup.status.provider === 'onedrive' ? 'OneDrive' : 'iCloud Drive'}
           leading={<IconButton icon="back" label={tr('رجوع', 'Back')} onPress={busy ? undefined : back} />}
         />
         {body}

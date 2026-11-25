@@ -8,6 +8,9 @@
  */
 import type { Id, IsoDate } from '../model/index.ts';
 
+/** Where backups go: iCloud Drive (iOS), Google Drive, or OneDrive. */
+export type BackupProviderKind = 'icloud' | 'gdrive' | 'onedrive';
+
 export type BackupError =
   | 'icloud-off'
   | 'signed-out'
@@ -56,7 +59,7 @@ export interface RemoteNotebook {
 }
 
 export interface CloudProvider {
-  kind: 'icloud' | 'gdrive';
+  kind: BackupProviderKind;
   availability(): Promise<'ok' | BackupError>;
   /** Creates QU Student/Backups if needed. */
   ensureRoot(): Promise<void>;
@@ -72,7 +75,7 @@ export interface CloudProvider {
 
 export interface BackupStatus {
   enabled: boolean;
-  provider: 'icloud' | 'gdrive';
+  provider: BackupProviderKind;
   phase: 'off' | 'idle' | 'waiting-wifi' | 'running' | 'error';
   lastBackupAt?: IsoDate;
   lastCount?: number;

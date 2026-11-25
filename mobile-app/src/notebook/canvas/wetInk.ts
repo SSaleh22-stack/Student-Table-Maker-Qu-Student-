@@ -2,16 +2,20 @@
  * Wet ink (P22, PRD9-ink-latency): the stroke being drawn, built on the UI runtime from every pointer
  * event with core/ink/wetOutline.ts, so ink never waits for JS.
  *
- * - frozen: the part of the outline that can no longer change. Each wetStep returns the newly frozen
- *   patch, which is added once (PathBuilder over the previous path) as a straight-edged polygon, so
- *   the patches tile with no gaps. tail: the live end, rebuilt every event, smoothed along its sides
- *   and closed straight across where it meets the frozen part. Together they cover exactly
- *   getStroke(pts, strokeOptions(style, false)).
+ * - The live stroke is drawn as ONE closed outline (`tail`), rebuilt on every event: the frozen left
+ *   side (outline points that can no longer change, kept in `fl`), the live end from wetStep, the
+ *   frozen right side reversed (`fr`) and the start cap, smoothed the same way the painter smooths a
+ *   committed stroke. Earlier the frozen part was a pile of tiny separate polygons: their antialiased
+ *   edges left faint seams across the letters while writing, which vanished only when the finished
+ *   stroke replaced the wet ink. `frozen` stays empty (kept for the ghost and the canvas).
  * - At WET_MAX_POINTS (4000) raw points the stroke is committed and continues from its last point; the
  *   committed part moves to the GHOST paths, which stay on screen until the painter's picture shows it.
  *   A finished stroke also becomes a ghost when the next stroke starts before its picture arrived.
  * - preview: the dashed outline of the recognised shape while the hold-to-snap ring fills (NB-44).
  * - eraser: the pixel eraser's live path (drawn with DstOut inside the page layer, PageLayer.tsx).
+ * - shape: the shape tool's live preview while dragging (setShapePreview, built in the gesture on the
+ *   UI runtime with core/shapes/drag.ts, in the pen's colour and width), so the student sees the size
+ *   before lifting. It stays until the committed shape's picture is on screen (PageCanvas clears it).
  *
  * SKIA RUNTIME NOTE (#4339): these small SkPaths are the ONLY Skia objects made on the UI runtime (in
  * the gesture worklets, as the Phase 0 spike measured). They hold no pixels and are replaced on every
@@ -26,7 +30,9 @@ import { useSharedValue, type SharedValue } from 'react-native-reanimated';
 
 import { strokeOptions } from '@/notebook/core/ink/freehand';
 import { outlineToCommands, polygonToCommands } from '@/notebook/core/ink/outline';
-import { wetCarry, wetCreate, wetReset, wetShouldSplit, wetStep } from '@/notebook/core/ink/wetOutline';
+import { wetCarry, wetCreate, wetOutlinePolygon, wetReset, wetShouldSplit, wetStep } from '@/notebook/core/ink/wetOutline';
+import { shapeOutline as itemOutline } from '@/notebook/core/ink/bounds';
+import type { ShapeItem } from '@/notebook/core/model';
 import { shapeOutline, type ShapeCandidate } from '@/notebook/core/shapes/recognize';
 
 export interface WetStyle {
@@ -49,6 +55,10 @@ export interface WetInk {
   pts: SharedValue<number[]>;
   /** wetOutline state. */
   state: SharedValue<number[]>;
+  /** Frozen left and right outline points (flat x, y, stroke order) and the start cap. */
+  fl: SharedValue<number[]>;
+  fr: SharedValue<number[]>;
+  cap: SharedValue<number[]>;
   /** Stroke sequence number (increases at every pen-down and split). */
   seq: SharedValue<number>;
   /** True from pen-down to lift. */
@@ -65,6 +75,11 @@ export interface WetInk {
   /** The pixel eraser's path (page points of eraserPage). */
   eraser: SharedValue<SkPath>;
   eraserPage: SharedValue<number>;
+  /** The shape tool's live preview (page points of shapePage; -1: none). */
+  shape: SharedValue<SkPath>;
+  shapePage: SharedValue<number>;
+  shapeColor: SharedValue<string>;
+  shapeWidth: SharedValue<number>;
 }
 
 export function useWetInk(): WetInk {
@@ -76,6 +91,7 @@ export function useWetInk(): WetInk {
     ghostTail: Skia.Path.Make(),
     preview: Skia.Path.Make(),
     eraser: Skia.Path.Make(),
+    shape: Skia.Path.Make(),
   }));
   const frozen = useSharedValue<SkPath>(empty.frozen);
   const tail = useSharedValue<SkPath>(empty.tail);
@@ -85,6 +101,9 @@ export function useWetInk(): WetInk {
   const style = useSharedValue<WetStyle>({ tool: 'pen', color: '#1B2533', width: 3, pressure: true });
   const pts = useSharedValue<number[]>([]);
   const state = useSharedValue<number[]>(wetCreate());
+  const fl = useSharedValue<number[]>([]);
+  const fr = useSharedValue<number[]>([]);
+  const cap = useSharedValue<number[]>([]);
   const seq = useSharedValue(0);
   const down = useSharedValue(false);
   const ghostFrozen = useSharedValue<SkPath>(empty.ghostFrozen);
@@ -96,6 +115,10 @@ export function useWetInk(): WetInk {
   const preview = useSharedValue<SkPath>(empty.preview);
   const eraser = useSharedValue<SkPath>(empty.eraser);
   const eraserPage = useSharedValue(-1);
+  const shape = useSharedValue<SkPath>(empty.shape);
+  const shapePage = useSharedValue(-1);
+  const shapeColor = useSharedValue('#1B2533');
+  const shapeWidth = useSharedValue(3);
   return useMemo(
     () => ({
       frozen,
@@ -106,6 +129,9 @@ export function useWetInk(): WetInk {
       style,
       pts,
       state,
+      fl,
+      fr,
+      cap,
       seq,
       down,
       ghostFrozen,
@@ -117,8 +143,12 @@ export function useWetInk(): WetInk {
       preview,
       eraser,
       eraserPage,
+      shape,
+      shapePage,
+      shapeColor,
+      shapeWidth,
     }),
-    [frozen, tail, page, color, tool, style, pts, state, seq, down, ghostFrozen, ghostTail, ghostPage, ghostColor, ghostTool, ghostSeq, preview, eraser, eraserPage],
+    [frozen, tail, page, color, tool, style, pts, state, fl, fr, cap, seq, down, ghostFrozen, ghostTail, ghostPage, ghostColor, ghostTool, ghostSeq, preview, eraser, eraserPage, shape, shapePage, shapeColor, shapeWidth],
   );
 }
 
@@ -127,16 +157,12 @@ function emptyPath(): SkPath {
   return Skia.Path.Make();
 }
 
-/**
- * The tail as path commands: smoothed along its sides like the committed stroke (quadratic curves
- * through the midpoints), but its first and last points (the last frozen left and right points) are
- * kept and joined by a STRAIGHT edge, so it meets the frozen part with no gap.
- */
-function tailCommands(tail: number[]): number[][] {
+/** Empties the frozen sides (a new stroke or a split). */
+function resetSides(w: WetInk): void {
   'worklet';
-  const cmds = outlineToCommands(tail, false);
-  cmds.push([5]);
-  return cmds;
+  w.fl.set([]);
+  w.fr.set([]);
+  w.cap.set([]);
 }
 
 /** Recomputes the outline after pts changed (one wetStep). */
@@ -148,20 +174,25 @@ function stepWet(w: WetInk): void {
   // the result out of a nested modify() worklet would not work: an assignment there only changes
   // that worklet's captured copy of the variable.)
   const r = wetStep(w.state.get(), p, o);
-  const frozenPatch = r.frozenOutlineAppend;
-  const tailPoly = r.tail;
-  if (frozenPatch.length > 0) {
-    // Straight edges: the patches are tiny (often one stroke point long) and must tile exactly. The
-    // midpoint smoothing of outlineToCommands would round each one into a small blob, and the gaps
-    // between the blobs showed as dots along the ink while writing.
-    const patch = Skia.Path.MakeFromCmds(polygonToCommands(frozenPatch, true));
-    if (patch) {
-      const b = Skia.PathBuilder.MakeFromPath(w.frozen.get());
-      b.addPath(patch);
-      w.frozen.set(b.build());
-    }
+  if (r.frozenLeft.length > 0) {
+    const add = r.frozenLeft;
+    w.fl.modify((a) => {
+      'worklet';
+      for (let k = 0; k < add.length; k++) a.push(add[k]);
+      return a;
+    }, false);
   }
-  const t = tailPoly.length >= 4 ? Skia.Path.MakeFromCmds(tailCommands(tailPoly)) : null;
+  if (r.frozenRight.length > 0) {
+    const add = r.frozenRight;
+    w.fr.modify((a) => {
+      'worklet';
+      for (let k = 0; k < add.length; k++) a.push(add[k]);
+      return a;
+    }, false);
+  }
+  if (r.startCap.length > 0) w.cap.set(r.startCap.slice());
+  const poly = wetOutlinePolygon(w.fl.get(), r.tail, w.fr.get(), w.cap.get());
+  const t = poly.length >= 4 ? Skia.Path.MakeFromCmds(outlineToCommands(poly, true)) : null;
   w.tail.set(t ?? emptyPath());
 }
 
@@ -214,6 +245,7 @@ export function wetBegin(w: WetInk, pageIndex: number, x: number, y: number, p: 
     return st;
   }, false);
   w.frozen.set(emptyPath());
+  resetSides(w);
   stepWet(w);
 }
 
@@ -240,6 +272,7 @@ export function wetAdd(w: WetInk, x: number, y: number, p: number): number[] | n
       return st;
     }, false);
     w.frozen.set(emptyPath());
+    resetSides(w);
     stepWet(w);
     return done;
   }
@@ -257,6 +290,7 @@ export function wetReplace(w: WetInk, pts: number[]): void {
     return st;
   }, false);
   w.frozen.set(emptyPath());
+  resetSides(w);
   stepWet(w);
 }
 
@@ -328,4 +362,35 @@ export function clearEraserPath(w: WetInk): void {
   'worklet';
   w.eraserPage.set(-1);
   w.eraser.set(emptyPath());
+}
+
+/** Shows the shape tool's live preview on page `page` (null hides it). */
+export function setShapePreview(w: WetInk, page: number, item: ShapeItem | null): void {
+  'worklet';
+  if (!item) {
+    w.shapePage.set(-1);
+    w.shape.set(emptyPath());
+    return;
+  }
+  const o = itemOutline(item);
+  const n = o.pts.length;
+  let p: SkPath | null = null;
+  if (item.shape === 'ellipse' && item.box) {
+    const b = Skia.PathBuilder.Make();
+    b.addOval(Skia.XYWHRect(item.box.x, item.box.y, item.box.w, item.box.h));
+    p = b.build();
+  } else if (n >= 4) {
+    p = Skia.Path.MakeFromCmds(polygonToCommands(o.pts, o.closed));
+  }
+  w.shape.set(p ?? emptyPath());
+  w.shapeColor.set(item.color);
+  w.shapeWidth.set(item.width);
+  w.shapePage.set(page);
+}
+
+/** Hides the shape preview. */
+export function clearShapePreview(w: WetInk): void {
+  'worklet';
+  w.shapePage.set(-1);
+  w.shape.set(emptyPath());
 }

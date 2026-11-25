@@ -7,7 +7,7 @@
  * - P20 src/notebook/backup/useEnableBackupFlow.tsx: `useEnableBackupFlow: UseEnableBackupFlow`
  *   (checkRemote -> RemoteFoundDialog -> setEnabled; render `ui` once)
  * - P20 src/notebook/backup/service.ts: the BackupService singleton; providers in icloudProvider.ts
- *   and driveProvider.ts (Drive only through googleAuth.android.ts).
+ *   and driveProvider.ts (Drive only through googleAuth.native.ts).
  * - Core (P09 src/notebook/core/backup/*): planBackup, planRestore, shouldRun, DriveClient.
  *
  * Backup is OFF until the student turns it on (NB-85); enabling first checks for an existing backup

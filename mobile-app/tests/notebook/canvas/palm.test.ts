@@ -133,8 +133,16 @@ describe('one-pointer press (taps.ts)', () => {
     assert.equal(tickPress(s, LONG_PRESS_MS - 1), 'none');
     assert.equal(tickPress(s, LONG_PRESS_MS), 'long-press');
     assert.equal(tickPress(s, LONG_PRESS_MS + 100), 'none');
-    assert.equal(movePress(s, 50, 0, LONG_PRESS_MS + 120), 'none', 'a long press never turns into a drag');
+    assert.equal(movePress(s, TAP_SLOP - 1, 0, LONG_PRESS_MS + 110), 'none', 'a small wobble stays a long press');
     assert.equal(endPress(s, 900), 'long');
+  });
+
+  test('a long press that then moves becomes a drag (a shape aimed with the pencil)', () => {
+    const s = createPress();
+    beginPress(s, 0, 0, 0);
+    assert.equal(tickPress(s, LONG_PRESS_MS), 'long-press');
+    assert.equal(movePress(s, 50, 0, LONG_PRESS_MS + 120), 'drag-start');
+    assert.equal(endPress(s, 900), 'drag');
   });
 
   test('moving away and coming back is a drag, not a tap', () => {

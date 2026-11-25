@@ -9,12 +9,18 @@
  * iOS: LSSupportsOpeningDocumentsInPlace=false, so a PDF or .qunote opened from Files or another
  * app is copied into the app's Inbox instead of being edited in place. This plugin is the only
  * writer of that key.
+ *
+ * iOS Google sign-in (Google Drive backup on iPhone and iPad): when app.json
+ * extra.notebook.googleIosClientId is set, its reversed id (com.googleusercontent.apps.<id>) is added
+ * as a URL scheme, which Google's sign-in needs to return to the app. Without the id nothing is added
+ * and Google Drive reports 'unavailable' on iOS (iCloud keeps working).
  */
 import fs from 'node:fs';
 import path from 'node:path';
 import {
   type ConfigPlugin,
   createRunOncePlugin,
+  IOSConfig,
   withAndroidManifest,
   withDangerousMod,
   withInfoPlist,
@@ -86,15 +92,58 @@ const withBackupRuleAttributes: ConfigPlugin = (config) =>
     return cfg;
   });
 
+/**
+ * Camera (scanning pages) and microphone (lecture recording) are optional: the app works without them.
+ * Without these declarations Play infers android.hardware.camera, camera.autofocus and microphone as
+ * REQUIRED from the CAMERA / RECORD_AUDIO permissions, which hides the app from tablets and
+ * Chromebooks that lack a rear camera or a mic.
+ */
+const OPTIONAL_FEATURES = ['android.hardware.camera', 'android.hardware.camera.any', 'android.hardware.camera.autofocus', 'android.hardware.microphone'];
+
+const withOptionalHardware: ConfigPlugin = (config) =>
+  withAndroidManifest(config, (cfg) => {
+    const manifest = cfg.modResults.manifest as typeof cfg.modResults.manifest & {
+      'uses-feature'?: { $: Record<string, string> }[];
+    };
+    const list = manifest['uses-feature'] ?? [];
+    for (const name of OPTIONAL_FEATURES) {
+      const found = list.find((f) => f.$['android:name'] === name);
+      if (found) found.$['android:required'] = 'false';
+      else list.push({ $: { 'android:name': name, 'android:required': 'false' } });
+    }
+    manifest['uses-feature'] = list;
+    return cfg;
+  });
+
 const withOpenDocumentsAsCopies: ConfigPlugin = (config) =>
   withInfoPlist(config, (cfg) => {
     cfg.modResults.LSSupportsOpeningDocumentsInPlace = false;
     return cfg;
   });
 
+/** 'com.googleusercontent.apps.<id>' for an iOS client id '<id>.apps.googleusercontent.com'. */
+export function googleIosUrlScheme(clientId: string): string | null {
+  const id = clientId.trim();
+  const m = /^(.+)\.apps\.googleusercontent\.com$/.exec(id);
+  return m ? `com.googleusercontent.apps.${m[1]}` : null;
+}
+
+const withGoogleIosUrlScheme: ConfigPlugin = (config) => {
+  const extra = config.extra as { notebook?: { googleIosClientId?: unknown } } | undefined;
+  const id = extra?.notebook?.googleIosClientId;
+  const scheme = typeof id === 'string' ? googleIosUrlScheme(id) : null;
+  if (!scheme) return config;
+  return withInfoPlist(config, (cfg) => {
+    if (!IOSConfig.Scheme.hasScheme(scheme, cfg.modResults)) cfg.modResults = IOSConfig.Scheme.appendScheme(scheme, cfg.modResults);
+    return cfg;
+  });
+};
+
 const withNotebookNative: ConfigPlugin = (config) => {
   config = withBackupRuleFiles(config);
   config = withBackupRuleAttributes(config);
+  config = withGoogleIosUrlScheme(config);
+  config = withOptionalHardware(config);
   return withOpenDocumentsAsCopies(config);
 };
 

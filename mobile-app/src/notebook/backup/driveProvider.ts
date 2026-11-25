@@ -16,8 +16,8 @@
  * - Folder and file ids are looked up once per run (one listing per folder) and kept in memory;
  *   ensureRoot() starts each run fresh and saves the QU Student / Backups / notebook folder ids in
  *   the backup state.
- * - Sign-in, tokens and sign-out come from './googleAuth' (Metro: googleAuth.android.ts on Android,
- *   the 'unavailable' stub elsewhere). No other file imports the Google sign-in package.
+ * - Sign-in, tokens and sign-out come from './googleAuth' (Metro: googleAuth.native.ts on Android
+ *   and iOS, the 'unavailable' stub on web). No other file imports the Google sign-in package.
  */
 import { fetch as expoFetch } from 'expo/fetch';
 import { File } from 'expo-file-system';

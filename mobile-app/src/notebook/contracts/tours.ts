@@ -24,6 +24,12 @@ export const TOUR_TARGETS = {
   edUndo: 'ed.undo',
   edRecord: 'ed.record',
   edActions: 'ed.actions',
+  // The app's own tours (src/components/AppTours.tsx), outside the notebook.
+  appImport: 'app.import',
+  appTimetable: 'app.timetable',
+  tasksSummary: 'tasks.summary',
+  tasksFilters: 'tasks.filters',
+  tasksNew: 'tasks.new',
 } as const;
 
 export type TourTargetId = (typeof TOUR_TARGETS)[keyof typeof TOUR_TARGETS];
@@ -39,6 +45,8 @@ export interface TourRect {
 /** Anything with measureInWindow (a View instance). */
 export interface MeasurableNode {
   measureInWindow(cb: (x: number, y: number, width: number, height: number) => void): void;
+  /** Views have it too; Android tours measure with it (pageX / pageY), see ui/tourTargets.ts. */
+  measure?(cb: (x: number, y: number, width: number, height: number, pageX: number, pageY: number) => void): void;
 }
 
 /** Returns a stable ref callback for the element that is the target. */

@@ -2,7 +2,8 @@
  * Text boxes (P28, NB-46, Figma 09).
  *
  * useTextTool(ctx) returns the 'text' ToolPlugin:
- * - handler.onTap (JS, through scheduleOnRN while 'text' is the tool): a tap on a text box opens it for
+ * - handler.onTap (JS, through scheduleOnRN while 'text' is the tool; a finger tap counts too, even in
+ *   Apple Pencil mode, see gestures.ts textTap): a tap on a text box opens it for
  *   editing; a tap on empty space starts a new box there: TEXT_DEFAULT_WIDTH (240 pt) wide, size 18,
  *   the pen color as it shows on this page, not bold, with the recording mark (ctx.recMark()). A new
  *   box grows from the tap toward the end of the reading direction: in Arabic its right edge is at the
@@ -42,6 +43,7 @@ export {
   openTextEditor,
   reflowTextItem,
   textEditStore,
+  moveTextDraft,
   updateTextDraft,
   type TextEditState,
   type TextEditorOverlayProps,

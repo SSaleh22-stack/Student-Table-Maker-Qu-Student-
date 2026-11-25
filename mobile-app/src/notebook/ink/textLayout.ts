@@ -104,7 +104,10 @@ export function buildTextLayout(item: TextItem, fonts: SkTypefaceFontProvider | 
       offsets.push(y);
       y += p.getHeight();
     } finally {
-      builder.dispose();
+      // Skia 2.x types SkParagraphBuilder as disposable, but the native builder has no dispose() (it is
+      // freed by GC), so calling it unguarded throws "undefined is not a function" on device.
+      const b = builder as { dispose?: () => void };
+      if (typeof b.dispose === 'function') b.dispose();
     }
   }
   return { paragraphs, offsets, height: y, width };

@@ -46,6 +46,8 @@ describe('app.json', () => {
       'expo-image-picker',
       'expo-dev-client',
       './plugins/withNotebookNative',
+      // OneDrive backup: the refresh token in the keychain / keystore.
+      'expo-secure-store',
     ]);
   });
 
@@ -102,8 +104,9 @@ describe('app.json', () => {
 describe('package.json', () => {
   const pkg = readJson('package.json');
 
-  test('keeps google-signin out of iOS autolinking', () => {
-    assert.deepEqual(pkg.expo.autolinking.ios.exclude, ['@react-native-google-signin/google-signin']);
+  test('links google-signin on iOS too (Google Drive backup on iPhone and iPad)', () => {
+    assert.equal(pkg.expo?.autolinking?.ios?.exclude?.includes('@react-native-google-signin/google-signin') ?? false, false);
+    assert.ok(pkg.dependencies['@react-native-google-signin/google-signin']);
   });
 
   test('has the notebook scripts', () => {

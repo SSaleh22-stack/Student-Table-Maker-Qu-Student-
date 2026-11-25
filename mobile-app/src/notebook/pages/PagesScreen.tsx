@@ -1,36 +1,29 @@
 /**
- * The pages view (Figma 13; NB-23, NB-24, NB-25, NB-49a): every page of the open notebook as a PNG
- * thumbnail, to jump to, reorder, add, duplicate, re-paper, insert a PDF into, or delete.
+ * The pages view (Figma 13; NB-23, NB-24, NB-25, NB-49a): every page of the open notebook as a small
+ * PNG thumbnail, one per row, to jump to, reorder (long press and drag) or add (the dashed tile last).
  *
- * It opens as a SIDEBAR on the physical right edge (in Arabic and in English) over the notebook,
- * which stays visible and dimmed behind it; a tap on the dimmed notebook closes it. The route is a
- * transparent modal (src/app/notebook/_layout.tsx); the panel slides in from the right. Inside the
- * panel the grid has two columns and the phone-size header and action bar.
+ * Each page has a round ⋮ on its corner with that page's options: add a page after it, duplicate,
+ * change the paper, insert a PDF after it, delete (one undo step each). There is no action bar.
  *
- *   (back)  صفحات المذكرة                                  تحديد   تم
- *           <notebook title> · 8 صفحات
- *   [grid of pages, 3 / 4 / 6 columns; 'الحالية' under the current page; dashed 'صفحة جديدة' last]
- *                    اسحب الصفحة لتغيير ترتيبها
- *   [ إضافة صفحة | تكرار | تغيير الورق | إدراج PDF | حذف ]
+ * Two ways it shows (PagesPanel is the same list in both):
+ * - Tablets: DOCKED beside the page in the editor (EditorScreen, settings.pagesPinned), the same width
+ *   as the sidebar, so the student keeps writing with it open. The editor's pages button toggles it.
+ *   A tap jumps to the page and the panel stays; it follows the page on screen; thumbnails refresh a
+ *   moment after the last edit (DOCK_REFRESH_MS), never on every stroke.
+ * - Phones: this route, a SIDEBAR on the physical right edge over the dimmed notebook (a transparent
+ *   modal, src/app/notebook/_layout.tsx); a tap jumps and closes it, as does a tap on the notebook.
  *
- * - The screen uses useNotebookSession(id): the SAME session object the editor below holds (the
- *   registry shares it), so edits here are the editor's edits and every action is one undo step there.
- *   The editor stays mounted under this screen, so a recording keeps going.
- * - The current page comes from the route (?current=<pageId>, see the route file); without it the
- *   first page is current.
- * - Normal mode: a tap jumps (session.requestJump, then back); a long press lifts a page to reorder.
- *   'تحديد' switches to select mode (taps toggle pages, no reordering); 'إلغاء التحديد' leaves it.
- *   'تم' (and back) close the view. The action rules (targets for 0, 1 and n selected pages) are in
- *   core/pages/pageSelection.ts.
- * - Thumbnails refresh after any edit: the screen re-renders on every session change and each cell
- *   requests the thumbnail of the page's new version.
+ * - It uses the SAME session object the editor holds (the registry shares it), so edits here are the
+ *   editor's edits and every action is one undo step there.
+ * - The route's current page comes from ?current=<pageId>; without it the first page is current.
  */
-import { useCallback, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { ActivityIndicator, Platform, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated, { SlideInRight } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/AppText';
+import { Icon, type IconName } from '@/components/Icon';
 import { getLang, tr, useLang } from '@/lib/i18n';
 import { row } from '@/lib/rtl';
 import type { Id, PageBackground, PaperSpec } from '@/notebook/core/model';
@@ -45,12 +38,7 @@ import {
   effectiveCurrent,
   initialPaper,
   insertIndexAfter,
-  pagesHint,
   paperPlan,
-  pruneSelection,
-  selectionChanged,
-  tapAction,
-  toggleSelected,
   type PageActionId,
   type PagesView,
 } from '@/notebook/core/pages/pageSelection';
@@ -62,7 +50,7 @@ import { importFailureText } from '@/notebook/import/importPdf';
 import { insertPdfInto } from '@/notebook/import/insertPdf';
 import { getJobs, jobOf, subscribeJobs } from '@/notebook/import/jobs';
 import { goBackOr, openLibrary, openNotebook } from '@/notebook/nav';
-import { useNotebookSession, useSessionSnapshot } from '@/notebook/store/hooks';
+import { useNotebookSession } from '@/notebook/store/hooks';
 import { nbColors } from '@/notebook/theme';
 import { CircleButton } from '@/notebook/ui/CircleButton';
 import { ConfirmDialog } from '@/notebook/ui/ConfirmDialog';
@@ -72,7 +60,6 @@ import { physicalPadding, physicalRight } from '@/notebook/ui/physical';
 import { Popover, type AnchorRect } from '@/notebook/ui/Popover';
 import { showToast } from '@/notebook/ui/toast';
 
-import { PageActionsBar } from './PageActionsBar';
 import { PagePaperSheet, pdfPaperSkippedText } from './PagePaperSheet';
 import { ReorderGrid } from './ReorderGrid';
 
@@ -84,17 +71,25 @@ export interface PagesScreenProps {
 
 /** How long a paper change may wait for pages that had to be loaded before the undo group closes. */
 const GROUP_WAIT_MS = 8000;
-/** Sidebar width on tablets; phones use most of the screen width (PHONE_PANEL_SHARE, at most 380). */
-const PANEL_W = 400;
-const PHONE_PANEL_SHARE = 0.88;
+/** Sidebar width on tablets (also the docked panel); phones use part of the screen (at most 260). */
+export const PANEL_W = 300;
+const PHONE_PANEL_SHARE = 0.62;
 /** Grid padding inside the panel. */
 const PANEL_PAD_X = 16;
-const GRID_COLUMNS = 2;
+/** One page per row. */
+const GRID_COLUMNS = 1;
+/** A docked panel refreshes its thumbnails this long after the last edit (ms). */
+const DOCK_REFRESH_MS = 1200;
+/** Time for the ⋮ menu's Modal to go away before an option that opens a dialog runs. */
+const AFTER_MENU_MS = Platform.OS === 'ios' ? 350 : 60;
+/** Widest thumbnail in the one-column list (pt), so pages stay small. */
+const THUMB_MAX_W = 200;
 
-function usePanelWidth(): number {
+/** The width of the pages panel (safe-area inset not included). */
+export function usePanelWidth(): number {
   const { width } = useWindowDimensions();
   const compact = useWidthClass() === 'compact';
-  return Math.round(compact ? Math.min(width * PHONE_PANEL_SHARE, 380) : Math.min(PANEL_W, width * 0.6));
+  return Math.round(compact ? Math.min(width * PHONE_PANEL_SHARE, 260) : Math.min(PANEL_W, width * 0.6));
 }
 
 /** The dimmed notebook (tap to close) and the panel on the physical right edge. */
@@ -207,54 +202,20 @@ function useJobOf(notebookId: string | null) {
   return useMemo(() => (notebookId && jobs.length ? jobOf(notebookId) : null), [jobs, notebookId]);
 }
 
-function Header({
-  subtitle,
-  selectMode,
-  onToggleSelect,
-  onDone,
-  selectDisabled,
-}: {
-  subtitle: string;
-  selectMode: boolean;
-  onToggleSelect: () => void;
-  onDone: () => void;
-  selectDisabled: boolean;
-}) {
-  // The panel is narrow on every device: phone-size texts.
-  const compact = true;
+function Header({ subtitle, onDone }: { subtitle: string; onDone: () => void }) {
   return (
     <View style={[styles.header, { flexDirection: row }]}>
-      <CircleButton icon="x" label={tr('إغلاق', 'Close')} tone="muted" onPress={onDone} size={36} iconSize={18} />
       <View style={styles.headerTexts}>
-        <AppText size={20} weight="bold" numberOfLines={1} accessibilityRole="header">
-          {tr('صفحات المذكرة', 'Notebook pages')}
+        <AppText size={18} weight="bold" numberOfLines={1} accessibilityRole="header">
+          {tr('الصفحات', 'Pages')}
         </AppText>
         {subtitle ? (
-          <AppText size={compact ? 13 : 14} color={nbColors.faint} numberOfLines={1}>
+          <AppText size={13} color={nbColors.faint} numberOfLines={1}>
             {subtitle}
           </AppText>
         ) : null}
       </View>
-      <Pressable
-        onPress={onToggleSelect}
-        disabled={selectDisabled}
-        accessibilityRole="button"
-        accessibilityState={{ selected: selectMode, disabled: selectDisabled }}
-        hitSlop={8}
-        style={({ pressed }) => [styles.textBtn, { opacity: selectDisabled ? 0.4 : pressed ? 0.6 : 1 }]}>
-        <AppText size={compact ? 15 : 17} weight="semibold" color={nbColors.accent}>
-          {selectMode ? tr('إلغاء التحديد', 'Cancel selection') : tr('تحديد', 'Select')}
-        </AppText>
-      </Pressable>
-      <Pressable
-        onPress={onDone}
-        accessibilityRole="button"
-        hitSlop={8}
-        style={({ pressed }) => [styles.textBtn, { opacity: pressed ? 0.6 : 1 }]}>
-        <AppText size={compact ? 15 : 17} weight="bold" color={nbColors.accent}>
-          {tr('تم', 'Done')}
-        </AppText>
-      </Pressable>
+      <CircleButton icon="x" label={tr('إغلاق الصفحات', 'Close pages')} tone="muted" onPress={onDone} size={34} iconSize={17} />
     </View>
   );
 }
@@ -296,7 +257,7 @@ export function PagesScreen({ notebookId, currentPageId }: PagesScreenProps) {
   }
   return (
     <SidePanel onClose={close}>
-      <PagesBody session={session} initialCurrent={currentPageId ?? null} onClose={close} />
+      <PagesPanel session={session} currentId={currentPageId ?? null} onClose={close} />
     </SidePanel>
   );
 }
@@ -307,70 +268,116 @@ interface PaperSheetState {
   initial: PaperSpec;
 }
 
-function PagesBody({ session, initialCurrent, onClose }: { session: NotebookSession; initialCurrent: Id | null; onClose: () => void }) {
+/** The page options menu, in this order (the ⋮ on each page). */
+const MENU_ITEMS: { id: PageActionId; icon: IconName; label: () => string }[] = [
+  { id: 'add', icon: 'plus', label: () => tr('إضافة صفحة بعدها', 'Add a page after') },
+  { id: 'duplicate', icon: 'copy', label: () => tr('تكرار', 'Duplicate') },
+  { id: 'paper', icon: 'grid', label: () => tr('تغيير الورق', 'Change paper') },
+  { id: 'insertPdf', icon: 'fileText', label: () => tr('إدراج PDF بعدها', 'Insert a PDF after') },
+  { id: 'delete', icon: 'trash', label: () => tr('حذف الصفحة', 'Delete page') },
+];
+
+const NO_SELECTION: ReadonlySet<Id> = new Set();
+
+/** The view of one page's options: that page alone is the target. */
+function viewFor(pageIds: readonly Id[], id: Id): PagesView {
+  return { pageIds, current: id, mode: 'normal', selected: [] };
+}
+
+/**
+ * The notebook's snapshot, refreshed on every change, or (calm) DOCK_REFRESH_MS after the last change
+ * so a docked list never re-renders its thumbnails on every pen stroke. Adding or removing pages
+ * refreshes at once either way.
+ */
+function useCalmSnapshot(session: NotebookSession, calm: boolean) {
+  const [snap, setSnap] = useState(() => session.getSnapshot());
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    let count = session.notebook.pageIds.length;
+    const unsub = session.subscribe(() => {
+      const n = session.notebook.pageIds.length;
+      if (!calm || n !== count) {
+        count = n;
+        if (timer) clearTimeout(timer);
+        timer = null;
+        setSnap(session.getSnapshot());
+        return;
+      }
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        timer = null;
+        setSnap(session.getSnapshot());
+      }, DOCK_REFRESH_MS);
+    });
+    return () => {
+      unsub();
+      if (timer) clearTimeout(timer);
+    };
+  }, [session, calm]);
+  return snap;
+}
+
+export interface PagesPanelProps {
+  session: NotebookSession;
+  /** The editor's current page (the docked panel follows it). */
+  currentId: Id | null;
+  onClose: () => void;
+  /** Docked beside the page in the editor: a tap jumps without closing, thumbnails refresh calmly. */
+  docked?: boolean;
+}
+
+/** The pages list with its header, the ⋮ menu of each page and the dialogs. */
+export function PagesPanel({ session, currentId, onClose, docked = false }: PagesPanelProps) {
   const lang = useLang();
-  const snap = useSessionSnapshot(session);
+  const snap = useCalmSnapshot(session, docked);
   const notebook = snap?.notebook ?? session.notebook;
   const pageIds = notebook.pageIds;
   const readOnly = session.readOnly;
-  const { width: winW } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const panelW = usePanelWidth();
-  // The sidebar is narrow on every device: phone-size grid, header and action bar.
-  const compact = true;
   const imp = useImportUi();
   const job = useJobOf(session.id);
 
-  const [mode, setMode] = useState<'normal' | 'select'>('normal');
-  const [rawSelected, setSelected] = useState<Id[]>([]);
-  const [rawCurrent, setCurrent] = useState<Id | null>(initialCurrent);
+  const [rawCurrent, setCurrent] = useState<Id | null>(currentId);
+  // The docked panel follows the page on screen.
+  const [seenCurrent, setSeenCurrent] = useState(currentId);
+  if (seenCurrent !== currentId) {
+    setSeenCurrent(currentId);
+    setCurrent(currentId);
+  }
+  const current = effectiveCurrent(pageIds, rawCurrent);
+
+  const [menu, setMenu] = useState<{ id: Id; anchor: AnchorRect } | null>(null);
   const [paperSheet, setPaperSheet] = useState<PaperSheetState | null>(null);
   const [paperKey, setPaperKey] = useState(0);
   const [confirmDelete, setConfirmDelete] = useState<Id[] | null>(null);
-  const [addAnchor, setAddAnchor] = useState<AnchorRect | null>(null);
   const [inserting, setInserting] = useState(false);
-  const [barH, setBarH] = useState(0);
   const busyRef = useRef(false);
   const insertingRef = useRef(false);
-
-  // Pages removed elsewhere (undo, an import, a delete) leave the selection; a removed current page
-  // falls back to the first page.
-  const selected = useMemo(
-    () => (selectionChanged(rawSelected, pageIds) ? pruneSelection(rawSelected, pageIds) : rawSelected),
-    [rawSelected, pageIds],
+  const menuTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (menuTimer.current) clearTimeout(menuTimer.current);
+    },
+    [],
   );
-  const current = effectiveCurrent(pageIds, rawCurrent);
 
-  const view: PagesView = useMemo(() => ({ pageIds, current, mode, selected }), [pageIds, current, mode, selected]);
-  const states = useMemo(() => actionStates(view, readOnly), [view, readOnly]);
-  const selectedSet = useMemo(() => new Set(selected), [selected]);
-  const targets = useMemo(() => actionTargets(view), [view]);
+  // ----- layout (one small page per row, centred)
 
-  // ----- layout
+  const gridW = Math.min(THUMB_MAX_W, Math.max(120, panelW - PANEL_PAD_X * 2));
+  const padX = Math.max(PANEL_PAD_X, (panelW - gridW) / 2);
+  const metrics = useMemo(() => gridMetrics({ width: gridW, columns: GRID_COLUMNS, compact: true }), [gridW]);
+  const bottomGap = Math.max(insets.bottom, 12) + 8;
 
-  const padX = PANEL_PAD_X;
-  const gridW = Math.max(120, panelW - insets.right - padX * 2);
-  const metrics = useMemo(() => gridMetrics({ width: gridW, columns: GRID_COLUMNS, compact }), [gridW, compact]);
-  const bottomGap = Math.max(insets.bottom, 12) + (compact ? 8 : 24);
-  const hintH = 34;
-
-  // ----- actions
-
-  const toggleSelect = useCallback(() => {
-    setMode((m) => (m === 'select' ? 'normal' : 'select'));
-    setSelected([]);
-  }, []);
+  // ----- actions (each on the pages of a view: one page from its ⋮)
 
   const onTap = useCallback(
     (id: Id) => {
-      if (tapAction(mode) === 'toggle') {
-        setSelected((s) => toggleSelected(s, id));
-        return;
-      }
+      setCurrent(id);
       session.requestJump(id);
-      onClose();
+      if (!docked) onClose();
     },
-    [mode, session, onClose],
+    [session, docked, onClose],
   );
 
   const onMove = useCallback(
@@ -385,42 +392,45 @@ function PagesBody({ session, initialCurrent, onClose }: { session: NotebookSess
 
   const addAtEnd = useCallback(() => {
     if (readOnly) return;
-    const plan = addPagePlan(view, bgOfSession(session), session.notebook.defaults, 'end');
+    const ids = session.notebook.pageIds;
+    const v = viewFor(ids, current ?? ids[0]);
+    const plan = addPagePlan(v, bgOfSession(session), session.notebook.defaults, 'end');
     session.addPage(plan.after, { background: plan.background });
-  }, [readOnly, view, session]);
+  }, [readOnly, session, current]);
 
-  const addAfterTargets = useCallback(async () => {
-    const last = targets.length ? targets[targets.length - 1] : null;
-    // The new page copies the last target's paper: make sure its background is known.
-    if (last) await ensureLoaded(session, [last]);
-    const plan = addPagePlan(view, bgOfSession(session), session.notebook.defaults, 'after');
-    session.addPage(plan.after, { background: plan.background });
-  }, [targets, session, view]);
+  const addAfter = useCallback(
+    async (v: PagesView) => {
+      const targets = actionTargets(v);
+      const last = targets.length ? targets[targets.length - 1] : null;
+      // The new page copies the page's paper: make sure its background is known.
+      if (last) await ensureLoaded(session, [last]);
+      const plan = addPagePlan(v, bgOfSession(session), session.notebook.defaults, 'after');
+      session.addPage(plan.after, { background: plan.background });
+    },
+    [session],
+  );
 
-  const duplicate = useCallback(() => {
-    if (!targets.length) return;
-    // One call = one undo step (each copy goes right after its page).
-    session.duplicatePages(targets);
-  }, [targets, session]);
-
-  const openPaper = useCallback(async () => {
-    if (!targets.length) return;
-    const unpin = await loadPinned(session, targets);
-    let plan: ReturnType<typeof paperPlan>;
-    let initial: PaperSpec;
-    try {
-      plan = paperPlan(targets, bgOfSession(session));
-      initial = initialPaper(plan.apply, bgOfSession(session), session.notebook.defaults);
-    } finally {
-      unpin();
-    }
-    if (plan.apply.length === 0) {
-      if (plan.skippedPdf > 0) showToast({ text: pdfPaperSkippedText(), tone: 'info', id: 'nb-pages-paper-pdf' });
-      return;
-    }
-    setPaperKey((k) => k + 1);
-    setPaperSheet({ apply: plan.apply, skippedPdf: plan.skippedPdf, initial });
-  }, [targets, session]);
+  const openPaper = useCallback(
+    async (targets: Id[]) => {
+      if (!targets.length) return;
+      const unpin = await loadPinned(session, targets);
+      let plan: ReturnType<typeof paperPlan>;
+      let initial: PaperSpec;
+      try {
+        plan = paperPlan(targets, bgOfSession(session));
+        initial = initialPaper(plan.apply, bgOfSession(session), session.notebook.defaults);
+      } finally {
+        unpin();
+      }
+      if (plan.apply.length === 0) {
+        if (plan.skippedPdf > 0) showToast({ text: pdfPaperSkippedText(), tone: 'info', id: 'nb-pages-paper-pdf' });
+        return;
+      }
+      setPaperKey((k) => k + 1);
+      setPaperSheet({ apply: plan.apply, skippedPdf: plan.skippedPdf, initial });
+    },
+    [session],
+  );
 
   const applyPaper = useCallback(
     async (paper: PaperSpec, applyToNew: boolean) => {
@@ -440,8 +450,7 @@ function PagesBody({ session, initialCurrent, onClose }: { session: NotebookSess
           const bg = p.background;
           return bg.kind === 'pdf' || (bg.paper.style === paper.style && bg.paper.color === paper.color && bg.paper.size === paper.size);
         });
-      const edit = () =>
-        session.setPageBackground(sheet.apply, (p) => (want.has(p.id) ? toBg(p) : null));
+      const edit = () => session.setPageBackground(sheet.apply, (p) => (want.has(p.id) ? toBg(p) : null));
       if (applyToNew) {
         groupedEdit(session, 'changePaper', edit, landed, () => session.setDefaults(paper), unpin);
       } else {
@@ -456,32 +465,30 @@ function PagesBody({ session, initialCurrent, onClose }: { session: NotebookSess
     [paperSheet, readOnly, session],
   );
 
-  const insertPdf = useCallback(async () => {
-    // A ref, not the state: two quick taps run before the state re-renders.
-    if (insertingRef.current || readOnly) return;
-    const at = insertIndexAfter(pageIds, targets);
-    insertingRef.current = true;
-    setInserting(true);
-    try {
-      const r = await insertPdfInto(session, at, imp.ui);
-      if (!r.ok) {
-        const text = importFailureText(r.reason);
+  const insertPdf = useCallback(
+    async (targets: Id[]) => {
+      // A ref, not the state: two quick taps run before the state re-renders.
+      if (insertingRef.current || readOnly) return;
+      const at = insertIndexAfter(session.notebook.pageIds, targets);
+      insertingRef.current = true;
+      setInserting(true);
+      try {
+        const r = await insertPdfInto(session, at, imp.ui);
+        if (!r.ok) {
+          const text = importFailureText(r.reason);
+          if (text) showToast({ text, tone: 'warn', id: 'nb-pages-insert-pdf' });
+        }
+      } catch {
+        const text = importFailureText('io');
         if (text) showToast({ text, tone: 'warn', id: 'nb-pages-insert-pdf' });
+      } finally {
+        insertingRef.current = false;
+        setInserting(false);
+        imp.resetProgress();
       }
-    } catch {
-      const text = importFailureText('io');
-      if (text) showToast({ text, tone: 'warn', id: 'nb-pages-insert-pdf' });
-    } finally {
-      insertingRef.current = false;
-      setInserting(false);
-      imp.resetProgress();
-    }
-  }, [readOnly, pageIds, targets, session, imp]);
-
-  const askDelete = useCallback(() => {
-    if (!states.delete.enabled) return;
-    setConfirmDelete(targets);
-  }, [states.delete.enabled, targets]);
+    },
+    [readOnly, session, imp],
+  );
 
   const doDelete = useCallback(() => {
     const ids = confirmDelete;
@@ -495,7 +502,6 @@ function PagesBody({ session, initialCurrent, onClose }: { session: NotebookSess
     session.deletePages(doomed);
     const entry = session.topEntryId();
     setCurrent(nextCurrent);
-    setSelected((s) => s.filter((id) => !doomed.includes(id)));
     showToast({
       text: deletedPagesText(doomed.length, getLang()),
       tone: 'ok',
@@ -505,57 +511,64 @@ function PagesBody({ session, initialCurrent, onClose }: { session: NotebookSess
     });
   }, [confirmDelete, readOnly, session, current]);
 
-  const run = useCallback(
-    (id: PageActionId) => {
-      if (!states[id].enabled || busyRef.current) return;
-      const once = (p: Promise<void> | void) => {
-        if (!p) return;
+  /** Runs one option of a page's ⋮ menu. */
+  const runFor = useCallback(
+    (id: Id, action: PageActionId) => {
+      const v = viewFor(session.notebook.pageIds, id);
+      if (!actionStates(v, readOnly)[action].enabled || busyRef.current) return;
+      const targets = actionTargets(v);
+      const once = (p: Promise<void>) => {
         busyRef.current = true;
         p.catch(() => undefined).finally(() => {
           busyRef.current = false;
         });
       };
-      switch (id) {
+      switch (action) {
         case 'add':
-          once(addAfterTargets());
+          once(addAfter(v));
           break;
         case 'duplicate':
-          duplicate();
+          // One call = one undo step (the copy goes right after its page).
+          session.duplicatePages(targets);
           break;
         case 'paper':
-          once(openPaper());
+          once(openPaper(targets));
           break;
         case 'insertPdf':
-          void insertPdf();
+          void insertPdf(targets);
           break;
         case 'delete':
-          askDelete();
+          setConfirmDelete(targets);
           break;
       }
     },
-    [states, addAfterTargets, duplicate, openPaper, insertPdf, askDelete],
+    [session, readOnly, addAfter, openPaper, insertPdf],
   );
+
+  /** Closes the menu, then runs the option once its Modal has gone (iOS cannot stack Modals). */
+  const pick = (action: PageActionId) => {
+    const id = menu?.id;
+    setMenu(null);
+    if (!id) return;
+    if (menuTimer.current) clearTimeout(menuTimer.current);
+    menuTimer.current = setTimeout(() => {
+      menuTimer.current = null;
+      runFor(id, action);
+    }, AFTER_MENU_MS);
+  };
+
+  const menuStates = menu ? actionStates(viewFor(pageIds, menu.id), readOnly) : null;
+  const menuIndex = menu ? pageIds.indexOf(menu.id) : -1;
 
   // ----- text
 
   const subtitle = [notebook.title, countLabel(pageIds.length, 'page', lang)].filter(Boolean).join(' · ');
-  const hint =
-    job && job.state === 'running' ? importingPagesText(job.done, job.total) : pagesHint(view, lang, readOnly);
-  const targetsLabel =
-    mode === 'select' && selected.length ? countLabel(targets.length, 'page', lang) : tr('الصفحة الحالية', 'The current page');
-  const addAfterLabel =
-    mode === 'select' && selected.length ? tr('بعد الصفحات المحددة', 'After the selected pages') : tr('بعد الصفحة الحالية', 'After the current page');
+  const importing = job && job.state === 'running' ? importingPagesText(job.done, job.total) : null;
 
   return (
     <View style={styles.body}>
       <View style={[styles.top, { paddingHorizontal: PANEL_PAD_X }]}>
-        <Header
-          subtitle={subtitle}
-          selectMode={mode === 'select'}
-          onToggleSelect={toggleSelect}
-          onDone={onClose}
-          selectDisabled={readOnly}
-        />
+        <Header subtitle={subtitle} onDone={onClose} />
       </View>
 
       <ReorderGrid
@@ -563,71 +576,61 @@ function PagesBody({ session, initialCurrent, onClose }: { session: NotebookSess
         pageIds={pageIds}
         metrics={metrics}
         current={current}
-        selectMode={mode === 'select'}
-        selected={selectedSet}
+        selectMode={false}
+        selected={NO_SELECTION}
         defaults={notebook.defaults}
         readOnly={readOnly}
         onTap={onTap}
         onMove={onMove}
         onAddEnd={addAtEnd}
+        onMenu={readOnly ? undefined : (id, anchor) => setMenu({ id, anchor })}
         padX={padX}
-        bottomInset={barH + hintH + bottomGap + 16}
+        bottomInset={bottomGap + 16}
         initialPageId={current}
       />
 
-      <View pointerEvents="box-none" style={[styles.bottom, { paddingBottom: bottomGap, paddingHorizontal: 12 }]}>
-        {inserting && imp.progress ? (
-          <View style={styles.progressCard}>
-            <ImportProgress info={imp.progress} hint={false} />
-          </View>
-        ) : null}
-        <AppText size={13} color={nbColors.faint} align="center" style={styles.hint} accessibilityLiveRegion="polite">
-          {hint}
-        </AppText>
-        <View onLayout={(e) => setBarH(e.nativeEvent.layout.height)}>
-          <PageActionsBar
-            states={states}
-            onAction={run}
-            onAddLongPress={(a) => {
-              if (states.add.enabled) setAddAnchor(a ?? { x: winW / 2, y: 0, width: 1, height: 1 });
-            }}
-            compact={compact}
-            targetsLabel={targetsLabel}
-          />
+      {(inserting && imp.progress) || importing ? (
+        <View pointerEvents="box-none" style={[styles.bottom, { paddingBottom: bottomGap, paddingHorizontal: 12 }]}>
+          {inserting && imp.progress ? (
+            <View style={styles.progressCard}>
+              <ImportProgress info={imp.progress} hint={false} />
+            </View>
+          ) : null}
+          {importing ? (
+            <AppText size={13} color={nbColors.faint} align="center" style={styles.hint} accessibilityLiveRegion="polite">
+              {importing}
+            </AppText>
+          ) : null}
         </View>
-      </View>
+      ) : null}
 
       <Popover
-        visible={addAnchor !== null}
-        anchor={addAnchor}
-        onClose={() => setAddAnchor(null)}
-        prefer="above"
-        padding={8}
-        gap={0}
-        accessibilityLabel={tr('إضافة صفحة', 'Add page')}>
-        <Pressable
-          onPress={() => {
-            setAddAnchor(null);
-            run('add');
-          }}
-          accessibilityRole="button"
-          style={({ pressed }) => [styles.menuRow, { opacity: pressed ? 0.6 : 1 }]}>
-          <AppText size={16} weight="medium">
-            {addAfterLabel}
-          </AppText>
-        </Pressable>
-        <View style={styles.menuDivider} />
-        <Pressable
-          onPress={() => {
-            setAddAnchor(null);
-            addAtEnd();
-          }}
-          accessibilityRole="button"
-          style={({ pressed }) => [styles.menuRow, { opacity: pressed ? 0.6 : 1 }]}>
-          <AppText size={16} weight="medium">
-            {tr('في النهاية', 'At the end')}
-          </AppText>
-        </Pressable>
+        visible={menu !== null}
+        anchor={menu?.anchor ?? null}
+        onClose={() => setMenu(null)}
+        prefer="below"
+        padding={6}
+        gap={4}
+        width={230}
+        accessibilityLabel={menuIndex >= 0 ? tr(`خيارات الصفحة ${menuIndex + 1}`, `Page ${menuIndex + 1} options`) : tr('خيارات الصفحة', 'Page options')}>
+        {MENU_ITEMS.map((it) => {
+          const enabled = !!menuStates?.[it.id].enabled;
+          const color = !enabled ? nbColors.placeholder : it.id === 'delete' ? nbColors.danger : nbColors.text;
+          return (
+            <Pressable
+              key={it.id}
+              onPress={() => pick(it.id)}
+              disabled={!enabled}
+              accessibilityRole="button"
+              accessibilityState={{ disabled: !enabled }}
+              style={({ pressed }) => [styles.menuRow, { flexDirection: row }, pressed && styles.menuPressed]}>
+              <Icon name={it.icon} size={18} color={color} />
+              <AppText size={15} weight="medium" color={color}>
+                {it.label()}
+              </AppText>
+            </Pressable>
+          );
+        })}
       </Popover>
 
       <PagePaperSheet
@@ -674,7 +677,7 @@ const styles = StyleSheet.create({
   },
   body: { flex: 1 },
   top: { paddingTop: 12, paddingBottom: 8 },
-  header: { alignItems: 'center', gap: 14, width: '100%', maxWidth: 1180, alignSelf: 'center' },
+  header: { alignItems: 'center', gap: 10, width: '100%', maxWidth: 1180, alignSelf: 'center' },
   headerTexts: { flex: 1, gap: 2 },
   textBtn: { paddingHorizontal: 4, paddingVertical: 6 },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
@@ -690,6 +693,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: nbColors.border,
   },
-  menuRow: { paddingHorizontal: 14, paddingVertical: 12, minWidth: 200 },
+  menuRow: { alignItems: 'center', gap: 10, paddingHorizontal: 12, paddingVertical: 11, borderRadius: 12 },
+  menuPressed: { backgroundColor: nbColors.surfaceMuted },
   menuDivider: { height: StyleSheet.hairlineWidth, backgroundColor: nbColors.divider, marginHorizontal: 8 },
 });

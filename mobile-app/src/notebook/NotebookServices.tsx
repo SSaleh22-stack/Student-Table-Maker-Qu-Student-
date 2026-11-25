@@ -181,8 +181,8 @@
  *       notebooks, folders and course names, and nothing remote is deleted.
  *   6.4 Two devices on one account: each keeps the other's notebooks. A conflict is skipped and
  *       shown as a note.
- *   6.5 iOS: the google-signin pod is NOT in Podfile.lock (autolinking exclude), and the app never
- *       imports the package (only googleAuth.android.ts does).
+ *   6.5 iOS: Backup offers iCloud Drive or Google Drive (settings.backup.provider). Google Drive
+ *       needs extra.notebook.googleIosClientId; only googleAuth.native.ts loads the sign-in package.
  * 7. Export (P23, P08)
  *   7.1 The exported PDF has selectable PDF text, vector ink, and the highlighter group looks the
  *       same as on screen. Page ranges work. A PNG of one page works.

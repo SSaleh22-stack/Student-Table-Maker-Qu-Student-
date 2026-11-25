@@ -11,9 +11,11 @@
     "@shopify/react-native-skia": "2.14.0",
     "expo": "~58.0.26",
     "expo-audio": "~58.0.12",
+    "expo-auth-session": "~58.0.19",
     "expo-camera": "~58.0.14",
     "expo-clipboard": "~58.0.4",
     "expo-constants": "~58.0.13",
+    "expo-crypto": "~58.0.8",
     "expo-dev-client": "~58.0.21",
     "expo-device": "~58.0.5",
     "expo-document-picker": "~58.0.5",
@@ -30,6 +32,7 @@
     "expo-notifications": "~58.1.9",
     "expo-print": "~58.0.9",
     "expo-router": "~58.0.32",
+    "expo-secure-store": "~58.0.3",
     "expo-sharing": "~58.0.23",
     "expo-splash-screen": "~58.0.14",
     "expo-status-bar": "~58.0.5",
@@ -72,14 +75,5 @@
     "typecheck:core": "tsc -p tsconfig.core.json",
     "gate": "node scripts/notebook-gate.mjs"
   },
-  "private": true,
-  "expo": {
-    "autolinking": {
-      "ios": {
-        "exclude": [
-          "@react-native-google-signin/google-signin"
-        ]
-      }
-    }
-  }
+  "private": true
 }

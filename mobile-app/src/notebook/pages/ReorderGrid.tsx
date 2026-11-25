@@ -7,6 +7,8 @@
  *
  * Gestures:
  * - A tap on a page calls onTap (the screen jumps or toggles the selection).
+ * - With onMenu, each page has a round ⋮ button on its top corner (physical right) that opens the
+ *   page's options (the screen's menu: add after, duplicate, paper, PDF, delete).
  * - In normal mode a 350 ms long press LIFTS the page: one RNGH v3 usePanGesture with
  *   activateAfterLongPress over the whole grid (it cancels the cell's tap once it activates). The
  *   lifted copy follows the finger, rotated −4° with a shadow; the page's own cell fades to 0.35, and
@@ -35,6 +37,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
+import { Icon } from '@/components/Icon';
 import { tr } from '@/lib/i18n';
 import { isRTL } from '@/lib/rtl';
 import type { Id, PaperSpec } from '@/notebook/core/model';
@@ -53,7 +56,8 @@ import {
 } from '@/notebook/core/pages/reorder';
 import type { NotebookSession } from '@/notebook/core/session/types';
 import { nbColors } from '@/notebook/theme';
-import { physicalLeft } from '@/notebook/ui/physical';
+import { physicalLeft, physicalRight } from '@/notebook/ui/physical';
+import type { AnchorRect } from '@/notebook/ui/Popover';
 
 import { AddPageTile } from './AddPageTile';
 import { PageThumb } from './PageThumb';
@@ -83,6 +87,8 @@ export interface ReorderGridProps {
   initialPageId?: Id | null;
   /** Shown above the grid, inside the scroll view. */
   header?: ReactNode;
+  /** The ⋮ button on each page (window rect of the button); none when not given. */
+  onMenu?: (pageId: Id, anchor: AnchorRect) => void;
 }
 
 interface Lifted {
@@ -116,6 +122,26 @@ interface CellProps {
   canMove: boolean;
   onTap: (pageId: Id) => void;
   onMove: (pageId: Id, toIndex: number) => void;
+  onMenu?: (pageId: Id, anchor: AnchorRect) => void;
+}
+
+/** The round ⋮ on a page's corner. */
+const MENU_D = 30;
+
+function MenuDot({ pageId, index, onMenu }: { pageId: Id; index: number; onMenu: (pageId: Id, anchor: AnchorRect) => void }) {
+  const ref = useRef<ComponentRef<typeof View>>(null);
+  return (
+    <View ref={ref} collapsable={false} style={[styles.menuDot, physicalRight(6)]}>
+      <Pressable
+        onPress={() => ref.current?.measureInWindow((x, y, width, height) => onMenu(pageId, { x, y, width, height }))}
+        hitSlop={8}
+        accessibilityRole="button"
+        accessibilityLabel={tr(`خيارات الصفحة ${index + 1}`, `Page ${index + 1} options`)}
+        style={({ pressed }) => [styles.menuDotInner, pressed && { opacity: 0.7 }]}>
+        <Icon name="moreV" size={16} color={nbColors.text} />
+      </Pressable>
+    </View>
+  );
 }
 
 const Cell = memo(function Cell({
@@ -135,6 +161,7 @@ const Cell = memo(function Cell({
   canMove,
   onTap,
   onMove,
+  onMenu,
 }: CellProps) {
   const actions = canMove
     ? [
@@ -172,6 +199,7 @@ const Cell = memo(function Cell({
         selectMode={selectMode}
         selected={selected}
       />
+      {onMenu && !selectMode ? <MenuDot pageId={pageId} index={index} onMenu={onMenu} /> : null}
     </Pressable>
   );
 });
@@ -192,6 +220,7 @@ export function ReorderGrid({
   bottomInset,
   initialPageId,
   header,
+  onMenu,
 }: ReorderGridProps) {
   const count = pageIds.length;
   const slots = count + 1;
@@ -431,6 +460,7 @@ export function ReorderGrid({
         canMove={reorderOn}
         onTap={onTap}
         onMove={onMove}
+        onMenu={onMenu}
       />,
     );
   }
@@ -485,6 +515,22 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   grid: { position: 'relative', alignSelf: 'center' },
   cell: { position: 'absolute' },
+  menuDot: { position: 'absolute', top: 6 },
+  menuDotInner: {
+    width: MENU_D,
+    height: MENU_D,
+    borderRadius: MENU_D / 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: nbColors.borderStrong,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#1B2533',
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 2,
+  },
   ghost: { zIndex: 10, elevation: 12 },
   dropBar: { position: 'absolute', width: DROP_BAR_W, borderRadius: 2, backgroundColor: nbColors.accent, zIndex: 9 },
 });

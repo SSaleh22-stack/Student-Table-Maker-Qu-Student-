@@ -1,8 +1,11 @@
 /**
  * The backup service (NB-85, NB-86, NB-86a, NB-86b, S6): one app-wide singleton.
  *
- * Provider: iCloud Drive on iOS (icloudProvider.ts), Google Drive on Android (driveProvider.ts, the
- * only path to Google sign-in), none on web (every call answers 'unavailable').
+ * Provider: Google Drive on Android (driveProvider.ts); on iPhone and iPad the student picks iCloud
+ * Drive (icloudProvider.ts, the default) or Google Drive (settings.backup.provider, setProvider, only
+ * while backup is off); none on web (every call answers 'unavailable'). Switching provider clears
+ * this device's backup bookkeeping (folder ids, what was uploaded), so the new place gets a full first
+ * backup and nothing is ever deleted from either place.
  *
  * RULES
  * - Backup is OFF until the student turns it on (settings.backup.enabled, default false). Nothing
@@ -65,6 +68,7 @@ import {
   isBackupError,
   type AbortSignalLike,
   type BackupError,
+  type BackupProviderKind,
   type BackupService,
   type BackupStatus,
   type CloudProvider,
@@ -84,6 +88,7 @@ import {
   readPageFile,
   type Folder,
   type Id,
+  type IsoDate,
   type LocationKey,
   type Notebook,
 } from '@/notebook/core/model';
@@ -95,6 +100,7 @@ import { settingsStore } from '@/notebook/store/settingsStore';
 import { getBackupState, loadBackupState, updateBackupState } from './backupStore';
 import { createDriveProvider } from './driveProvider';
 import { createIcloudProvider, icloudHelp } from './icloudProvider';
+import { createOneDriveProvider } from './oneDriveProvider';
 import { lastNetwork, readNetwork, subscribeNetwork } from './network';
 import { buildSnapshot, localFilePath, readUploadText } from './snapshot';
 
@@ -148,6 +154,8 @@ export interface BackupServiceImpl extends BackupService {
   cancel(): void;
   /** Ref-counted auto-run (useBackupAutoRun). Returns the release. */
   startAutoRun(): () => void;
+  /** iPhone / iPad: where backups go. Only while backup is off ('busy' otherwise). */
+  setProvider(kind: BackupProviderKind): Promise<'ok' | 'busy' | 'unavailable'>;
 }
 
 /** Thrown by restore for local problems (no BackupError code fits). */
@@ -167,22 +175,24 @@ export function backupErrorMessage(code: BackupError, detail?: 'newer'): string 
   if (detail === 'newer') {
     return tr('هذه النسخة الاحتياطية من إصدار أحدث من التطبيق. حدّث التطبيق لمتابعة النسخ.', 'This backup was made by a newer version of the app. Update the app to continue.');
   }
-  const drive = Platform.OS === 'android';
+  const kind = providerKindNow();
+  const cloud = kind === 'onedrive' ? 'OneDrive' : 'Google Drive';
+  const account = kind === 'onedrive' ? 'Microsoft' : 'Google';
   switch (code) {
     case 'icloud-off':
       return icloudHelp();
     case 'revoked':
-      return tr('تم إيقاف النسخ الاحتياطي لأن الوصول إلى Google Drive أُلغي', 'Backup was turned off because access to Google Drive was revoked');
+      return tr(`تم إيقاف النسخ الاحتياطي لأن الوصول إلى ${cloud} أُلغي`, `Backup was turned off because access to ${cloud} was revoked`);
     case 'signed-out':
-      return tr('سجّل الدخول إلى Google لمتابعة النسخ الاحتياطي', 'Sign in to Google to continue the backup');
+      return tr(`سجّل الدخول إلى ${account} لمتابعة النسخ الاحتياطي`, `Sign in to ${account} to continue the backup`);
     case 'no-play-services':
       return tr('خدمات Google Play غير متوفرة على هذا الجهاز', 'Google Play services are not available on this device');
     case 'unavailable':
       return tr('النسخ الاحتياطي غير متاح في هذا الإصدار من التطبيق', 'Backup is not available in this version of the app');
     case 'quota':
-      return drive
-        ? tr('مساحة Google Drive ممتلئة. أفرغ بعض المساحة لمتابعة النسخ.', 'Your Google Drive is full. Free up space to continue the backup.')
-        : tr('مساحة iCloud ممتلئة. أفرغ بعض المساحة لمتابعة النسخ.', 'Your iCloud storage is full. Free up space to continue the backup.');
+      return kind === 'icloud'
+        ? tr('مساحة iCloud ممتلئة. أفرغ بعض المساحة لمتابعة النسخ.', 'Your iCloud storage is full. Free up space to continue the backup.')
+        : tr(`مساحة ${cloud} ممتلئة. أفرغ بعض المساحة لمتابعة النسخ.`, `Your ${cloud} is full. Free up space to continue the backup.`);
     case 'network':
       return tr('تعذّر الاتصال بالإنترنت. ستُعاد المحاولة تلقائياً.', "Couldn't connect. It will try again automatically.");
     default:
@@ -192,12 +202,29 @@ export function backupErrorMessage(code: BackupError, detail?: 'newer'): string 
 
 // ===== provider
 
-const providerKind: BackupStatus['provider'] = Platform.OS === 'android' ? 'gdrive' : 'icloud';
-let providerInstance: BackupProvider | null | undefined;
+/** Where backups can go on this device, the default first. */
+export const providerChoices: readonly BackupProviderKind[] =
+  Platform.OS === 'ios' ? ['icloud', 'gdrive', 'onedrive'] : Platform.OS === 'android' ? ['gdrive', 'onedrive'] : [];
+
+/** The student can choose where backups go (iOS and Android). */
+export const canChooseProvider = providerChoices.length > 1;
+
+/** Where backups go now: the saved choice when this device offers it, else the default. */
+function providerKindNow(): BackupProviderKind {
+  const saved = backupSettings().provider;
+  if (saved && providerChoices.includes(saved)) return saved;
+  return providerChoices[0] ?? 'icloud';
+}
+
+let providerInstance: BackupProvider | null = null;
+let providerInstanceKind: BackupStatus['provider'] | null = null;
 
 function provider(): BackupProvider | null {
-  if (providerInstance === undefined) {
-    providerInstance = Platform.OS === 'ios' ? createIcloudProvider() : Platform.OS === 'android' ? createDriveProvider() : null;
+  if (Platform.OS !== 'ios' && Platform.OS !== 'android') return null;
+  const kind = providerKindNow();
+  if (!providerInstance || providerInstanceKind !== kind) {
+    providerInstance = kind === 'gdrive' ? createDriveProvider() : kind === 'onedrive' ? createOneDriveProvider() : createIcloudProvider();
+    providerInstanceKind = kind;
   }
   return providerInstance;
 }
@@ -260,7 +287,7 @@ function computeStatus(): ServiceStatus {
   const error = savedError();
   const phase: BackupStatus['phase'] = !b.enabled ? 'off' : running ? 'running' : waitingWifi ? 'waiting-wifi' : error ? 'error' : 'idle';
   const conflicts = getBackupState()?.conflicts ?? [];
-  const s: ServiceStatus = { enabled: b.enabled, provider: providerKind, phase, conflicts, restoring, wifiOnly: b.wifiOnly };
+  const s: ServiceStatus = { enabled: b.enabled, provider: providerKindNow(), phase, conflicts, restoring, wifiOnly: b.wifiOnly };
   if (b.lastBackupAt) s.lastBackupAt = b.lastBackupAt;
   if (b.lastCount !== undefined) s.lastCount = b.lastCount;
   if (b.lastBytes !== undefined) s.lastBytes = b.lastBytes;
@@ -1137,6 +1164,27 @@ export const backupService: BackupServiceImpl = {
     // Automatic runs wait a while (otherwise the next evaluation would start over at once).
     heldUntil = Math.max(heldUntil, Date.now() + DEBOUNCE_MS);
     running.abort.abort();
+  },
+
+  async setProvider(kind) {
+    wire();
+    if (!providerChoices.includes(kind)) return 'unavailable';
+    if (providerKindNow() === kind) return 'ok';
+    if (backupSettings().enabled || running || restoring) return 'busy';
+    // Sign the old account out (iCloud has nothing to sign out of).
+    if (providerKindNow() !== 'icloud') await provider()?.signOut?.().catch(() => {});
+    provider()?.reset?.();
+    failures = 0;
+    lastFailureAt = null;
+    detail = undefined;
+    // What this device uploaded belongs to the old place: the new one starts with a full backup.
+    await loadBackupState().catch(() => null);
+    await updateBackupState((st) => ({ deviceId: st.deviceId, lastUploaded: {}, conflicts: [] }));
+    // The last-backup line belongs to the old place too ('' reads as no backup yet; the merge keeps
+    // keys a patch leaves undefined, so it is cleared with an empty value).
+    setBackupSettings({ provider: kind, lastError: '', account: '', lastBackupAt: '' as IsoDate });
+    notify();
+    return 'ok';
   },
 
   startAutoRun() {

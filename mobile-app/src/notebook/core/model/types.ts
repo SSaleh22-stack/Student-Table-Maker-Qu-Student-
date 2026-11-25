@@ -315,6 +315,8 @@ export interface NotebookSettings {
   shapeSnap: boolean;
   snapHintsShown: number;
   rulerHintShown: boolean;
+  /** The pages strip stays docked beside the page while writing (pinned from the pages sidebar). */
+  pagesPinned: boolean;
   /** widthIndex indexes PEN_WIDTHS [2, 3, 5, 7, 10]. */
   pen: { presets: [PenPreset, PenPreset, PenPreset]; color: Hex; widthIndex: number };
   /** widthIndex indexes HL_WIDTHS [10, 14, 18, 24, 30]. straight true = a hold at the stroke end straightens it. */
@@ -330,6 +332,11 @@ export interface NotebookSettings {
     account?: string;
     lastCount?: number;
     lastBytes?: number;
+    /**
+     * Where backups go (undefined = the platform default: iCloud Drive on iOS, Google Drive on
+     * Android). iOS offers all three, Android Google Drive and OneDrive. Changed only while backup is off.
+     */
+    provider?: 'icloud' | 'gdrive' | 'onedrive';
   };
   tours: { library: TourFlag; setup: TourFlag; editor: TourFlag };
   calc: { open: boolean; docked: boolean; float: { x: number; y: number } };

@@ -77,20 +77,23 @@ export interface MovableToolbarProps extends Omit<ToolbarProps, 'onMoveTo' | 'po
   onPosChange?: (pos: ToolbarPos) => void;
   /** Told when the bar is lifted (true) and dropped (false), e.g. to pause canvas input. */
   onLiftChange?: (lifted: boolean) => void;
+  /** Length of the record slot along the bar (default BAR.record; the recordings button adds to it). */
+  recordSlotLength?: number;
 }
 
-export function MovableToolbar({ frame, screen, insets, dock = null, onPosChange, onLiftChange, ...toolbar }: MovableToolbarProps) {
+export function MovableToolbar({ frame, screen, insets, dock = null, onPosChange, onLiftChange, recordSlotLength, ...toolbar }: MovableToolbarProps) {
   const pos = toolbar.pos;
   // Where the full bar does not fit its slot (a header-row bar on a portrait iPad, a docked calculator,
   // a landscape iPad's vertical bar): the medium bar (no color dots), else the phone layout, with the
   // buttons shrunk to fit.
   const room = isVertical(pos) ? frame.height : frame.width;
-  const layout = chooseBarLayout(room, toolbar.compact);
+  const slot = { recordSlot: recordSlotLength };
+  const layout = chooseBarLayout(room, toolbar.compact, slot);
   const compact = layout === 'compact';
-  const buttonSize = toolbar.buttonSize ?? fitButtonSize(room, layout);
+  const buttonSize = toolbar.buttonSize ?? fitButtonSize(room, layout, slot);
   const vertical = isVertical(pos);
   // Smallest buttons and still too long: scroll inside the slot instead of spilling out of it.
-  const overflows = room > 0 && barLength(layout, { button: buttonSize }) > room;
+  const overflows = room > 0 && barLength(layout, { button: buttonSize, recordSlot: recordSlotLength }) > room;
   const allowed = useMemo(() => allowedPositions(screen), [screen]);
   const zones = useMemo(() => dropZones(screen, insets, { dock, allowed }), [screen, insets, dock, allowed]);
   const [lifted, setLifted] = useState(false);

@@ -255,3 +255,18 @@ export function wetStep(state: number[], pts: ArrayLike<number>, o?: FreehandOpt
   state[21] = work;
   return { frozenOutlineAppend: patch, frozenLeft, frozenRight, startCap, tail, work };
 }
+
+/**
+ * The whole outline of the live stroke as one closed polygon (getStroke's order): frozen left side,
+ * the live tail (which starts at the last frozen left point and ends at the last frozen right point,
+ * both skipped as they are already in fl / fr), frozen right side reversed, start cap.
+ */
+export function wetOutlinePolygon(fl: number[], tail: number[], fr: number[], cap: number[]): number[] {
+  'worklet';
+  if (fl.length === 0 && fr.length === 0) return tail;
+  const out = fl.slice();
+  for (let k = 2; k < tail.length - 2; k++) out.push(tail[k]);
+  for (let k = fr.length - 2; k >= 0; k -= 2) out.push(fr[k], fr[k + 1]);
+  for (let k = 0; k < cap.length; k++) out.push(cap[k]);
+  return out;
+}

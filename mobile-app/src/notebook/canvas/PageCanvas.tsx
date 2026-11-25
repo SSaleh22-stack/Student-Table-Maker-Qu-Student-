@@ -74,7 +74,7 @@ import { usePencilActions, usePencilOnlyPreference } from './pencil';
 import { usePlaybackDim } from './playback';
 import type { SettledView } from './tiles';
 import { applyLayout, insetsOf, useCanvasCore, useCanvasHandle, useOverlayValue, viewOf, viewportOf, type CanvasCore } from './useCanvasApi';
-import { clearEraserPath, clearWet, useWetInk, type WetInk } from './wetInk';
+import { clearEraserPath, clearShapePreview, clearWet, useWetInk, type WetInk } from './wetInk';
 
 /** If a page picture never reports (page unmounted, write ignored), the wet ink still goes after this. */
 const WET_CLEAR_FALLBACK_MS = 1200;
@@ -195,7 +195,7 @@ interface ViewRange {
 }
 
 interface Pending {
-  kind: 'wet' | 'eraser';
+  kind: 'wet' | 'eraser' | 'shape';
   seq: number;
   pageId: Id;
   version: number;
@@ -222,6 +222,7 @@ function createBridge(wet: WetInk, setRange: (r: ViewRange) => void): Bridge {
 
   const clearNow = (kind: Pending['kind'], seq: number) => {
     if (kind === 'wet') scheduleOnUI(clearWet, wet, seq);
+    else if (kind === 'shape') scheduleOnUI(clearShapePreview, wet);
     else scheduleOnUI(clearEraserPath, wet);
   };
   // Two frames after the picture was committed it is on screen; then the wet ink can go.
@@ -315,7 +316,16 @@ function createBridge(wet: WetInk, setRange: (r: ViewRange) => void): Bridge {
     if (!h) return;
     if (kind === 'begin') h.onBegin?.(p);
     else if (kind === 'update') h.onUpdate?.(p);
-    else if (kind === 'end') h.onEnd?.(p, cancelled);
+    else if (kind === 'end') {
+      const before = L ? L.session.pageVersion(p.pageId) : 0;
+      h.onEnd?.(p, cancelled);
+      if (tool === 'shapes') {
+        // The live preview (drawn by the gesture) stays until the new shape's picture is on screen.
+        const after = L ? L.session.pageVersion(p.pageId) : 0;
+        if (cancelled || after === before) clearNow('shape', 0);
+        else addPending('shape', 0, p.pageId, after);
+      }
+    }
     else if (kind === 'tap') h.onTap?.(p);
     else h.onLongPress?.(p);
   };
@@ -374,6 +384,8 @@ function createBridge(wet: WetInk, setRange: (r: ViewRange) => void): Bridge {
 function WetLayer({ core, wet, hlLayer }: { core: CanvasCore; wet: WetInk; hlLayer: boolean }) {
   const liveT = useDerivedValue(() => pageTransformOf(core.layout.get(), wet.page.get()));
   const ghostT = useDerivedValue(() => pageTransformOf(core.layout.get(), wet.ghostPage.get()));
+  const shapeT = useDerivedValue(() => pageTransformOf(core.layout.get(), wet.shapePage.get()));
+  const shapeOn = useDerivedValue(() => (wet.shapePage.get() >= 0 ? 1 : 0));
   const livePen = useDerivedValue(() => (wet.tool.get() === 'pen' ? 1 : 0));
   const liveHl = useDerivedValue(() => (wet.tool.get() === 'highlighter' ? 1 : 0));
   const ghostPen = useDerivedValue(() => (wet.ghostTool.get() === 'pen' ? 1 : 0));
@@ -415,6 +427,9 @@ function WetLayer({ core, wet, hlLayer }: { core: CanvasCore; wet: WetInk; hlLay
         <Path path={wet.preview} color={nbColors.accent} style="stroke" strokeWidth={previewW} strokeJoin="round">
           <DashPathEffect intervals={dash} />
         </Path>
+      </Group>
+      <Group transform={shapeT} opacity={shapeOn}>
+        <Path path={wet.shape} color={wet.shapeColor} style="stroke" strokeWidth={wet.shapeWidth} strokeCap="round" strokeJoin="round" />
       </Group>
     </>
   );
@@ -493,10 +508,12 @@ function PageCanvasImpl(props: PageCanvasProps & { ref?: Ref<PageCanvasHandle> }
       eraserMode: tools.eraser.mode,
       eraserHlOnly: tools.eraser.highlighterOnly,
       eraserSize: tools.eraser.size,
+      shapeKind: tools.shapeKind,
     });
   }, [
     cfg,
     tools.tool,
+    tools.shapeKind,
     session.readOnly,
     input.input,
     input.fingerDraws,

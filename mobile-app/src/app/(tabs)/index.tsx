@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 
 import { Announcements } from '@/components/Announcements';
+import { HomeTour } from '@/components/AppTours';
 import { AppText } from '@/components/AppText';
 import { Icon, type IconName } from '@/components/Icon';
 import { Logo } from '@/components/Logo';
@@ -28,7 +29,9 @@ import { alignStart, fromEnd, pushToEnd, row } from '@/lib/rtl';
 import { conflictCodes } from '@/lib/schedule';
 import { colors } from '@/lib/theme';
 import type { Course } from '@/lib/types';
+import { TOUR_TARGETS } from '@/notebook/contracts/tours';
 import { showNotebookOnHome } from '@/notebook/flags';
+import { useTourTarget } from '@/notebook/ui/tourTargets';
 import { useAppData } from '@/store/AppData';
 
 const DAY_KEYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -87,6 +90,13 @@ interface Feature {
   href: Href;
   /** Small tag on the icon's top corner at the reading end (the notebook's "Beta") */
   badge?: string;
+}
+
+/** The tour's spotlight targets on the home grid: import, then the timetable (components/AppTours). */
+function useFeatureTourRefs() {
+  const importRef = useTourTarget(TOUR_TARGETS.appImport);
+  const timetableRef = useTourTarget(TOUR_TARGETS.appTimetable);
+  return (href: Href) => (href === '/import' ? importRef : href === '/timetable' ? timetableRef : undefined);
 }
 
 const features = (): Feature[] => [
@@ -192,6 +202,7 @@ export default function HomeScreen() {
   const { width } = useWindowDimensions();
   // Tablets get bigger icons and text, so the page uses the screen
   const tablet = useIsTablet();
+  const tourRefOf = useFeatureTourRefs();
   const t = (phone: number, tab: number) => (tablet ? tab : phone);
   const cardPad = tablet ? 14 : 6;
   // Side margins; the content stays 1100 wide at most on big screens
@@ -408,6 +419,8 @@ export default function HomeScreen() {
             {features().map((f) => (
               <Pressable
                 key={f.href as string}
+                ref={tourRefOf(f.href)}
+                collapsable={false}
                 onPress={() => router.push(f.href)}
                 accessibilityRole="button"
                 accessibilityLabel={a11yLabel(f)}
@@ -461,6 +474,7 @@ export default function HomeScreen() {
           <Announcements />
         </View>
       </ScrollView>
+      <HomeTour />
     </SafeAreaView>
   );
 }
@@ -494,6 +508,7 @@ function TabletHome({
   cellW?: number;
   onGridWidth: (w: number) => void;
 }) {
+  const tourRefOf = useFeatureTourRefs();
   return (
     <SafeAreaView style={styles.screen} edges={['left', 'right']}>
       <ScrollView contentContainerStyle={{ flexGrow: 1, paddingBottom: 28 }}>
@@ -550,6 +565,8 @@ function TabletHome({
             {features().map((f) => (
               <Pressable
                 key={f.href as string}
+                ref={tourRefOf(f.href)}
+                collapsable={false}
                 onPress={() => router.push(f.href)}
                 accessibilityRole="button"
                 accessibilityLabel={a11yLabel(f)}
@@ -601,6 +618,7 @@ function TabletHome({
           </View>
         </View>
       </ScrollView>
+      <HomeTour />
     </SafeAreaView>
   );
 }

@@ -7,7 +7,8 @@
  *
  * ONE-POINTER PRESS for the forwarded tools (lasso, shapes, text) and the play tool: a press is held
  * back until it is clearly a drag (moved TAP_SLOP screen px) or a long press (LONG_PRESS_MS without
- * moving); a press lifted before either is a tap (a slow tap is still a tap). Forwarded drags are
+ * moving); a press lifted before either is a tap (a slow tap is still a tap). A long press that then
+ * moves TAP_SLOP still becomes a drag. Forwarded drags are
  * sent to the JS tool handler at most every FORWARD_INTERVAL_MS (60 Hz), plus the last point at the end.
  *
  * The press state is a small plain object MUTATED in place (it lives in a shared value on the UI
@@ -76,7 +77,9 @@ export function movePress(s: PressState, x: number, y: number, t: number): Press
   const dy = y - s.y0;
   const d = Math.sqrt(dx * dx + dy * dy);
   if (d > s.moved) s.moved = d;
-  if (s.phase !== 'pending') return 'none';
+  // A press held still before it moves (aiming a shape with the pencil) still becomes a drag: without
+  // this, resting the tip for LONG_PRESS_MS first meant the shape tool drew nothing.
+  if (s.phase !== 'pending' && s.phase !== 'long') return 'none';
   if (s.moved >= TAP_SLOP) {
     s.phase = 'drag';
     return 'drag-start';

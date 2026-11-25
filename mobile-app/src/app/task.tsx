@@ -221,19 +221,19 @@ export default function TaskScreen() {
   return (
     <SafeAreaView
       style={styles.screen}
-      // On iOS the page sheet already sits below the status bar.
-      edges={Platform.OS === 'ios' ? ['bottom', 'left', 'right'] : ['top', 'bottom', 'left', 'right']}>
+      // On an iPhone the page sheet already sits below the status bar; on an iPad it is full screen.
+      edges={Platform.OS === 'ios' && !tablet ? ['bottom', 'left', 'right'] : ['top', 'bottom', 'left', 'right']}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={sheetTop}
         onLayout={(e) => {
-          if (Platform.OS !== 'ios') return;
+          if (Platform.OS !== 'ios' || tablet) return;
           // The sheet ends at the bottom of the screen, so its top is what the window has above it.
           const { y, height } = e.nativeEvent.layout;
           setSheetTop(Math.max(0, Math.round(windowHeight - (y + height + insets.bottom))));
         }}>
-        {Platform.OS === 'ios' ? <View style={styles.grab} /> : null}
+        {Platform.OS === 'ios' && !tablet ? <View style={styles.grab} /> : null}
         <ScrollView
           contentContainerStyle={[styles.content, tablet && styles.contentTablet]}
           keyboardShouldPersistTaps="handled">
@@ -537,7 +537,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.surface },
   grab: { alignSelf: 'center', width: 36, height: 5, borderRadius: 3, backgroundColor: colors.borderStrong, marginTop: 8 },
   content: { padding: 20, paddingTop: 12, gap: 18, paddingBottom: 24 },
-  contentTablet: { width: '100%', maxWidth: 640, alignSelf: 'center', paddingHorizontal: 32, paddingTop: 20, gap: 22 },
+  contentTablet: { width: '100%', paddingHorizontal: 40, paddingTop: 20, gap: 22 },
   field: { gap: 10 },
   input: {
     minHeight: 52,
@@ -614,5 +614,5 @@ const styles = StyleSheet.create({
   course: { borderWidth: 2, borderRadius: 12, padding: 2 },
   courseInner: { borderRadius: 9, paddingHorizontal: 11, paddingVertical: 3 },
   footer: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 12, backgroundColor: colors.surface },
-  footerTablet: { width: '100%', maxWidth: 640, alignSelf: 'center', paddingHorizontal: 32 },
+  footerTablet: { width: '100%', paddingHorizontal: 40, paddingBottom: 16 },
 });

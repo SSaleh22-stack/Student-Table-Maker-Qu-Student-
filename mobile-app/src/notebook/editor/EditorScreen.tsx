@@ -46,12 +46,13 @@ import { ActivityIndicator, StyleSheet, View, useWindowDimensions, type LayoutCh
 
 import { tr } from '@/lib/i18n';
 import { useScreenInsets } from '@/lib/insets';
-import { isRTL } from '@/lib/rtl';
+import { isRTL, row } from '@/lib/rtl';
 import { shadow } from '@/lib/theme';
 import { ContinueRecordingBanner } from '@/notebook/audio/ContinueRecordingBanner';
 import { PlayerBar } from '@/notebook/audio/PlayerBar';
 import { recorder } from '@/notebook/audio/recorder';
 import { RecordButton } from '@/notebook/audio/RecordButton';
+import { RECORDINGS_BUTTON_ROOM, RECORDINGS_GAP, RecordingsButton } from '@/notebook/audio/RecordingsButton';
 import { RecordingsPanel } from '@/notebook/audio/RecordingsPanel';
 import { useEnableBackupFlow } from '@/notebook/backup/useEnableBackupFlow';
 import { CALC_DOCK_WIDTH, CALC_PHONE_DOCK_FRACTION } from '@/notebook/calc/CalculatorPanel';
@@ -63,6 +64,7 @@ import type { NotebookSession } from '@/notebook/core/session/types';
 import { BAR, FRAME, barThickness, editorFrames, type DockSpec, type Insets, type Rect } from '@/notebook/core/toolbar/dock';
 import { ExportSheet } from '@/notebook/export/ExportSheet';
 import { goBackOr, openLibrary, openNotebookSettings, openPages } from '@/notebook/nav';
+import { PagesPanel, usePanelWidth } from '@/notebook/pages/PagesScreen';
 import { useNotebookSession, useNotebookSettings, usePage, useSessionSnapshot } from '@/notebook/store/hooks';
 import { nbColors } from '@/notebook/theme';
 import { MovableToolbar } from '@/notebook/toolbar/MovableToolbar';
@@ -73,7 +75,7 @@ import { SetupModal } from '@/notebook/tours/SetupModal';
 import { CircleButton } from '@/notebook/ui/CircleButton';
 import { InfoBanner } from '@/notebook/ui/InfoBanner';
 import { useIsCompact } from '@/notebook/ui/layout';
-import { physicalBox, physicalLeft, physicalRight, physicalSides } from '@/notebook/ui/physical';
+import { physicalBox, physicalLeft, physicalPadding, physicalRight, physicalSides } from '@/notebook/ui/physical';
 import type { AnchorRect } from '@/notebook/ui/Popover';
 import { useTourTarget } from '@/notebook/ui/tourTargets';
 
@@ -171,6 +173,12 @@ function EditorBody({ session, canvasRef, getCanvas, life }: EditorBodyProps) {
   }, []);
   const W = box?.width ?? win.width;
   const H = box?.height ?? win.height;
+  // The pages panel (tablets) is docked on the physical right edge, at the sidebar's width, so the
+  // student writes with it open: the frames below are laid out on the screen without it and the page
+  // area keeps clear of it. The pages button toggles it (settings.pagesPinned, kept between visits).
+  const pagesPanelW = usePanelWidth();
+  const pagesPinned = settings.pagesPinned && !compact;
+  const railW = pagesPinned ? pagesPanelW + safe.right : 0;
 
   // ----- frames (physical)
   const insets: Insets = useMemo(
@@ -185,14 +193,18 @@ function EditorBody({ session, canvasRef, getCanvas, life }: EditorBodyProps) {
     () => (calcOpen && calcDocked && !compact ? { side: 'left', width: CALC_DOCK_WIDTH } : null),
     [calcOpen, calcDocked, compact],
   );
-  const frameScreen = useMemo(() => ({ width: W, height: H - panelH }), [W, H, panelH]);
+  const frameScreen = useMemo(() => ({ width: W - railW, height: H - panelH }), [W, railW, H, panelH]);
   // Tablets: a top toolbar goes into the header row, between the back button and the actions pill.
   const headerRoom = useMemo(() => {
     if (compact || readOnly) return null;
     const r = headerReserve(40);
     return isRTL ? { left: r.end, right: r.start } : { left: r.start, right: r.end };
   }, [compact, readOnly]);
-  const frameInsets: Insets = useMemo(() => (phoneDock ? { ...insets, bottom: 0 } : insets), [phoneDock, insets]);
+  const frameInsets: Insets = useMemo(() => {
+    const i = phoneDock ? { ...insets, bottom: 0 } : insets;
+    // The strip covers the right safe inset itself.
+    return pagesPinned ? { ...i, right: 0 } : i;
+  }, [phoneDock, insets, pagesPinned]);
   const frames = useMemo(
     () =>
       editorFrames({
@@ -214,15 +226,15 @@ function EditorBody({ session, canvasRef, getCanvas, life }: EditorBodyProps) {
       top: c.top + (readOnly && bannerH > 0 ? bannerH + OVER_GAP : 0),
       bottom: c.bottom + panelH,
       left: c.left,
-      right: c.right,
+      right: c.right + railW,
     };
-  }, [frames.canvasInsets, readOnly, bannerH, panelH]);
+  }, [frames.canvasInsets, readOnly, bannerH, panelH, railW]);
 
   const dockLeft = !!frames.dock && frames.dock.x === 0;
   const dockRight = !!frames.dock && frames.dock.x > 0;
   /** Physical offsets of the page area's side edges (the dock's inner edge, or the safe inset). */
   const sideLeft = dockLeft && frames.dock ? frames.dock.width : insets.left;
-  const sideRight = dockRight && frames.dock ? frames.dock.width : insets.right;
+  const sideRight = railW > 0 ? railW : dockRight && frames.dock ? frames.dock.width : insets.right;
   const dockFrame: Rect | null = useMemo(() => {
     if (phoneDock) return { x: 0, y: H - panelH, width: W, height: panelH };
     if (!frames.dock) return null;
@@ -241,7 +253,7 @@ function EditorBody({ session, canvasRef, getCanvas, life }: EditorBodyProps) {
     (frames.pos === 'bottom' && !readOnly ? H - frames.toolbar.y : footerBase + FRAME.footer) + OVER_GAP;
   /** The player bar's height: a 'continue recording' banner sits above an open bar, not under it. */
   const [playerH, setPlayerH] = useState(0);
-  const overSides = physicalSides(frames.canvasInsets.left + (compact ? 12 : 32), frames.canvasInsets.right + (compact ? 12 : 32));
+  const overSides = physicalSides(frames.canvasInsets.left + (compact ? 12 : 32), frames.canvasInsets.right + railW + (compact ? 12 : 32));
 
   // ----- page and zoom
   const [page, setPage] = useState<{ index: number; id: Id | null }>({ index: 0, id: notebook.pageIds[0] ?? null });
@@ -291,14 +303,24 @@ function EditorBody({ session, canvasRef, getCanvas, life }: EditorBodyProps) {
   }, [session]);
   const onToggleCalc = useCallback(() => setSettings((s) => ({ calc: { open: !s.calc.open } })), [setSettings]);
   const recordTarget = useTourTarget('ed.record');
+  // The recordings open from a button beside the mic, once the notebook has one (not from the ⋮ menu).
+  const recCount = notebook.recordings.length;
+  const barVertical = frames.pos === 'left' || frames.pos === 'right';
+  const { panelOpen, openPanel, closePanel } = playback;
+  const toggleRecordings = useCallback(() => (panelOpen ? closePanel() : openPanel()), [panelOpen, openPanel, closePanel]);
   const recordSlot = useMemo(
     () => (
-      <View ref={recordTarget} collapsable={false}>
-        <RecordButton session={session} />
+      <View style={[styles.recordSlot, { flexDirection: barVertical ? 'column' : row }]}>
+        <View ref={recordTarget} collapsable={false}>
+          <RecordButton session={session} />
+        </View>
+        {recCount > 0 && !readOnly ? <RecordingsButton count={recCount} open={panelOpen} onPress={toggleRecordings} /> : null}
       </View>
     ),
-    [recordTarget, session],
+    [recordTarget, session, barVertical, recCount, readOnly, panelOpen, toggleRecordings],
   );
+  /** Length of the record slot along the bar, for the toolbar's layout. */
+  const recordSlotLength = BAR.record + (recCount > 0 && !readOnly ? RECORDINGS_BUTTON_ROOM : 0);
 
   // ----- header actions
   const [exportOpen, setExportOpen] = useState(false);
@@ -309,19 +331,29 @@ function EditorBody({ session, canvasRef, getCanvas, life }: EditorBodyProps) {
     goBackOr(openLibrary);
   }, [flushNow]);
   const onPages = useCallback(() => {
-    openPages(session.id, { current: page.id ?? undefined });
-  }, [session, page.id]);
+    // Tablets: show or hide the docked panel; phones: the sidebar over the notebook.
+    if (!compact) setSettings((s) => ({ pagesPinned: !s.pagesPinned }));
+    else openPages(session.id, { current: page.id ?? undefined });
+  }, [compact, setSettings, session, page.id]);
+  // The ⋮ button closes the recordings panel and opens the menu (they never stack).
+  const onMore = useCallback(
+    (a: AnchorRect | null) => {
+      closePanel();
+      setMore(a);
+    },
+    [closePanel],
+  );
+  const onUnpinPages = useCallback(() => setSettings({ pagesPinned: false }), [setSettings]);
   const onMoreAction = useCallback(
     (a: EditorMoreAction) => {
-      if (a === 'recordings') playback.openPanel();
-      else if (a === 'settings') openNotebookSettings();
+      if (a === 'settings') openNotebookSettings();
       else if (a === 'addPage' && !session.readOnly) {
         const id = session.addPage(page.id ?? 'end');
         // Once the canvas has laid the new page out, go there (useEditorLifecycle's onJump scrolls).
         setTimeout(() => session.requestJump(id), 60);
       }
     },
-    [playback, session, page.id],
+    [session, page.id],
   );
 
   // ----- deferred panels (PRD9 open time: the first page first)
@@ -347,7 +379,7 @@ function EditorBody({ session, canvasRef, getCanvas, life }: EditorBodyProps) {
     ? [{ top: contentInsets.top + 8, maxHeight: Math.max(160, H * 0.5) }, physicalSides(insets.left + 12, insets.right + 12)]
     : [
         { top: contentInsets.top + 10, maxHeight: Math.max(200, H - contentInsets.top - overBottom - (playback.barOpen ? 120 : 20)) },
-        isRTL ? physicalLeft(frames.canvasInsets.left + 16) : physicalRight(frames.canvasInsets.right + 16),
+        isRTL ? physicalLeft(frames.canvasInsets.left + 16) : physicalRight(frames.canvasInsets.right + railW + 16),
       ];
 
   return (
@@ -407,7 +439,7 @@ function EditorBody({ session, canvasRef, getCanvas, life }: EditorBodyProps) {
             onPointer={playback.onPointer}
             pointerActive={playback.pointerActive}
             onClose={playback.onCloseBar}
-            onOpenList={playback.openPanel}
+            session={session}
           />
         </View>
       ) : null}
@@ -419,6 +451,12 @@ function EditorBody({ session, canvasRef, getCanvas, life }: EditorBodyProps) {
       ) : null}
 
       {panelsReady && calcOpen && calcDocked ? <CalculatorDock frame={dockFrame} pad={dockPad} /> : null}
+
+      {pagesPinned ? (
+        <View style={[styles.pagesDock, { width: railW, paddingTop: insets.top }, physicalPadding(0, insets.right), physicalRight(0)]}>
+          <PagesPanel session={session} currentId={page.id} onClose={onUnpinPages} docked />
+        </View>
+      ) : null}
 
       {readOnly ? null : (
         <View style={[styles.abs, physicalBox(0, 0, frameScreen.width, frameScreen.height)]} pointerEvents="box-none">
@@ -435,6 +473,7 @@ function EditorBody({ session, canvasRef, getCanvas, life }: EditorBodyProps) {
             calcOpen={calcOpen}
             onToggleCalc={onToggleCalc}
             recordSlot={recordSlot}
+            recordSlotLength={recordSlotLength}
             onImage={editorTools.openImage}
             paperColor={paperColor}
             compact={compact}
@@ -452,7 +491,7 @@ function EditorBody({ session, canvasRef, getCanvas, life }: EditorBodyProps) {
         onBack={onBack}
         onPages={onPages}
         onShare={() => setExportOpen(true)}
-        onMore={setMore}
+        onMore={onMore}
       />
 
       {editorTools.sheets}
@@ -461,7 +500,6 @@ function EditorBody({ session, canvasRef, getCanvas, life }: EditorBodyProps) {
         anchor={more}
         onClose={() => setMore(null)}
         onAction={onMoreAction}
-        recordingCount={notebook.recordings.length}
         readOnly={readOnly}
       />
       {panelsReady ? (
@@ -481,5 +519,17 @@ const styles = StyleSheet.create({
   center: { position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, alignItems: 'center', justifyContent: 'center' },
   round: { backgroundColor: nbColors.surface, ...shadow },
   playerRow: { alignItems: 'center' },
+  recordSlot: { alignItems: 'center', gap: RECORDINGS_GAP },
+  pagesDock: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    backgroundColor: nbColors.bg,
+    shadowColor: '#1B2533',
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 8,
+  },
   fill: { flexShrink: 1 },
 });

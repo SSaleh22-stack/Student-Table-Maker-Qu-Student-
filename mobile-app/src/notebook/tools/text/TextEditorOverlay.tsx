@@ -21,6 +21,8 @@
  *   draw under it; a tap anywhere else on the canvas (a transparent backdrop) ends editing.
  * - The TextFormatBar sits above the box, aligned with its physical right edge (Figma 09), or below it
  *   when there is no room above.
+ * - A round move handle beside the box's top-left corner drags the box on the page, before or while
+ *   typing (moveTextDraft; the box stays on the page).
  *
  * STORE (textEditStore, module-wide: one box is edited at a time). Editing works on a draft and writes
  * the page ONCE when it ends (commitTextEdit): an empty text removes the box (or drops a new one), a new
@@ -30,9 +32,11 @@
  */
 import { useEffect, useRef, useState, useSyncExternalStore, type ComponentRef } from 'react';
 import { AppState, Keyboard, Pressable, StyleSheet, TextInput, View, type LayoutChangeEvent } from 'react-native';
+import { GestureDetector, usePanGesture } from 'react-native-gesture-handler';
 import { useAnimatedReaction } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
+import { Icon } from '@/components/Icon';
 import { tr } from '@/lib/i18n';
 import { useOverlay } from '@/notebook/canvas/overlayContext';
 import { getSelection } from '@/notebook/canvas/selection';
@@ -59,6 +63,9 @@ const BORDER = 1.5;
 /** Distance of the format bar from the box and from the screen edges (px). */
 const BAR_GAP = 10;
 const BAR_MARGIN = 8;
+/** The move handle beside the box (px) and its gap from the frame. */
+const MOVE_HANDLE = 34;
+const MOVE_GAP = 6;
 
 // ===== geometry
 
@@ -202,6 +209,25 @@ export function updateTextDraft(key: number, patch: Partial<Pick<TextItem, 'text
   emit();
 }
 
+/**
+ * Moves the open draft so its box's x / y is (x, y) on the page (the move handle), kept on the page.
+ * Ignored when `key` is not the open box.
+ */
+export function moveTextDraft(key: number, x: number, y: number): void {
+  if (!edit || edit.key !== key) return;
+  const b = edit.draft.box;
+  const page = edit.session.getPage(edit.pageId);
+  let nx = x;
+  let ny = y;
+  if (page) {
+    nx = Math.min(Math.max(0, nx), Math.max(0, page.size.w - b.w));
+    ny = Math.min(Math.max(0, ny), Math.max(0, page.size.h - b.h));
+  }
+  if (!Number.isFinite(nx) || !Number.isFinite(ny) || (nx === b.x && ny === b.y)) return;
+  edit = { ...edit, draft: { ...edit.draft, box: { ...b, x: nx, y: ny } } };
+  emit();
+}
+
 /** Ends editing and deletes the box (the format bar's trash). A new box is just dropped. */
 export function deleteTextEdit(key: number): void {
   if (!edit || edit.key !== key) return;
@@ -239,6 +265,38 @@ function TextEditor({ state }: { state: TextEditState }) {
   const [bar, setBar] = useState({ w: 0, h: 0 });
   const inputRef = useRef<ComponentRef<typeof TextInput>>(null);
   const claimedRef = useRef(false);
+  // The move handle: drags the box on the page. k (screen px per point) is kept from the last origin.
+  const kRef = useRef(1);
+  const dragStart = useRef<[number, number] | null>(null);
+  useEffect(() => {
+    if (origin && origin[2] > 0) kRef.current = origin[2];
+  }, [origin]);
+  const moveStart = () => {
+    const cur = textEditStore.get();
+    dragStart.current = cur && cur.key === key ? [cur.draft.box.x, cur.draft.box.y] : null;
+  };
+  const moveBy = (dx: number, dy: number) => {
+    const s0 = dragStart.current;
+    if (s0) moveTextDraft(key, s0[0] + dx / kRef.current, s0[1] + dy / kRef.current);
+  };
+  const moveEnd = () => {
+    dragStart.current = null;
+  };
+  const moveGesture = usePanGesture({
+    minDistance: 0,
+    onBegin: () => {
+      'worklet';
+      scheduleOnRN(moveStart);
+    },
+    onUpdate: (e) => {
+      'worklet';
+      scheduleOnRN(moveBy, e.translationX, e.translationY);
+    },
+    onFinalize: () => {
+      'worklet';
+      scheduleOnRN(moveEnd);
+    },
+  });
 
   // Where the page is on screen (the canvas is frozen while the input has the focus).
   useAnimatedReaction(
@@ -356,6 +414,9 @@ function TextEditor({ state }: { state: TextEditState }) {
   if (below) barY = maxY + BAR_GAP;
   const maxBarX = screen.w > 0 ? screen.w - bar.w - BAR_MARGIN : maxX;
   const barX = Math.max(BAR_MARGIN, Math.min(maxBarX, maxX - bar.w));
+  // The move handle sits beside the frame's top-left corner (inside it when there is no room).
+  const handleX = minX - MOVE_HANDLE - MOVE_GAP >= BAR_MARGIN ? minX - MOVE_HANDLE - MOVE_GAP : minX;
+  const handleY = minX - MOVE_HANDLE - MOVE_GAP >= BAR_MARGIN ? minY : Math.max(BAR_MARGIN, minY - MOVE_HANDLE - MOVE_GAP);
 
   const dir = paragraphDirection(draft.text, 'rtl');
   // React Native swaps left and right text alignment in a native RTL build: align to the PHYSICAL side.
@@ -410,6 +471,14 @@ function TextEditor({ state }: { state: TextEditState }) {
           ]}
         />
       </View>
+      <GestureDetector gesture={moveGesture}>
+        <View
+          accessibilityLabel={tr('تحريك مربع النص', 'Move the text box')}
+          hitSlop={8}
+          style={[styles.move, PHYSICAL_ORIGIN, { transform: [{ translateX: handleX }, { translateY: handleY }] }]}>
+          <Icon name="grip" size={18} color={nbColors.white} />
+        </View>
+      </GestureDetector>
       <View
         onLayout={(e) => {
           const { width: w, height: h } = e.nativeEvent.layout;
@@ -456,5 +525,15 @@ const styles = StyleSheet.create({
   bar: {
     position: 'absolute',
     top: 0,
+  },
+  move: {
+    position: 'absolute',
+    top: 0,
+    width: MOVE_HANDLE,
+    height: MOVE_HANDLE,
+    borderRadius: MOVE_HANDLE / 2,
+    backgroundColor: nbColors.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

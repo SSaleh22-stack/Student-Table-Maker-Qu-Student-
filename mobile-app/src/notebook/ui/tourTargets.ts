@@ -14,6 +14,7 @@
  *   never reach the ref.
  */
 import { useCallback, useRef } from 'react';
+import { Platform } from 'react-native';
 
 import type { MeasurableNode, MeasureTarget, TourRect, TourTargetId, UseTourTarget } from '@/notebook/contracts/tours';
 
@@ -88,14 +89,23 @@ function measureNode(node: MeasurableNode): Promise<TourRect | null> {
       done = true;
       resolve(null);
     }, MEASURE_TIMEOUT_MS);
+    const answer = (x: number, y: number, width: number, height: number) => {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      const ok = [x, y, width, height].every(Number.isFinite) && width > 0 && height > 0;
+      resolve(ok ? { x, y, width, height } : null);
+    };
     try {
-      node.measureInWindow((x, y, width, height) => {
-        if (done) return;
-        done = true;
-        clearTimeout(timer);
-        const ok = [x, y, width, height].every(Number.isFinite) && width > 0 && height > 0;
-        resolve(ok ? { x, y, width, height } : null);
-      });
+      // Android draws edge to edge, and so does the tour's full-screen Modal (statusBarTranslucent),
+      // but measureInWindow there leaves out the status bar: every spotlight sat a status bar's
+      // height too high, half off its button. measure()'s pageX / pageY count from the root view,
+      // which is the top of the screen, the same origin the Modal draws from.
+      if (Platform.OS === 'android' && typeof node.measure === 'function') {
+        node.measure((_x, _y, width, height, pageX, pageY) => answer(pageX, pageY, width, height));
+      } else {
+        node.measureInWindow(answer);
+      }
     } catch {
       if (done) return;
       done = true;

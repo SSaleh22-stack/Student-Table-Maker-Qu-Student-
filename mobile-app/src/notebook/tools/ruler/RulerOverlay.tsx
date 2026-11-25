@@ -15,15 +15,15 @@
  * one millimetre of the page under the ruler at the current zoom (OverlayContext pageOrigin k), thinned
  * to 2, 5 or 10 mm when millimetres would be too dense. Before the page scale is known, 10 px per unit.
  *
- * Gesture (ruling (p)): ONE manual gesture that moves and rotates the ruler with two fingers at once.
- * - onTouchesDown: with fewer than two pointers it waits. With two, it FAILS unless both are inside
- *   ruler.hitTest (one finger on the ruler and one on the page never moves it). Otherwise it claims the
- *   overlay (claimOverlay: canvas gestures fail meanwhile) and activates.
- * - onTouchesMove: rigid two-finger transform: the ruler turns by the change of the fingers' angle
- *   (snapped to multiples of 45 degrees within 1.5 degrees, core/ink/ruler.ts snapRulerAngle) about
- *   their midpoint and follows it. The centre stays inside the view.
- * - A finger lifting ends it; onFinalize releases the overlay (also after a cancel).
- * - While it runs, the angle pill ('8°', angleLabel) shows next to the ruler.
+ * Gesture: ONE manual gesture on the ruler body. A touch on the ruler claims the overlay at once
+ * (claimOverlay: canvas gestures fail meanwhile) and activates:
+ * - one finger (or the pencil) on the body drags the ruler;
+ * - one finger on a round handle at either end (HANDLE_ZONE px) turns it about its centre;
+ * - two fingers move and turn it together (rigid transform about their midpoint). A second finger can
+ *   join a one-finger drag, and lifting one of two fingers goes back to dragging.
+ * Angles snap to multiples of 45 degrees within 1.5 degrees (core/ink/ruler.ts snapRulerAngle). The
+ * centre stays inside the view. onFinalize releases the overlay (also after a cancel). While turning,
+ * the angle pill ('8°', angleLabel) shows next to the ruler.
  *
  * First use (settings.rulerHintShown false): the info pill 'اضغط مطولاً في نهاية الخط ليصبح شكلاً
  * مستقيماً' shows at the top of the canvas for HINT_MS, and rulerHintShown is saved at once.
@@ -57,6 +57,10 @@ const MIN_TICK_GAP = 6;
 const SCALE_START = 10;
 /** Tick lengths (px): unit, 5 units, 10 units (Figma 09: 9, 15, 22). */
 const TICK = { short: 9, mid: 15, long: 22 } as const;
+/** A finger landing this close (px) to either end of the ruler turns it instead of dragging it. */
+const HANDLE_ZONE = 48;
+/** The round turn handles drawn at both ends (px). */
+const HANDLE_SIZE = 26;
 
 // ===== first-use hint (a tiny store, so the effect that starts it sets no React state)
 
@@ -211,77 +215,128 @@ export function RulerOverlay({ visible, hintTop = 12 }: RulerOverlayProps) {
     },
   );
 
+  /** 0: idle, 1: one finger drags it, 2: one finger turns it (end handle), 3: two fingers. */
+  const mode = useSharedValue(0);
+
+  /** Starts a gesture from the touches now down (one or two of them), relative to the root. */
+  const startFrom = (pts: { id: number; x: number; y: number }[], ox: number, oy: number) => {
+    'worklet';
+    if (pts.length >= 2) {
+      const [a, b] = pts;
+      mode.set(3);
+      ids.set([a.id, b.id]);
+      start.set([(a.x + b.x) / 2, (a.y + b.y) / 2, Math.atan2(b.y - a.y, b.x - a.x), cx.get(), cy.get(), angle.get(), ox, oy]);
+      rotating.set(true);
+      return;
+    }
+    const a = pts[0];
+    const ang = angle.get();
+    // Position along the ruler's long axis: the round handles at both ends turn it.
+    const u = (a.x - cx.get()) * Math.cos(ang) + (a.y - cy.get()) * Math.sin(ang);
+    const turn = Math.abs(u) >= RULER_LENGTH / 2 - HANDLE_ZONE;
+    mode.set(turn ? 2 : 1);
+    ids.set([a.id, -1]);
+    // Turning: [_, _, touch angle about the centre, cx, cy, angle0, ox, oy]; dragging: [touchX, touchY, _, cx0, cy0, ...].
+    start.set([a.x, a.y, Math.atan2(a.y - cy.get(), a.x - cx.get()), cx.get(), cy.get(), ang, ox, oy]);
+    rotating.set(turn);
+  };
+
+  const clampCentre = (x: number, y: number) => {
+    'worklet';
+    const w = viewW.get();
+    const h = viewH.get();
+    cx.set(w > 0 ? Math.min(w, Math.max(0, x)) : x);
+    cy.set(h > 0 ? Math.min(h, Math.max(0, y)) : y);
+  };
+
+  const normAngle = (a: number) => {
+    'worklet';
+    let n = a;
+    while (n > Math.PI) n -= Math.PI * 2;
+    while (n <= -Math.PI) n += Math.PI * 2;
+    return n;
+  };
+
   const gesture = useManualGesture({
     onTouchesDown: (e) => {
       'worklet';
-      if (claimed.get()) return;
-      const all = e.allTouches;
-      if (all.length < 2) return;
       const m = measure(rootRef);
       const ox = m ? m.pageX : 0;
       const oy = m ? m.pageY : 0;
-      const a = all[0];
-      const b = all[1];
-      const x1 = a.absoluteX - ox;
-      const y1 = a.absoluteY - oy;
-      const x2 = b.absoluteX - ox;
-      const y2 = b.absoluteY - oy;
-      if (!hitTest(x1, y1) || !hitTest(x2, y2)) {
-        GestureStateManager.fail(e.handlerTag);
+      const pts = e.allTouches.map((t) => ({ id: t.id, x: t.absoluteX - ox, y: t.absoluteY - oy }));
+      if (!claimed.get()) {
+        // The touch landed on the ruler body (this view's hit area): one finger, the pencil or two
+        // fingers all move it.
+        if (pts.length === 0 || !hitTest(pts[0].x, pts[0].y)) {
+          GestureStateManager.fail(e.handlerTag);
+          return;
+        }
+        claimOverlay();
+        claimed.set(true);
+        startFrom(pts.slice(0, 2), ox, oy);
+        GestureStateManager.activate(e.handlerTag);
         return;
       }
-      claimOverlay();
-      claimed.set(true);
-      ids.set([a.id, b.id]);
-      start.set([(x1 + x2) / 2, (y1 + y2) / 2, Math.atan2(y2 - y1, x2 - x1), cx.get(), cy.get(), angle.get(), ox, oy]);
-      rotating.set(true);
-      GestureStateManager.activate(e.handlerTag);
+      // A second finger joined a one-finger drag: switch to the two-finger move and turn.
+      if (mode.get() !== 3 && pts.length >= 2) startFrom(pts.slice(0, 2), ox, oy);
     },
     onTouchesMove: (e) => {
       'worklet';
       if (!claimed.get()) return;
       const [ia, ib] = ids.get();
+      const s = start.get();
       const all = e.allTouches;
       const a = all.find((t) => t.id === ia);
-      const b = all.find((t) => t.id === ib);
-      if (!a || !b) return;
-      const s = start.get();
+      if (!a) return;
       const x1 = a.absoluteX - s[6];
       const y1 = a.absoluteY - s[7];
+      const md = mode.get();
+      if (md === 1) {
+        clampCentre(s[3] + x1 - s[0], s[4] + y1 - s[1]);
+        return;
+      }
+      if (md === 2) {
+        angle.set(snapRulerAngle(normAngle(s[5] + Math.atan2(y1 - s[4], x1 - s[3]) - s[2])));
+        return;
+      }
+      const b = all.find((t) => t.id === ib);
+      if (!b) return;
       const x2 = b.absoluteX - s[6];
       const y2 = b.absoluteY - s[7];
       const mx = (x1 + x2) / 2;
       const my = (y1 + y2) / 2;
-      let turn = Math.atan2(y2 - y1, x2 - x1) - s[2];
-      while (turn > Math.PI) turn -= Math.PI * 2;
-      while (turn <= -Math.PI) turn += Math.PI * 2;
-      let next = s[5] + turn;
-      while (next > Math.PI) next -= Math.PI * 2;
-      while (next <= -Math.PI) next += Math.PI * 2;
-      next = snapRulerAngle(next);
+      const next = snapRulerAngle(normAngle(s[5] + normAngle(Math.atan2(y2 - y1, x2 - x1) - s[2])));
       const d = next - s[5];
       const c = Math.cos(d);
       const sn = Math.sin(d);
       const vx = s[3] - s[0];
       const vy = s[4] - s[1];
-      let ncx = mx + vx * c - vy * sn;
-      let ncy = my + vx * sn + vy * c;
-      const w = viewW.get();
-      const h = viewH.get();
-      if (w > 0) ncx = Math.min(w, Math.max(0, ncx));
-      if (h > 0) ncy = Math.min(h, Math.max(0, ncy));
-      cx.set(ncx);
-      cy.set(ncy);
+      clampCentre(mx + vx * c - vy * sn, my + vx * sn + vy * c);
       angle.set(next);
     },
     onTouchesUp: (e) => {
       'worklet';
-      if (claimed.get()) {
-        const [ia, ib] = ids.get();
-        if (e.changedTouches.some((t) => t.id === ia || t.id === ib)) GestureStateManager.deactivate(e.handlerTag);
+      if (!claimed.get()) {
+        if (e.numberOfTouches <= e.changedTouches.length) GestureStateManager.fail(e.handlerTag);
         return;
       }
-      if (e.numberOfTouches <= e.changedTouches.length) GestureStateManager.fail(e.handlerTag);
+      if (e.numberOfTouches <= e.changedTouches.length) {
+        GestureStateManager.deactivate(e.handlerTag);
+        return;
+      }
+      // One of two fingers lifted: carry on dragging with the one left.
+      const [ia, ib] = ids.get();
+      if (e.changedTouches.some((t) => t.id === ia || t.id === ib)) {
+        const s = start.get();
+        const left = e.allTouches.filter((t) => !e.changedTouches.some((c) => c.id === t.id));
+        if (left.length > 0) {
+          const t = left[0];
+          mode.set(1);
+          rotating.set(false);
+          ids.set([t.id, -1]);
+          start.set([t.absoluteX - s[6], t.absoluteY - s[7], 0, cx.get(), cy.get(), angle.get(), s[6], s[7]]);
+        }
+      }
     },
     onFinalize: () => {
       'worklet';
@@ -290,6 +345,7 @@ export function RulerOverlay({ visible, hintTop = 12 }: RulerOverlayProps) {
         releaseOverlay();
         markRulerPlaced();
       }
+      mode.set(0);
       rotating.set(false);
       ids.set([-1, -1]);
     },
@@ -341,7 +397,7 @@ export function RulerOverlay({ visible, hintTop = 12 }: RulerOverlayProps) {
         <Animated.View
           accessible
           accessibilityLabel={tr('المسطرة', 'Ruler')}
-          accessibilityHint={tr('حرّكها وأدرها بإصبعين', 'Move and turn it with two fingers')}
+          accessibilityHint={tr('اسحبها لتحريكها، واسحب الدائرة في طرفها لتدويرها', 'Drag to move it; drag the circle at either end to turn it')}
           style={[styles.ruler, PHYSICAL_ORIGIN, rulerStyle]}>
           <Svg width={RULER_LENGTH} height={RULER_WIDTH} style={StyleSheet.absoluteFill} pointerEvents="none">
             <Path d={d} stroke={nbColors.muted} strokeWidth={1.2} />
@@ -351,6 +407,12 @@ export function RulerOverlay({ visible, hintTop = 12 }: RulerOverlayProps) {
               {l.text}
             </Text>
           ))}
+          <View pointerEvents="none" style={[styles.handle, physicalLeft(8)]}>
+            <Icon name="refresh" size={14} color={nbColors.accentDark} />
+          </View>
+          <View pointerEvents="none" style={[styles.handle, physicalLeft(RULER_LENGTH - HANDLE_SIZE - 8)]}>
+            <Icon name="refresh" size={14} color={nbColors.accentDark} />
+          </View>
         </Animated.View>
       </GestureDetector>
 
@@ -388,6 +450,18 @@ const styles = StyleSheet.create({
     fontFamily: fonts.regular,
     fontSize: 11,
     color: nbColors.muted,
+  },
+  handle: {
+    position: 'absolute',
+    bottom: 5,
+    width: HANDLE_SIZE,
+    height: HANDLE_SIZE,
+    borderRadius: HANDLE_SIZE / 2,
+    backgroundColor: nbColors.accentTint,
+    borderWidth: 1,
+    borderColor: nbColors.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   pill: {
     position: 'absolute',

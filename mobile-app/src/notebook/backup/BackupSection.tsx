@@ -7,7 +7,11 @@
  *   [wifi]    عبر Wi-Fi فقط  /  لا تستخدم بيانات الجوال للنسخ               [switch]
  *   [restore] استعادة من النسخة الاحتياطية                                        ›
  *   [refresh] النسخ الآن                                                   (while on)
- *   [user]    the Google account, 'تسجيل الخروج'                     (Android, signed in)
+ *   [user]    the Google account, 'تسجيل الخروج'                 (Google Drive, signed in)
+ *
+ * Above the switch, 'مكان النسخ الاحتياطي': iCloud Drive / Google Drive / OneDrive on iPhone and
+ * iPad, Google Drive / OneDrive on Android (providerChoices). It changes only while backup is off;
+ * switching starts a fresh backup there.
  *
  * Under it: the current error (with 'تسجيل الدخول' after a temporary sign-out, the iCloud help when
  * iCloud Drive is off), and the note 'بعض المذكرات لها نسخة أحدث من جهاز آخر' when the last run
@@ -17,11 +21,13 @@
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { AppText } from '@/components/AppText';
 import { tr, useLang } from '@/lib/i18n';
 import { ltr } from '@/lib/rtl';
 import { colors } from '@/lib/theme';
 import { bytesLabel, countLabel, relativeTime } from '@/notebook/core/text/labels';
-import type { BackupError } from '@/notebook/core/contracts/backup';
+import type { BackupError, BackupProviderKind } from '@/notebook/core/contracts/backup';
+import type { IconName } from '@/components/Icon';
 import { openRestore } from '@/notebook/nav';
 import { PillButton } from '@/notebook/ui/CircleButton';
 import { ConfirmDialog } from '@/notebook/ui/ConfirmDialog';
@@ -29,9 +35,10 @@ import { Group } from '@/notebook/ui/Group';
 import { InfoBanner } from '@/notebook/ui/InfoBanner';
 import { ListRow } from '@/notebook/ui/ListRow';
 import { ProgressBar } from '@/notebook/ui/ProgressBar';
+import { RadioGroup } from '@/notebook/ui/RadioRow';
 import { ToggleRow } from '@/notebook/ui/ToggleRow';
 
-import { backupErrorDetail, backupErrorMessage } from './service';
+import { backupErrorDetail, backupErrorMessage, canChooseProvider, providerChoices } from './service';
 import { useBackup } from './useBackup';
 import { useEnableBackupFlow } from './useEnableBackupFlow';
 
@@ -46,6 +53,13 @@ function enableErrorMessage(code: BackupError, detail?: 'newer'): string {
   return backupErrorMessage(code);
 }
 
+/** How each place reads in the 'Back up to' choice. */
+const PROVIDER_OPTION: Record<BackupProviderKind, () => { label: string; subtitle: string; icon: IconName }> = {
+  icloud: () => ({ label: 'iCloud Drive', subtitle: tr('حساب Apple على هذا الجهاز', 'The Apple account on this device'), icon: 'cloud' }),
+  gdrive: () => ({ label: 'Google Drive', subtitle: tr('بحساب Google، على iPhone وAndroid', 'With a Google account, on iPhone and Android'), icon: 'drive' }),
+  onedrive: () => ({ label: 'OneDrive', subtitle: tr('بحساب Microsoft، على iPhone وAndroid', 'With a Microsoft account, on iPhone and Android'), icon: 'cloud' }),
+};
+
 export interface BackupSectionProps {
   /** Hide the 'النسخ الاحتياطي' label above the card. */
   hideTitle?: boolean;
@@ -59,6 +73,10 @@ export function BackupSection({ hideTitle, onOpenRestore }: BackupSectionProps) 
   const flow = useEnableBackupFlow();
   const s = backup.status;
   const drive = s.provider === 'gdrive';
+  const onedrive = s.provider === 'onedrive';
+  /** A provider the student signs in to (an account row, sign out). */
+  const accountBased = drive || onedrive;
+  const cloudName = drive ? 'Google Drive' : onedrive ? 'OneDrive' : 'iCloud Drive';
   const [enabling, setEnabling] = useState(false);
   const [flowError, setFlowErrorCode] = useState<BackupError | null>(null);
   /** 'newer': turning backup on failed because the backup was written by a newer app version. */
@@ -114,10 +132,12 @@ export function BackupSection({ hideTitle, onOpenRestore }: BackupSectionProps) 
     }
   };
 
-  const toggleTitle = drive ? tr('النسخ الاحتياطي إلى Google Drive', 'Back up to Google Drive') : tr('النسخ الاحتياطي إلى iCloud Drive', 'Back up to iCloud Drive');
+  const toggleTitle = tr(`النسخ الاحتياطي إلى ${cloudName}`, `Back up to ${cloudName}`);
   const toggleSub = drive
     ? tr('مجلد "QU Student" يظهر في Google Drive', 'A "QU Student" folder you can see in Google Drive')
-    : tr('مجلد "QU Student" يظهر في تطبيق الملفات', 'A "QU Student" folder you can see in the Files app');
+    : onedrive
+      ? tr('مجلد "Apps/QU Student" يظهر في OneDrive', 'An "Apps/QU Student" folder you can see in OneDrive')
+      : tr('مجلد "QU Student" يظهر في تطبيق الملفات', 'A "QU Student" folder you can see in the Files app');
 
   // ----- the status row
   let statusRow = null;
@@ -165,7 +185,7 @@ export function BackupSection({ hideTitle, onOpenRestore }: BackupSectionProps) 
   const error: BackupError | null = flowError ?? s.error ?? null;
   const errorText = flowError ? enableErrorMessage(flowError, flowDetail) : error ? backupErrorMessage(error, s.detail) : null;
   const errorAction =
-    error === 'signed-out' || (error === 'revoked' && drive)
+    error === 'signed-out' || (error === 'revoked' && accountBased)
       ? {
           label: tr('تسجيل الدخول', 'Sign in'),
           // Backup is off (revoked, or turning it on failed): sign in through the enable flow.
@@ -173,8 +193,29 @@ export function BackupSection({ hideTitle, onOpenRestore }: BackupSectionProps) 
         }
       : undefined;
 
+  const busy = s.enabled || enabling || s.restoring;
+  const providerPicker = canChooseProvider ? (
+    <Group title={tr('مكان النسخ الاحتياطي', 'Back up to')}>
+      <RadioGroup
+        label={tr('مكان النسخ الاحتياطي', 'Back up to')}
+        value={s.provider}
+        onChange={(v) => {
+          setFlowError(null);
+          void backup.setProvider(v);
+        }}
+        options={providerChoices.map((value) => ({ ...PROVIDER_OPTION[value](), value, disabled: busy }))}
+      />
+      {s.enabled ? (
+        <AppText size={12} color={colors.muted} style={styles.note}>
+          {tr('أوقف النسخ الاحتياطي لتغيير مكانه.', 'Turn backup off to change where it goes.')}
+        </AppText>
+      ) : null}
+    </Group>
+  ) : null;
+
   return (
     <View style={styles.wrap}>
+      {providerPicker}
       <Group title={hideTitle ? undefined : tr('النسخ الاحتياطي', 'Backup')}>
         <ToggleRow
           key="toggle"
@@ -212,12 +253,12 @@ export function BackupSection({ hideTitle, onOpenRestore }: BackupSectionProps) 
             onPress={() => void backup.runNow()}
           />
         ) : null}
-        {drive && s.account ? (
+        {accountBased && s.account ? (
           <ListRow
             key="account"
             icon="user"
             title={ltr(s.account)}
-            subtitle={tr('حساب Google', 'Google account')}
+            subtitle={drive ? tr('حساب Google', 'Google account') : tr('حساب Microsoft', 'Microsoft account')}
             trailing={<PillButton label={tr('تسجيل الخروج', 'Sign out')} variant="link" size="sm" onPress={() => setConfirmSignOut(true)} />}
           />
         ) : null}
@@ -238,10 +279,10 @@ export function BackupSection({ hideTitle, onOpenRestore }: BackupSectionProps) 
       <ConfirmDialog
         visible={confirmSignOut}
         icon="user"
-        title={tr('تسجيل الخروج من Google؟', 'Sign out of Google?')}
+        title={drive ? tr('تسجيل الخروج من Google؟', 'Sign out of Google?') : tr('تسجيل الخروج من Microsoft؟', 'Sign out of Microsoft?')}
         message={tr(
-          'سيتوقف النسخ الاحتياطي على هذا الجهاز. تبقى النسخ الموجودة في Google Drive.',
-          'Backup stops on this device. The backups already in Google Drive stay there.',
+          `سيتوقف النسخ الاحتياطي على هذا الجهاز. تبقى النسخ الموجودة في ${cloudName}.`,
+          `Backup stops on this device. The backups already in ${cloudName} stay there.`,
         )}
         confirmLabel={tr('تسجيل الخروج', 'Sign out')}
         destructive
@@ -259,4 +300,5 @@ export function BackupSection({ hideTitle, onOpenRestore }: BackupSectionProps) 
 const styles = StyleSheet.create({
   wrap: { gap: 12 },
   progress: { width: 90 },
+  note: { paddingHorizontal: 16, paddingBottom: 12 },
 });

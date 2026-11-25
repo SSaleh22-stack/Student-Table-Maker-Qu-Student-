@@ -10,6 +10,7 @@ import {
   WET_MAX_POINTS,
   wetCarry,
   wetCreate,
+  wetOutlinePolygon,
   wetReset,
   wetShouldSplit,
   wetStep,
@@ -122,6 +123,33 @@ describe('wetStep equivalence', () => {
     assert.ok(worst <= 0.5, `worst ${worst}`);
     assert.equal(worst, 0);
     assert.ok(steps > 15000);
+  });
+
+  test('the single wet outline (frozen sides + tail + start cap) equals getStroke at every step', () => {
+    let worst = 0;
+    for (let seed = 1; seed < 9; seed++) {
+      for (const base of OPTION_SETS) {
+        const n = 200;
+        const all = genStroke(seed, n, 1 + (seed % 6), seed % 3 === 0 ? 2.5 : 0.35);
+        const st = wetCreate();
+        const fl: number[] = [];
+        const fr: number[] = [];
+        let cap: number[] = [];
+        for (let k = 1; k <= n; k++) {
+          const o = { ...base, last: k === n };
+          const pts = all.slice(0, k * 3);
+          const r = wetStep(st, pts, o);
+          fl.push(...r.frozenLeft);
+          fr.push(...r.frozenRight);
+          if (r.startCap.length > 0) cap = r.startCap.slice();
+          const poly = wetOutlinePolygon(fl, r.tail, fr, cap);
+          const ref = getStroke(pts, o);
+          assert.equal(poly.length, ref.length, `seed ${seed} step ${k}`);
+          worst = Math.max(worst, maxDiff(poly, ref));
+        }
+      }
+    }
+    assert.ok(worst <= 0.5, `worst ${worst}`);
   });
 
   test('short strokes (1 and 2 points) are the plain getStroke', () => {

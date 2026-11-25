@@ -598,7 +598,7 @@
       "src/notebook/backup/icloudProvider.ts",
       "src/notebook/backup/driveProvider.ts",
       "src/notebook/backup/googleAuth.ts",
-      "src/notebook/backup/googleAuth.android.ts",
+      "src/notebook/backup/googleAuth.native.ts",
       "src/notebook/backup/snapshot.ts",
       "src/notebook/backup/network.ts",
       "src/notebook/backup/useBackup.ts",

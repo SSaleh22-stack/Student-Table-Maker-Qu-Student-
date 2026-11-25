@@ -6,7 +6,7 @@
  * hole stays clear. SVG content is never mirrored, and the hole comes from measureInWindow, so its
  * coordinates are physical (from the window's physical left) as they are.
  */
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 import Svg, { Path, Rect as SvgRect } from 'react-native-svg';
 
 import { colors } from '@/lib/theme';
@@ -15,6 +15,9 @@ import { holePath, holeRadius, isValidRect, type Rect } from '@/notebook/core/to
 export const SPOTLIGHT_DIM = '#1B2533';
 export const SPOTLIGHT_DIM_OPACITY = 0.62;
 const RING = 3;
+/** Native only: on web the SVG element would get them as unknown DOM attributes. */
+const HIDDEN_FROM_READERS =
+  Platform.OS === 'web' ? {} : { accessibilityElementsHidden: true, importantForAccessibility: 'no-hide-descendants' as const };
 
 export interface SpotlightProps {
   /** Overlay size (the window). */
@@ -37,8 +40,7 @@ export function Spotlight({ width, height, hole, radius, opacity = SPOTLIGHT_DIM
       height={height}
       style={StyleSheet.absoluteFill}
       pointerEvents="none"
-      accessibilityElementsHidden
-      importantForAccessibility="no-hide-descendants">
+      {...HIDDEN_FROM_READERS}>
       <Path d={holePath({ width, height }, valid ?? { x: 0, y: 0, width: 0, height: 0 }, r)} fill={SPOTLIGHT_DIM} fillOpacity={opacity} fillRule="evenodd" />
       {valid ? (
         <SvgRect
