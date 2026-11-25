@@ -8,7 +8,7 @@
 import { Platform } from 'react-native';
 
 /** Turn on to show the notebook on Home in store builds (needs a native build, not an OTA update). */
-export const NOTEBOOK_HOME_FLAG = false;
+export const NOTEBOOK_HOME_FLAG = true;
 
 /** Use the contingent native ink-input module (P22N) instead of gesture-handler for drawing. */
 export const USE_NATIVE_INK_INPUT = false;
