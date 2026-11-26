@@ -1,0 +1,52 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+  <application>
+    <receiver
+      android:name="net.qustudent.widgets.TimetableWidgetReceiver"
+      android:exported="true"
+      android:label="@string/qw_timetable_label">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+      </intent-filter>
+      <meta-data
+        android:name="android.appwidget.provider"
+        android:resource="@xml/qw_timetable_info" />
+    </receiver>
+
+    <receiver
+      android:name="net.qustudent.widgets.TasksWidgetReceiver"
+      android:exported="true"
+      android:label="@string/qw_tasks_label">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+      </intent-filter>
+      <meta-data
+        android:name="android.appwidget.provider"
+        android:resource="@xml/qw_tasks_info" />
+    </receiver>
+
+    <receiver
+      android:name="net.qustudent.widgets.CountdownWidgetReceiver"
+      android:exported="true"
+      android:label="@string/qw_countdown_label">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+      </intent-filter>
+      <meta-data
+        android:name="android.appwidget.provider"
+        android:resource="@xml/qw_countdown_info" />
+    </receiver>
+
+    <!-- Redraws the widgets when a lecture starts or ends, every minute close to one, and at midnight. -->
+    <receiver
+      android:name="net.qustudent.widgets.TickReceiver"
+      android:exported="false">
+      <intent-filter>
+        <action android:name="android.intent.action.BOOT_COMPLETED" />
+        <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+        <action android:name="android.intent.action.TIME_SET" />
+        <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+      </intent-filter>
+    </receiver>
+  </application>
+</manifest>

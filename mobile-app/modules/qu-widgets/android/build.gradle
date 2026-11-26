@@ -1,0 +1,36 @@
+// QuWidgets (Android): the home-screen widgets (الجدول، مهامي، المحاضرة القادمة), drawn with
+// Jetpack Glance, and the Expo module the app uses to hand them its data.
+// Compose is set up the same way as @expo/ui (the Compose compiler plugin follows kotlinVersion).
+
+buildscript {
+  repositories {
+    mavenCentral()
+  }
+  dependencies {
+    classpath("org.jetbrains.kotlin.plugin.compose:org.jetbrains.kotlin.plugin.compose.gradle.plugin:${kotlinVersion}")
+  }
+}
+
+apply plugin: 'com.android.library'
+apply plugin: 'expo-module-gradle-plugin'
+apply plugin: 'org.jetbrains.kotlin.plugin.compose'
+
+group = 'net.qustudent.widgets'
+version = '1.0.0'
+
+android {
+  namespace "net.qustudent.widgets"
+  defaultConfig {
+    versionCode 1
+    versionName '1.0.0'
+  }
+  buildFeatures {
+    compose true
+  }
+}
+
+dependencies {
+  implementation 'com.facebook.react:react-android'
+  implementation 'androidx.glance:glance-appwidget:1.1.1'
+  implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2'
+}

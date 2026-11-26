@@ -10,6 +10,7 @@
     "backgroundColor": "#EEF3F8",
     "ios": {
       "bundleIdentifier": "net.qustudent.app",
+      "appleTeamId": "4264PT4468",
       "supportsTablet": true,
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
@@ -70,6 +71,9 @@
         ],
         "com.apple.developer.icloud-services": [
           "CloudDocuments"
+        ],
+        "com.apple.security.application-groups": [
+          "group.net.qustudent.app"
         ]
       }
     },
@@ -215,7 +219,8 @@
         }
       ],
       "./plugins/withNotebookNative",
-      "expo-secure-store"
+      "expo-secure-store",
+      "@bacons/apple-targets"
     ],
     "experiments": {
       "typedRoutes": true,

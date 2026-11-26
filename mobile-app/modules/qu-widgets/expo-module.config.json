@@ -1,0 +1,9 @@
+{
+  "platforms": ["apple", "android"],
+  "apple": {
+    "modules": ["QuWidgetsModule"]
+  },
+  "android": {
+    "modules": ["net.qustudent.widgets.QuWidgetsModule"]
+  }
+}

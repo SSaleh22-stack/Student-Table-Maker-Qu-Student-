@@ -26,6 +26,21 @@ export interface AcademicCalendar {
 
 const bundled: AcademicCalendar = { sections: CALENDAR_SNAPSHOT, updatedAt: CALENDAR_SNAPSHOT_DATE, source: 'bundled' };
 
+/**
+ * The saved copy of the calendar, or the bundled one, without reading the site (for the
+ * home-screen widgets, which should not cause a download on every app start).
+ */
+export async function readSavedCalendarSections(): Promise<CalendarSection[]> {
+  try {
+    const raw = await AsyncStorage.getItem(CACHE_KEY);
+    const saved = raw ? (JSON.parse(raw) as { sections?: unknown }) : null;
+    if (saved && isCalendarSections(saved.sections)) return saved.sections;
+  } catch {
+    // Damaged saved copy: the bundled one below.
+  }
+  return bundled.sections;
+}
+
 async function readLive(): Promise<CalendarSection[]> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);

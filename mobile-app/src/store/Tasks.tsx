@@ -9,6 +9,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
+import type { WidgetToggle } from '../../modules/qu-widgets';
 import { useLang } from '@/lib/i18n';
 import { cancelTaskReminder, resyncAllReminders, snoozeReminder, syncTaskReminder } from '@/lib/reminders';
 import {
@@ -48,11 +49,28 @@ interface TasksValue {
   toggleDone: (id: string) => void;
   /** Reminds again in a few minutes (10 by default); the task itself does not change. */
   snooze: (id: string, minutes?: number) => void;
+  /**
+   * Applies ticks made on a home-screen widget while the app was in the background. A tick is
+   * skipped when the task is gone, already in that state, or has moved to another date since.
+   */
+  applyWidgetToggles: (toggles: readonly WidgetToggle[]) => void;
   getTask: (id: string) => Task | undefined;
 }
 
 const REMINDERS: readonly ReminderOffset[] = ['atTime', '10m', '1h', '1d', 'morning', 'custom'];
 const REPEATS: readonly Repeat[] = ['none', 'daily', 'weekly'];
+
+/** The task ticked off (or back on). A repeating task moves to its next date and stays open. */
+const flipped = (t: Task): Task => {
+  if (!t.done) {
+    // Like phone reminder apps: finishing one occurrence moves the task to the next one.
+    const next = nextOccurrence(t);
+    // completedAt records that today's occurrence was finished (for the summary card).
+    if (next) return { ...t, date: next, completedAt: new Date().toISOString() };
+    return { ...t, done: true, completedAt: new Date().toISOString() };
+  }
+  return { ...t, done: false, completedAt: undefined };
+};
 
 const optionalString = (v: unknown): string | undefined => (typeof v === 'string' && v ? v : undefined);
 
@@ -213,19 +231,23 @@ export function TasksProvider({ children }: { children: ReactNode }) {
 
   const toggleDone = useCallback(
     (id: string) => {
-      commit(
-        latest.current.map((t) => {
-          if (t.id !== id) return t;
-          if (!t.done) {
-            // Like phone reminder apps: finishing one occurrence moves the task to the next one.
-            const next = nextOccurrence(t);
-            // completedAt records that today's occurrence was finished (for the summary card).
-            if (next) return { ...t, date: next, completedAt: new Date().toISOString() };
-            return { ...t, done: true, completedAt: new Date().toISOString() };
-          }
-          return { ...t, done: false, completedAt: undefined };
-        }),
-      );
+      commit(latest.current.map((t) => (t.id === id ? flipped(t) : t)));
+    },
+    [commit],
+  );
+
+  const applyWidgetToggles = useCallback(
+    (toggles: readonly WidgetToggle[]) => {
+      let changed = false;
+      let list = latest.current;
+      for (const w of toggles) {
+        list = list.map((t) => {
+          if (t.id !== w.id || t.done === w.done || (t.date ?? null) !== w.date) return t;
+          changed = true;
+          return flipped(t);
+        });
+      }
+      if (changed) commit(list);
     },
     [commit],
   );
@@ -239,8 +261,20 @@ export function TasksProvider({ children }: { children: ReactNode }) {
   const getTask = useCallback((id: string) => tasks.find((t) => t.id === id), [tasks]);
 
   const value = useMemo<TasksValue>(
-    () => ({ tasks, loaded, addTask, updateTask, deleteTask, deleteTasks, restoreTasks, toggleDone, snooze, getTask }),
-    [tasks, loaded, addTask, updateTask, deleteTask, deleteTasks, restoreTasks, toggleDone, snooze, getTask],
+    () => ({
+      tasks,
+      loaded,
+      addTask,
+      updateTask,
+      deleteTask,
+      deleteTasks,
+      restoreTasks,
+      toggleDone,
+      snooze,
+      applyWidgetToggles,
+      getTask,
+    }),
+    [tasks, loaded, addTask, updateTask, deleteTask, deleteTasks, restoreTasks, toggleDone, snooze, applyWidgetToggles, getTask],
   );
 
   return <TasksContext.Provider value={value}>{children}</TasksContext.Provider>;

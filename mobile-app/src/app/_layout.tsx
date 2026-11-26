@@ -16,6 +16,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { IntroAnimation } from '@/components/IntroAnimation';
 import { LectureFollowUps } from '@/components/LectureFollowUps';
 import { UpdateGate } from '@/components/UpdateGate';
+import { WidgetSync } from '@/components/WidgetSync';
 import { useLang, useLanguageBoot } from '@/lib/i18n';
 import { markIntroDone } from '@/lib/appTours';
 import { useIsTablet } from '@/lib/layout';
@@ -86,6 +87,7 @@ export default function RootLayout() {
               <NotebookServices />
               <TaskReminderActions />
               <LectureFollowUps />
+              <WidgetSync />
               <StatusBar style="dark" />
               {/* Changing the language remounts every screen so text and layout direction update. */}
               <View key={lang} style={{ flex: 1 }}>
