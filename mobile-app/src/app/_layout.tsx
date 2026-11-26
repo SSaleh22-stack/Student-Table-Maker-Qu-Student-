@@ -14,6 +14,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { IntroAnimation } from '@/components/IntroAnimation';
+import { LectureFollowUps } from '@/components/LectureFollowUps';
 import { UpdateGate } from '@/components/UpdateGate';
 import { useLang, useLanguageBoot } from '@/lib/i18n';
 import { markIntroDone } from '@/lib/appTours';
@@ -84,6 +85,7 @@ export default function RootLayout() {
               {/* The notebook's app-wide services (recorder host, cover worker, backup, boot steps); null on web. */}
               <NotebookServices />
               <TaskReminderActions />
+              <LectureFollowUps />
               <StatusBar style="dark" />
               {/* Changing the language remounts every screen so text and layout direction update. */}
               <View key={lang} style={{ flex: 1 }}>

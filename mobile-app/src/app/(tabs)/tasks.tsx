@@ -1,6 +1,7 @@
+import * as Haptics from 'expo-haptics';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Alert, BackHandler, Platform, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { TasksTour } from '@/components/AppTours';
 import { AppText } from '@/components/AppText';
@@ -59,8 +60,26 @@ const sectionShowsDate = (section: TaskSection, task: Task, now: Date) =>
 
 const openTask = (id?: string) => (id ? router.push({ pathname: '/task', params: { id } }) : router.push('/task'));
 
+/** "حذف 3 من المهام؟" with Cancel / Delete (window.confirm on web, where Alert has no buttons). */
+function confirmDeleteMany(count: number, run: () => void) {
+  const title =
+    count === 1 ? tr('حذف المهمة؟', 'Delete this task?') : tr(`حذف ${ltr(count)} من المهام؟`, `Delete ${count} tasks?`);
+  const message =
+    count === 1
+      ? tr('ستُحذف المهمة وتذكيرها.', 'The task and its reminder will be removed.')
+      : tr('ستُحذف المهام المحددة وتذكيراتها.', 'The selected tasks and their reminders will be removed.');
+  if (Platform.OS === 'web') {
+    if (typeof window !== 'undefined' && window.confirm(`${title}\n${message}`)) run();
+    return;
+  }
+  Alert.alert(title, message, [
+    { text: tr('إلغاء', 'Cancel'), style: 'cancel' },
+    { text: tr('حذف', 'Delete'), style: 'destructive', onPress: run },
+  ]);
+}
+
 export default function TasksScreen() {
-  const { tasks, loaded, toggleDone } = useTasks();
+  const { tasks, loaded, toggleDone, deleteTasks, restoreTasks } = useTasks();
   const tablet = useIsTablet();
   const { width } = useWindowDimensions();
   const summaryRef = useTourTarget(TOUR_TARGETS.tasksSummary);
@@ -70,6 +89,13 @@ export default function TasksScreen() {
   const sidePad = tablet ? (width >= 1100 ? TABLET_PAD_WIDE : TABLET_PAD) : 16;
 
   const [filter, setFilter] = useState<TaskFilter>('all');
+  /**
+   * Multi-select: null while not selecting. A long press on a task starts it with that task; a tap
+   * then selects or unselects, and unselecting the last one ends it.
+   */
+  const [selected, setSelected] = useState<ReadonlySet<string> | null>(null);
+  const selecting = selected !== null;
+  const endSelect = useCallback(() => setSelected(null), []);
 
   // "Now" moves on every minute and whenever the tab comes back, so tasks turn overdue and
   // "Today" rolls over at midnight without reopening the app.
@@ -81,8 +107,20 @@ export default function TasksScreen() {
   useFocusEffect(
     useCallback(() => {
       setNow(new Date());
+      // Leaving the tab ends a selection, so coming back never finds tasks still picked for deleting.
+      return () => setSelected(null);
     }, []),
   );
+
+  // Android's back button ends the selection first.
+  useEffect(() => {
+    if (!selecting) return;
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      setSelected(null);
+      return true;
+    });
+    return () => sub.remove();
+  }, [selecting]);
 
   const [toast, setToast] = useState<ToastData | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -128,6 +166,54 @@ export default function TasksScreen() {
   const empty = loaded && sections.every((s) => s.tasks.length === 0);
   // The empty state has its own add button, except on "Done", where the floating one stays.
   const emptyAdds = empty && filter !== 'done';
+  const visibleIds = sections.flatMap((s) => s.tasks.map((task) => task.id));
+  // Only tasks still in the list count (one may have been deleted from a notification meanwhile).
+  const picked = selected ? visibleIds.filter((id) => selected.has(id)) : [];
+  const allPicked = selecting && visibleIds.length > 0 && picked.length === visibleIds.length;
+
+  const startSelect = (task: Task) => {
+    if (Platform.OS !== 'web') Haptics.selectionAsync().catch(() => {});
+    dismissToast();
+    setSelected(new Set([task.id]));
+  };
+
+  const togglePick = (task: Task) =>
+    setSelected((prev) => {
+      if (!prev) return prev;
+      const next = new Set(prev);
+      if (next.has(task.id)) next.delete(task.id);
+      else next.add(task.id);
+      return next.size ? next : null;
+    });
+
+  const changeFilter = (f: TaskFilter) => {
+    setFilter(f);
+    // A filter change keeps only the picked tasks the new filter still shows: nothing hidden is deleted.
+    if (selected) {
+      const shown = new Set(groupTasks(tasks, f, now).flatMap((s) => s.tasks.map((task) => task.id)));
+      const kept = [...selected].filter((id) => shown.has(id));
+      setSelected(kept.length ? new Set(kept) : null);
+    }
+  };
+
+  const deletePicked = () => {
+    if (!picked.length) return;
+    const ids = picked;
+    confirmDeleteMany(ids.length, () => {
+      const gone = new Set(ids);
+      const removed = tasks.filter((task) => gone.has(task.id));
+      deleteTasks(ids);
+      setSelected(null);
+      showToast({
+        text:
+          removed.length === 1
+            ? tr('حُذفت المهمة', 'Task deleted')
+            : tr(`حُذفت ${ltr(removed.length)} من المهام`, `${removed.length} tasks deleted`),
+        tone: 'ok',
+        undo: () => restoreTasks(removed),
+      });
+    });
+  };
 
   return (
     <View style={styles.screen}>
@@ -138,7 +224,16 @@ export default function TasksScreen() {
             tablet && styles.contentTablet,
             { paddingHorizontal: sidePad, paddingBottom: emptyAdds ? 32 : t(104, 120) },
           ]}>
-          <ScreenHeader title={tr('مهامي', 'My tasks')} subtitle={longDate(now)} />
+          {selecting ? (
+            <SelectionBar
+              count={picked.length}
+              allPicked={allPicked}
+              onCancel={endSelect}
+              onToggleAll={() => setSelected(allPicked ? null : new Set(visibleIds))}
+            />
+          ) : (
+            <ScreenHeader title={tr('مهامي', 'My tasks')} subtitle={longDate(now)} />
+          )}
 
           {loaded && tasks.length ? (
             <View ref={summaryRef} collapsable={false}>
@@ -148,7 +243,7 @@ export default function TasksScreen() {
 
           <View ref={filtersRef} collapsable={false} style={[styles.filters, { flexDirection: row }]}>
             {filters(loaded ? countForFilter(tasks, 'today', now) : 0).map((f) => (
-              <Chip key={f.key} label={f.label} selected={filter === f.key} onPress={() => setFilter(f.key)} />
+              <Chip key={f.key} label={f.label} selected={filter === f.key} onPress={() => changeFilter(f.key)} />
             ))}
           </View>
 
@@ -193,7 +288,10 @@ export default function TasksScreen() {
                         showDate={sectionShowsDate(section, task, now)}
                         tablet={tablet}
                         onToggle={() => toggle(task)}
-                        onPress={() => openTask(task.id)}
+                        onPress={() => (selecting ? togglePick(task) : openTask(task.id))}
+                        onLongPress={() => (selecting ? togglePick(task) : startSelect(task))}
+                        selecting={selecting}
+                        selected={!!selected?.has(task.id)}
                       />
                     ))}
                   </View>
@@ -203,7 +301,28 @@ export default function TasksScreen() {
         </ScrollView>
       </SafeAreaView>
 
-      {loaded && !emptyAdds ? (
+      {selecting ? (
+        <Pressable
+          onPress={deletePicked}
+          disabled={!picked.length}
+          accessibilityRole="button"
+          accessibilityLabel={tr(`حذف ${picked.length} من المهام`, `Delete ${picked.length} tasks`)}
+          style={({ pressed }) => [
+            styles.fab,
+            styles.fabDanger,
+            tablet && styles.fabTablet,
+            shadow,
+            { flexDirection: row },
+            fromEnd(tablet ? sidePad : 16),
+            pressed && { opacity: 0.88 },
+            !picked.length && { opacity: 0.5 },
+          ]}>
+          <Icon name="trash" size={t(20, 22)} color="#FFFFFF" strokeWidth={2.4} />
+          <AppText size={t(15, 17)} weight="semibold" color="#FFFFFF">
+            {picked.length > 0 ? tr(`حذف (${ltr(picked.length)})`, `Delete (${picked.length})`) : tr('حذف', 'Delete')}
+          </AppText>
+        </Pressable>
+      ) : loaded && !emptyAdds ? (
         <Pressable
           ref={emptyAdds ? undefined : newRef}
           collapsable={false}
@@ -225,8 +344,46 @@ export default function TasksScreen() {
         </Pressable>
       ) : null}
 
-      <TasksTour />
+      {selecting ? null : <TasksTour />}
       {toast ? <Toast toast={toast} onDismiss={dismissToast} position="top" inset={tablet ? sidePad : 16} /> : null}
+    </View>
+  );
+}
+
+/** Replaces the title while selecting: ✕, "3 محددة", and select all / none. */
+function SelectionBar({
+  count,
+  allPicked,
+  onCancel,
+  onToggleAll,
+}: {
+  count: number;
+  allPicked: boolean;
+  onCancel: () => void;
+  onToggleAll: () => void;
+}) {
+  return (
+    <View style={[styles.selectBar, { flexDirection: row }]}>
+      <Pressable
+        onPress={onCancel}
+        hitSlop={8}
+        accessibilityRole="button"
+        accessibilityLabel={tr('إلغاء التحديد', 'Cancel selection')}
+        style={({ pressed }) => [styles.selectClose, pressed && { opacity: 0.7 }]}>
+        <Icon name="x" size={20} color={colors.text} strokeWidth={2.4} />
+      </Pressable>
+      <AppText weight="bold" size={20} style={{ flex: 1 }} accessibilityLiveRegion="polite">
+        {tr(`${ltr(count)} محددة`, `${count} selected`)}
+      </AppText>
+      <Pressable
+        onPress={onToggleAll}
+        hitSlop={8}
+        accessibilityRole="button"
+        style={({ pressed }) => [styles.selectAll, pressed && { opacity: 0.7 }]}>
+        <AppText size={14} weight="semibold" color={colors.accent}>
+          {allPicked ? tr('إلغاء تحديد الكل', 'Select none') : tr('تحديد الكل', 'Select all')}
+        </AppText>
+      </Pressable>
     </View>
   );
 }
@@ -248,4 +405,15 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accent,
   },
   fabTablet: { bottom: 24, minHeight: 58, paddingHorizontal: 24, borderRadius: 29 },
+  fabDanger: { backgroundColor: colors.danger },
+  selectBar: { alignItems: 'center', gap: 12, minHeight: 52 },
+  selectClose: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surface,
+  },
+  selectAll: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999, backgroundColor: colors.accentSoft },
 });

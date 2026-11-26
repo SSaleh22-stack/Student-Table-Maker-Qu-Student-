@@ -133,11 +133,12 @@ export function BackupSection({ hideTitle, onOpenRestore }: BackupSectionProps) 
   };
 
   const toggleTitle = tr(`النسخ الاحتياطي إلى ${cloudName}`, `Back up to ${cloudName}`);
+  // The PDF folder (pdfCopies.ts) is what the student opens; Backups holds the data a restore reads.
   const toggleSub = drive
-    ? tr('مجلد "QU Student" يظهر في Google Drive', 'A "QU Student" folder you can see in Google Drive')
+    ? tr('مجلد "QU Student" في Google Drive، وفيه ملف PDF لكل مذكرة', 'A "QU Student" folder in Google Drive, with a PDF of every notebook')
     : onedrive
-      ? tr('مجلد "Apps/QU Student" يظهر في OneDrive', 'An "Apps/QU Student" folder you can see in OneDrive')
-      : tr('مجلد "QU Student" يظهر في تطبيق الملفات', 'A "QU Student" folder you can see in the Files app');
+      ? tr('مجلد "Apps/QU Student" في OneDrive، وفيه ملف PDF لكل مذكرة', 'An "Apps/QU Student" folder in OneDrive, with a PDF of every notebook')
+      : tr('مجلد "QU Student" في تطبيق الملفات، وفيه ملف PDF لكل مذكرة', 'A "QU Student" folder in the Files app, with a PDF of every notebook');
 
   // ----- the status row
   let statusRow = null;
@@ -194,8 +195,13 @@ export function BackupSection({ hideTitle, onOpenRestore }: BackupSectionProps) 
       : undefined;
 
   const busy = s.enabled || enabling || s.restoring;
+  // The choices are bordered cards of their own, so they sit under the label without a group card
+  // around them (inside one, its rounded clip cut the cards' corners off).
   const providerPicker = canChooseProvider ? (
-    <Group title={tr('مكان النسخ الاحتياطي', 'Back up to')}>
+    <View style={styles.picker}>
+      <AppText size={14} weight="semibold" color={colors.faint} style={styles.pickerTitle} accessibilityRole="header">
+        {tr('مكان النسخ الاحتياطي', 'Back up to')}
+      </AppText>
       <RadioGroup
         label={tr('مكان النسخ الاحتياطي', 'Back up to')}
         value={s.provider}
@@ -210,7 +216,7 @@ export function BackupSection({ hideTitle, onOpenRestore }: BackupSectionProps) 
           {tr('أوقف النسخ الاحتياطي لتغيير مكانه.', 'Turn backup off to change where it goes.')}
         </AppText>
       ) : null}
-    </Group>
+    </View>
   ) : null;
 
   return (
@@ -300,5 +306,7 @@ export function BackupSection({ hideTitle, onOpenRestore }: BackupSectionProps) 
 const styles = StyleSheet.create({
   wrap: { gap: 12 },
   progress: { width: 90 },
-  note: { paddingHorizontal: 16, paddingBottom: 12 },
+  note: { paddingHorizontal: 8 },
+  picker: { gap: 8 },
+  pickerTitle: { paddingHorizontal: 8 },
 });

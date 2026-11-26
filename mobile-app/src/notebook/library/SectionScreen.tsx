@@ -11,6 +11,8 @@
  * - The grid: 2 columns on phones, 3 under 1000 pt, else 4; first card at the reading start.
  * - The floating button: 'مذكرة جديدة في CS102' (the new notebook starts in this place), or
  *   'مجلد جديد' in 'mine'.
+ * - Multi-select (NotebookSelection.tsx): a long press on a notebook starts it; the header and the
+ *   floating button give way to the selection header and the actions bar.
  */
 import { router, useLocalSearchParams, type Href } from 'expo-router';
 import { useMemo, useState } from 'react';
@@ -40,6 +42,7 @@ import { libraryErrorText } from './MoveSheet';
 import { NewNotebookModal } from './NewNotebookModal';
 import { afterModal, NotebookActionsSheet, type NotebookActionsTarget } from './NotebookActionsSheet';
 import { CardGrid, gridColumns, NotebookCard, useNow } from './NotebookCard';
+import { SelectionActions, SelectionHeader, useNotebookSelection } from './NotebookSelection';
 import { SortChips } from './SortControl';
 
 type Parsed = { kind: 'courses' } | { kind: 'mine' } | { kind: 'place'; loc: LocationKey } | { kind: 'bad' };
@@ -73,6 +76,7 @@ export default function SectionScreen() {
 
   const place = parsed.kind === 'place' ? parsed.loc : null;
   const entries: IndexEntry[] = place ? store.list(place, sort) : [];
+  const sel = useNotebookSelection(entries.map((e) => e.id));
 
   const courses = useMemo<CourseFolder[]>(() => {
     const list = store.courseFolders.slice();
@@ -190,7 +194,18 @@ export default function SectionScreen() {
       entries.length > 0 ? (
         <CardGrid columns={columns} gap={compact ? 12 : 32} rowGap={compact ? 20 : 32}>
           {entries.map((e) => (
-            <NotebookCard key={e.id} entry={e} now={now} lang={lang} onOpen={openEntry} onActions={openActions} />
+            <NotebookCard
+              key={e.id}
+              entry={e}
+              now={now}
+              lang={lang}
+              onOpen={openEntry}
+              onActions={openActions}
+              onSelectStart={(x) => sel.start(x.id)}
+              onSelect={(x) => sel.toggle(x.id)}
+              selecting={sel.selecting}
+              selected={sel.isSelected(e.id)}
+            />
           ))}
         </CardGrid>
       ) : (
@@ -205,16 +220,20 @@ export default function SectionScreen() {
 
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
-      <NbScreenHeader
-        title={title}
-        subtitle={store.loaded ? subtitle : undefined}
-        onBack={back}
-        actions={
-          showMore && target ? (
-            <CircleButton icon="more" label={tr('خيارات المجلد', 'Folder options')} onPress={() => setFolderActs({ ...target })} />
-          ) : undefined
-        }
-      />
+      {sel.selecting ? (
+        <SelectionHeader selection={sel} />
+      ) : (
+        <NbScreenHeader
+          title={title}
+          subtitle={store.loaded ? subtitle : undefined}
+          onBack={back}
+          actions={
+            showMore && target ? (
+              <CircleButton icon="more" label={tr('خيارات المجلد', 'Folder options')} onPress={() => setFolderActs({ ...target })} />
+            ) : undefined
+          }
+        />
+      )}
       <ScrollView contentContainerStyle={[styles.content, { paddingHorizontal: pad, paddingBottom: insets.bottom + (fab ? 120 : 32) }]}>
         <View style={styles.inner}>
           {store.loaded && !missing && parsed.kind !== 'courses' ? (
@@ -232,7 +251,11 @@ export default function SectionScreen() {
         </View>
       </ScrollView>
 
-      {store.loaded && fab ? <NewNotebookFab label={fab.label} onPress={fab.onPress} icon={fab.icon} /> : null}
+      {sel.selecting ? (
+        <SelectionActions selection={sel} />
+      ) : store.loaded && fab ? (
+        <NewNotebookFab label={fab.label} onPress={fab.onPress} icon={fab.icon} />
+      ) : null}
 
       <NewNotebookModal visible={newOpen} onClose={() => setNewOpen(false)} initialLocation={place && place.kind !== 'unfiled' ? place : undefined} />
       <NotebookActionsSheet target={actions} onClose={() => setActions(null)} />

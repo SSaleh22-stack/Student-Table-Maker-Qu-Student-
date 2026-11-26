@@ -1,7 +1,9 @@
 /**
  * A notebook card (Figma notebookCard, NB-14): the cover (Thumb), the title, and under it the last
- * edit and the page count ('اليوم 11:05 ص · 8 صفحات', Figma 03). A tap opens the notebook; a long
- * press or the small 'more' button opens the card actions (NotebookActionsSheet).
+ * edit and the page count ('اليوم 11:05 ص · 8 صفحات', Figma 03). A tap opens the notebook; the small
+ * 'more' button opens the card actions (NotebookActionsSheet). A long press starts selecting several
+ * notebooks (NotebookSelection.tsx) where the screen supports it, else it opens the actions too.
+ * While selecting, a tap selects or unselects, the cover shows a round check, and 'more' is hidden.
  *
  * Also the grid the section screens and Recently deleted share (CardGrid: rows that start at the
  * reading side, so the first card sits at the right edge in Arabic, NB-10a), its column rule
@@ -14,7 +16,7 @@ import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'rea
 import { AppText } from '@/components/AppText';
 import { Icon } from '@/components/Icon';
 import { tr, type Lang } from '@/lib/i18n';
-import { row } from '@/lib/rtl';
+import { fromStart, row } from '@/lib/rtl';
 import { colors } from '@/lib/theme';
 import type { IndexEntry } from '@/notebook/core/model';
 import { countLabel, relativeTime } from '@/notebook/core/text/labels';
@@ -89,12 +91,28 @@ export interface NotebookCardProps {
   onOpen: (e: IndexEntry) => void;
   /** Opens the card actions; anchor is the card in window coordinates (iPad share popover). */
   onActions?: (e: IndexEntry, anchor: AnchorRect | null) => void;
+  /** Starts selecting with this notebook (long press). Without it a long press opens the actions. */
+  onSelectStart?: (e: IndexEntry) => void;
+  /** Selects or unselects it while selecting. */
+  onSelect?: (e: IndexEntry) => void;
+  selecting?: boolean;
+  selected?: boolean;
 }
 
-export function NotebookCard({ entry, now, lang, onOpen, onActions }: NotebookCardProps) {
+/** The round check on a card's cover while selecting. */
+function SelectMark({ selected }: { selected: boolean }) {
+  return (
+    <View style={[styles.mark, fromStart(8), selected ? styles.markOn : styles.markOff]} pointerEvents="none">
+      {selected ? <Icon name="check" size={16} color="#FFFFFF" strokeWidth={3} /> : null}
+    </View>
+  );
+}
+
+export function NotebookCard({ entry, now, lang, onOpen, onActions, onSelectStart, onSelect, selecting, selected }: NotebookCardProps) {
   const ref = useRef<ComponentRef<typeof View>>(null);
   const title = notebookTitle(entry);
   const sub = cardSubtitle(entry, now, lang);
+  const press = () => (selecting && onSelect ? onSelect(entry) : onOpen(entry));
 
   const actions = () => {
     if (!onActions) return;
@@ -118,28 +136,46 @@ export function NotebookCard({ entry, now, lang, onOpen, onActions }: NotebookCa
     .filter(Boolean)
     .join('، ');
 
+  const longPress = selecting && onSelect ? () => onSelect(entry) : onSelectStart ? () => onSelectStart(entry) : onActions ? actions : undefined;
+  const a11yActions = selecting
+    ? undefined
+    : [
+        { name: 'activate' as const },
+        ...(onSelectStart ? [{ name: 'select', label: tr('تحديد عدة مذكرات', 'Select several notebooks') }] : []),
+        ...(onActions ? [{ name: 'longpress' as const, label: tr('خيارات المذكرة', 'Notebook options') }] : []),
+      ];
+
   return (
     <View ref={ref} collapsable={false} style={styles.card}>
       <Pressable
-        onPress={() => onOpen(entry)}
-        onLongPress={onActions ? actions : undefined}
+        onPress={press}
+        onLongPress={longPress}
         delayLongPress={400}
-        accessibilityRole="button"
+        accessibilityRole={selecting ? 'checkbox' : 'button'}
         accessibilityLabel={spoken}
-        accessibilityHint={tr('يفتح المذكرة', 'Opens the notebook')}
-        accessibilityActions={onActions ? [{ name: 'activate' }, { name: 'longpress', label: tr('خيارات المذكرة', 'Notebook options') }] : undefined}
+        accessibilityHint={selecting ? tr('تحديد المذكرة', 'Selects the notebook') : tr('يفتح المذكرة', 'Opens the notebook')}
+        accessibilityState={selecting ? { checked: !!selected } : undefined}
+        accessibilityActions={a11yActions}
         onAccessibilityAction={(ev) => {
-          if (ev.nativeEvent.actionName === 'longpress') actions();
-          else onOpen(entry);
+          const name = ev.nativeEvent.actionName;
+          if (name === 'longpress') actions();
+          else if (name === 'select') onSelectStart?.(entry);
+          else press();
         }}
         style={({ pressed }) => [styles.press, pressed && styles.pressed]}>
         <Thumb entry={entry} />
+        {selecting ? (
+          <>
+            {selected ? <View style={styles.selectedRing} pointerEvents="none" /> : null}
+            <SelectMark selected={!!selected} />
+          </>
+        ) : null}
       </Pressable>
       <View style={[styles.meta, { flexDirection: row }]}>
         {/* The title opens the notebook too; screen readers use the cover button, which says it all. */}
         <Pressable
-          onPress={() => onOpen(entry)}
-          onLongPress={onActions ? actions : undefined}
+          onPress={press}
+          onLongPress={longPress}
           delayLongPress={400}
           accessible={false}
           importantForAccessibility="no-hide-descendants"
@@ -154,7 +190,7 @@ export function NotebookCard({ entry, now, lang, onOpen, onActions }: NotebookCa
             </AppText>
           ) : null}
         </Pressable>
-        {onActions ? (
+        {onActions && !selecting ? (
           <Pressable
             onPress={actions}
             hitSlop={10}
@@ -174,6 +210,28 @@ const styles = StyleSheet.create({
   cell: { flex: 1, minWidth: 0 },
   card: { gap: 8 },
   press: { borderRadius: 10 },
+  selectedRing: {
+    position: 'absolute',
+    top: -3,
+    bottom: -3,
+    left: -3,
+    right: -3,
+    borderRadius: 13,
+    borderWidth: 3,
+    borderColor: colors.accent,
+  },
+  mark: {
+    position: 'absolute',
+    top: 8,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+  },
+  markOn: { backgroundColor: colors.accent, borderColor: '#FFFFFF' },
+  markOff: { backgroundColor: 'rgba(255,255,255,0.92)', borderColor: colors.borderStrong },
   pressed: { opacity: 0.8 },
   meta: { alignItems: 'flex-start', gap: 4 },
   texts: { flex: 1, minWidth: 0 },

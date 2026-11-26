@@ -1,6 +1,10 @@
 /**
  * One row in the tasks list: a round checkbox, the title, and a meta line (time or date, course,
  * repeat). The reminder (or "done") pill sits at the end of the row.
+ *
+ * A long press starts selecting (the list's multi-select). While selecting, a tap selects or
+ * unselects the task, the round "done" checkbox gives way to a square selection box, and the pill
+ * is hidden.
  */
 import { useEffect, useRef } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -23,9 +27,14 @@ interface TaskCardProps {
   tablet?: boolean;
   onToggle: () => void;
   onPress: () => void;
+  /** Starts selecting with this task (long press). */
+  onLongPress?: () => void;
+  /** The list is selecting tasks: a tap selects instead of opening. */
+  selecting?: boolean;
+  selected?: boolean;
 }
 
-export function TaskCard({ task, showDate, now, tablet, onToggle, onPress }: TaskCardProps) {
+export function TaskCard({ task, showDate, now, tablet, onToggle, onPress, onLongPress, selecting, selected }: TaskCardProps) {
   const t = (phone: number, tab: number) => (tablet ? tab : phone);
   const overdue = isOverdue(task, now);
   const metaColor = overdue ? colors.danger : colors.faint;
@@ -62,9 +71,50 @@ export function TaskCard({ task, showDate, now, tablet, onToggle, onPress }: Tas
     .filter(Boolean)
     .join('، ');
 
+  if (selecting) {
+    return (
+      <Pressable
+        onPress={onPress}
+        accessibilityRole="checkbox"
+        accessibilityLabel={a11y}
+        accessibilityHint={tr('تحديد المهمة', 'Selects the task')}
+        accessibilityState={{ checked: !!selected }}
+        style={({ pressed }) => [
+          styles.card,
+          { flexDirection: row, alignItems: hasMeta ? 'flex-start' : 'center' },
+          tablet && styles.cardTablet,
+          selected ? styles.cardSelected : null,
+          pressed && !selected && { backgroundColor: colors.surfaceMuted },
+        ]}>
+        <SelectBox selected={!!selected} size={t(24, 28)} />
+        <View style={styles.body}>
+          <AppText
+            size={t(15, 17)}
+            weight="semibold"
+            color={task.done ? colors.faint : colors.text}
+            numberOfLines={2}
+            style={task.done ? styles.strike : undefined}>
+            {task.title}
+          </AppText>
+          {whenText ? (
+            <AppText size={t(12.5, 14)} weight="medium" color={metaColor} numberOfLines={1}>
+              {[whenText, task.courseCode].filter(Boolean).join(' · ')}
+            </AppText>
+          ) : task.courseCode ? (
+            <AppText size={t(12.5, 14)} weight="medium" color={colors.faint} numberOfLines={1}>
+              {task.courseCode}
+            </AppText>
+          ) : null}
+        </View>
+      </Pressable>
+    );
+  }
+
   return (
     <Pressable
       onPress={onPress}
+      onLongPress={onLongPress}
+      delayLongPress={350}
       accessibilityRole="button"
       accessibilityLabel={a11y}
       accessibilityHint={tr('فتح المهمة للتعديل', 'Opens the task to edit it')}
@@ -72,10 +122,12 @@ export function TaskCard({ task, showDate, now, tablet, onToggle, onPress }: Tas
       accessibilityActions={[
         { name: 'activate' },
         { name: 'toggle', label: task.done ? tr('إلغاء الإنجاز', 'Mark not done') : tr('إنجاز', 'Mark done') },
+        ...(onLongPress ? [{ name: 'longpress', label: tr('تحديد عدة مهام', 'Select several tasks') }] : []),
       ]}
       onAccessibilityAction={(e) => {
         if (e.nativeEvent.actionName === 'toggle') onToggle();
         else if (e.nativeEvent.actionName === 'activate') onPress();
+        else if (e.nativeEvent.actionName === 'longpress') onLongPress?.();
       }}
       style={({ pressed }) => [
         styles.card,
@@ -146,6 +198,20 @@ function Pill({ icon, label, bg, fg, tablet }: { icon: IconName; label: string; 
   );
 }
 
+/** The square selection box shown while selecting (round boxes mean "done"). */
+function SelectBox({ selected, size }: { selected: boolean; size: number }) {
+  return (
+    <View
+      style={[
+        styles.select,
+        { width: size, height: size, borderRadius: Math.round(size * 0.3) },
+        selected ? styles.checkOn : null,
+      ]}>
+      {selected ? <Icon name="check" size={Math.round(size * 0.66)} color="#FFFFFF" strokeWidth={3} /> : null}
+    </View>
+  );
+}
+
 /**
  * The round checkbox. It gives a small bounce when ticked, so finishing a task feels like
  * something happened even before the list moves it.
@@ -196,6 +262,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   cardTablet: { gap: 14, minHeight: 66, paddingHorizontal: 18, paddingVertical: 15, borderRadius: 20 },
+  cardSelected: { backgroundColor: colors.accentSoft },
   body: { flex: 1, gap: 4 },
   strike: { textDecorationLine: 'line-through' },
   meta: { alignItems: 'center', flexWrap: 'wrap', columnGap: 10, rowGap: 4 },
@@ -218,4 +285,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   checkOn: { backgroundColor: colors.accent, borderColor: colors.accent },
+  select: {
+    marginTop: 1,
+    borderWidth: 2,
+    borderColor: colors.accentBorder,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });

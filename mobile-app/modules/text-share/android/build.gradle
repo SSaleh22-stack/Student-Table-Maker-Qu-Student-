@@ -1,0 +1,24 @@
+// TextShare (Android): shares several files in one share sheet (ACTION_SEND_MULTIPLE).
+// The content:// URIs come from expo-sharing's FileProvider ("<package>.SharingFileProvider", which
+// covers the app's cache and files folders), so this module declares no provider of its own.
+
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+group = 'net.qustudent.textshare'
+version = '1.0.0'
+
+android {
+  namespace "net.qustudent.textshare"
+  defaultConfig {
+    versionCode 1
+    versionName '1.0.0'
+  }
+}
+
+dependencies {
+  // androidx.core (FileProvider) comes with it, as for expo-sharing.
+  implementation 'com.facebook.react:react-android'
+}

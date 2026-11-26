@@ -99,6 +99,7 @@ These were offered and not picked. They are not planned unless you decide otherw
 - **NB-11** Course folders come from the courses the student chose in the timetable (`chosen` in `AppData`). They are keyed by **course code**, not section, so changing a section keeps the notes. When a course leaves the timetable or a new term starts, **nothing happens automatically**. The folder and its notebooks stay where they are, and the student moves them manually if they want.
 - **NB-12** Students can create, rename and delete their own folders. Course folders can't be renamed or deleted while the course is in the timetable.
 - **NB-13** Notebooks can be created, renamed, duplicated, moved between folders and deleted. Deleting moves a notebook to "Recently deleted" for 30 days before it is removed for good. It can be restored at any time in those 30 days.
+- **NB-13a** **Several at once:** a long press on a notebook card starts selecting; taps then add or remove notebooks, with "Select all" in the header. The bar at the bottom moves them all to one place, duplicates them, shares them as .qunote files in one share sheet, or deletes them (to Recently deleted, with Undo). The card's ⋮ button still opens the actions for that one notebook.
 - **NB-14** Each notebook shows a thumbnail of its first page, its last-edited time, and a badge if it has recordings.
 - **NB-15** Students can sort by last edited, name or date created.
 
@@ -107,6 +108,7 @@ These were offered and not picked. They are not planned unless you decide otherw
 ### 7.1 Notebook types and paper
 
 - **NB-20** A **blank notebook** starts with paper chosen from blank, lined, grid or dotted.
+- **NB-20a** "New notebook" has two steps: first the four ways to start (empty notebook, import PDF, scan with the camera, from photos), then the details for that choice (empty: name, where to save it, paper; the others: where to save it, then the picker or camera).
 - **NB-21** Page color: white, cream, or dark. Dark paper switches the default pen to a light color.
 - **NB-22** Page sizes: A4 portrait (default), A4 landscape, Letter, and 16:9 widescreen.
 - **NB-23** Paper, color and size can be changed for each page. The notebook's default applies to new pages.
@@ -203,6 +205,8 @@ Each of these shows once per device. A "Show the tour again" row in the notebook
 - **NB-86** **iOS:** backups go to a "QU Student" folder in iCloud Drive that the student can see in the Files app. The student must be signed in to iCloud with iCloud Drive on. If not, the app explains how to turn it on.
 - **NB-86a** **Android:** backups go to the student's Google Drive. Turning backup on asks the student to sign in with Google once. The app uses the narrow `drive.file` permission, so it sees only the files it created, and keeps them in a "QU Student" folder that is visible like on iOS. Signing out or revoking access turns backup off, with a clear message.
 - **NB-86b** Backup runs only over Wi-Fi by default, with a switch to allow mobile data, because PDFs and audio are large.
+- **NB-86c** Where backups go (iCloud Drive, Google Drive or OneDrive on iPhone and iPad; Google Drive or OneDrive on Android) can be chosen in the notebook settings and in the first-time setup (NB-T2).
+- **NB-86d** Next to the backup data ("QU Student/Backups", which only Restore reads), each notebook is also saved as a **PDF** in "QU Student/PDF", in a sub-folder for its course or folder, so the notes open anywhere. A notebook's PDF is made again when it changes, renamed or moved with it, and removed when the notebook is deleted. A notebook open in the editor waits until it is closed.
 - **NB-87** Settings show how much storage notebooks use (total, plus recordings and PDFs separately).
 
 ## 9. Non-functional requirements

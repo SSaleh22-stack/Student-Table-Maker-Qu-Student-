@@ -42,6 +42,11 @@ export interface AbsenceInputs {
 export interface AppSettings {
   /** Show the "next lecture" card on the home screen (off unless the user turns it on) */
   showTodayCard: boolean;
+  /**
+   * After every lecture, a notification asks whether there is anything to add to the tasks
+   * (off unless the user turns it on; lib/lectureFollowUps.ts).
+   */
+  lectureFollowUp: boolean;
 }
 
 interface Persisted {
@@ -67,7 +72,7 @@ const initialState: Persisted = {
   chosenIds: [],
   gpa: { scale: 5, prevGpa: '', prevHours: '', grades: {} },
   absence: { studyWeeks: 15, maxPercent: 25, absent: {}, weeklyOverride: {}, manual: [] },
-  settings: { showTodayCard: false },
+  settings: { showTodayCard: false, lectureFollowUp: false },
 };
 
 interface AppDataValue extends Persisted {

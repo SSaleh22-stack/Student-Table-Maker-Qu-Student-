@@ -324,13 +324,16 @@
       "tests/notebook/backup/plan.test.ts",
       "tests/notebook/backup/policy.test.ts",
       "tests/notebook/backup/drive.test.ts",
-      "tests/notebook/backup/resumable.test.ts"
+      "tests/notebook/backup/resumable.test.ts",
+      "src/notebook/core/backup/pdfCopies.ts",
+      "tests/notebook/backup/pdfCopies.test.ts"
     ],
     "tests": [
       "tests/notebook/backup/plan.test.ts",
       "tests/notebook/backup/policy.test.ts",
       "tests/notebook/backup/drive.test.ts",
-      "tests/notebook/backup/resumable.test.ts"
+      "tests/notebook/backup/resumable.test.ts",
+      "tests/notebook/backup/pdfCopies.test.ts"
     ]
   },
   "P10": {
@@ -605,7 +608,8 @@
       "src/notebook/backup/useEnableBackupFlow.tsx",
       "src/notebook/backup/RemoteFoundDialog.tsx",
       "src/notebook/backup/BackupSection.tsx",
-      "src/notebook/backup/RestoreScreen.tsx"
+      "src/notebook/backup/RestoreScreen.tsx",
+      "src/notebook/backup/pdfCopies.ts"
     ],
     "tests": []
   },
@@ -632,7 +636,8 @@
       "src/notebook/library/SearchField.tsx",
       "src/notebook/library/BetaFeedbackBanner.tsx",
       "src/notebook/library/LowStorageBanner.tsx",
-      "src/notebook/library/Thumb.tsx"
+      "src/notebook/library/Thumb.tsx",
+      "src/notebook/library/NotebookSelection.tsx"
     ],
     "tests": []
   },

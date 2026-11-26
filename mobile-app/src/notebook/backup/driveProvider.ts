@@ -36,6 +36,15 @@ import type { BackupProvider } from './service';
 export const DRIVE_ROOT_NAME = 'QU Student';
 export const DRIVE_BACKUPS_NAME = 'Backups';
 
+export interface DriveProviderOptions {
+  /**
+   * The folder inside "QU Student" that every `rel` is relative to: 'Backups' (default) for the
+   * backup, 'PDF' for the readable copies. Only the Backups provider keeps its folder ids in the
+   * backup state.
+   */
+  folder?: string;
+}
+
 const driveFetch: FetchLike = (url, init) => expoFetch(url, init as Parameters<typeof expoFetch>[1]);
 
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
@@ -61,7 +70,9 @@ function availabilityError(a: googleAuth.GoogleAvailability): BackupError {
   return a === 'no-play-services' ? 'no-play-services' : 'unavailable';
 }
 
-export function createDriveProvider(): BackupProvider {
+export function createDriveProvider(options: DriveProviderOptions = {}): BackupProvider {
+  const folderName = options.folder ?? DRIVE_BACKUPS_NAME;
+  const tracked = folderName === DRIVE_BACKUPS_NAME;
   const client = new DriveClient({ fetch: driveFetch, getToken: (refresh) => googleAuth.tokenFor(refresh), sleep });
 
   let backupsId: string | null = null;
@@ -81,9 +92,10 @@ export function createDriveProvider(): BackupProvider {
   async function root(): Promise<string> {
     if (backupsId) return backupsId;
     const rootId = await client.ensureFolder(DRIVE_ROOT_NAME, 'root');
-    const id = await client.ensureFolder(DRIVE_BACKUPS_NAME, rootId);
+    const id = await client.ensureFolder(folderName, rootId);
     backupsId = id;
     dirs.set('', id);
+    if (!tracked) return id;
     await updateBackupState((s) =>
       s.drive && s.drive.rootId === rootId && s.drive.backupsId === id ? s : { ...s, drive: { rootId, backupsId: id, folderIds: s.drive?.backupsId === id ? s.drive.folderIds : {} } },
     );
@@ -119,7 +131,7 @@ export function createDriveProvider(): BackupProvider {
     }
     if (!id) return null;
     dirs.set(relDir, id);
-    if (parentOf(relDir) === '' && isSafeId(name)) {
+    if (tracked && parentOf(relDir) === '' && isSafeId(name)) {
       const folderId = id;
       await updateBackupState((s) =>
         s.drive && s.drive.folderIds[name] !== folderId ? { ...s, drive: { ...s.drive, folderIds: { ...s.drive.folderIds, [name]: folderId } } } : s,
@@ -241,7 +253,7 @@ export function createDriveProvider(): BackupProvider {
         dirs.delete(rel);
         for (const k of [...dirs.keys()]) if (k.startsWith(`${rel}/`)) dirs.delete(k);
         for (const k of [...children.keys()]) if (k === rel || k.startsWith(`${rel}/`)) children.delete(k);
-        if (dir === '' && isSafeId(name)) {
+        if (tracked && dir === '' && isSafeId(name)) {
           await updateBackupState((s) => {
             if (!s.drive || !(name in s.drive.folderIds)) return s;
             const folderIds = { ...s.drive.folderIds };

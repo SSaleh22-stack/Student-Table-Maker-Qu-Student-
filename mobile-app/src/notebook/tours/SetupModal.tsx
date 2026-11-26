@@ -5,8 +5,10 @@
  * Step 1 'قبل أن تبدأ': 'كيف تكتب؟' (two choice cards: Pen / Finger; 272 pt side by side on regular
  *   windows, STACKED full width on compact) and 'بأي يد تكتب؟' (right / left chips).
  * Step 2 'إعدادات مهمة': the Apple Pencil double tap (only with Pen, only on iOS), the default paper
- *   (the four small paper tiles), the toolbar position (chips that wrap on compact) and the backup row
- *   (iCloud Drive on iOS, Google Drive on Android), OFF until the student switches it on. Switching it
+ *   (the four small paper tiles), the toolbar position (chips that wrap on compact) and the backup:
+ *   'مكان النسخ الاحتياطي' chips (iCloud Drive, Google Drive, OneDrive on iOS; Google Drive, OneDrive
+ *   on Android; the same choice as in the notebook settings, locked while backup is on) and the
+ *   switch, OFF until the student switches it on. Switching it
  *   on awaits the injected enableBackup flow and shows the result inline. 'restore' (the student
  *   chose 'استعادة الآن' in the flow's 'backup found' dialog) saves the choices and opens the restore
  *   screen, as the flow's contract asks of its caller.
@@ -29,7 +31,9 @@ import { Icon, type IconName } from '@/components/Icon';
 import { tr } from '@/lib/i18n';
 import { row } from '@/lib/rtl';
 import { colors } from '@/lib/theme';
-import type { EnableBackupResult } from '@/notebook/core/contracts/backup';
+import { canChooseProvider, providerChoices } from '@/notebook/backup/service';
+import { useBackup } from '@/notebook/backup/useBackup';
+import type { BackupProviderKind, EnableBackupResult } from '@/notebook/core/contracts/backup';
 import type { NotebookSettings, PaperStyle } from '@/notebook/core/model';
 import type { SetupModalProps } from '@/notebook/contracts/tours';
 import { openRestore } from '@/notebook/nav';
@@ -57,6 +61,9 @@ type PencilAction = NotebookSettings['pencilDoubleTap'];
 type ToolbarPos = NotebookSettings['toolbarPos'];
 /** What the backup row says under it after the student touched the switch. */
 type BackupNote = EnableBackupResult | 'off-later' | null;
+
+const CLOUD_NAME: Record<BackupProviderKind, string> = { icloud: 'iCloud Drive', gdrive: 'Google Drive', onedrive: 'OneDrive' };
+const CLOUD_ICON: Record<BackupProviderKind, IconName> = { icloud: 'cloud', gdrive: 'drive', onedrive: 'cloud' };
 
 /** Figma choice card width on regular windows (two of them + the 20 pt gap fill the 564 pt body). */
 const CHOICE_W = 272;
@@ -123,6 +130,8 @@ function SetupBody({ enableBackup, isTablet, backupUi, settings, setSettings, on
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<BackupNote>(null);
   const [enabledHere, setEnabledHere] = useState(false);
+  const backup = useBackup();
+  const provider = backup.status.provider;
 
   const alive = useRef(true);
   useEffect(() => {
@@ -134,7 +143,7 @@ function SetupBody({ enableBackup, isTablet, backupUi, settings, setSettings, on
 
   const showPencil = input === 'pen' && Platform.OS === 'ios';
   const backupOn = settings.backup.enabled || enabledHere;
-  const drive = Platform.OS === 'android' ? 'Google Drive' : 'iCloud Drive';
+  const drive = CLOUD_NAME[provider];
 
   const skip = () => {
     setSettings({ tours: { setup: 'skipped' } });
@@ -342,6 +351,22 @@ function SetupBody({ enableBackup, isTablet, backupUi, settings, setSettings, on
           </SetupRow>
 
           <View style={styles.backup}>
+            {canChooseProvider ? (
+              <SetupRow
+                label={tr('مكان النسخ الاحتياطي', 'Back up to')}
+                sub={backupOn ? tr('أوقف النسخ الاحتياطي من إعدادات المذكرات لتغيير مكانه.', 'Turn backup off in the notebook settings to change where it goes.') : undefined}>
+                <ChipGroup<BackupProviderKind>
+                  label={tr('مكان النسخ الاحتياطي', 'Back up to')}
+                  options={providerChoices.map((p) => ({ value: p, label: CLOUD_NAME[p], icon: CLOUD_ICON[p], disabled: backupOn || busy }))}
+                  value={provider}
+                  onChange={(p) => {
+                    setNote(null);
+                    void backup.setProvider(p);
+                  }}
+                  gap={10}
+                />
+              </SetupRow>
+            ) : null}
             <ToggleRow
               title={tr(`النسخ الاحتياطي إلى ${drive}`, `Back up to ${drive}`)}
               subtitle={backupSubtitle(backupOn, busy, settings.backup.wifiOnly)}
@@ -350,7 +375,7 @@ function SetupBody({ enableBackup, isTablet, backupUi, settings, setSettings, on
               onChange={(v) => void onBackup(v)}
               style={styles.backupRow}
             />
-            <BackupMessage note={note} />
+            <BackupMessage note={note} provider={provider} />
           </View>
           <View style={styles.divider} />
         </>
@@ -366,14 +391,16 @@ function backupSubtitle(on: boolean, busy: boolean, wifiOnly: boolean): string {
   return tr('مغلق الآن — فعّله ليُنسخ تلقائياً عبر Wi-Fi', 'Off for now. Turn it on to back up automatically over Wi-Fi');
 }
 
-function backupErrorText(e: Exclude<EnableBackupResult, 'ok' | 'cancelled' | 'restore'>): string {
+function backupErrorText(e: Exclude<EnableBackupResult, 'ok' | 'cancelled' | 'restore'>, provider: BackupProviderKind): string {
+  const account = provider === 'onedrive' ? 'Microsoft' : 'Google';
+  const cloud = CLOUD_NAME[provider];
   switch (e) {
     case 'icloud-off':
       return tr('iCloud Drive غير مفعّل على هذا الجهاز. فعّله من إعدادات الجهاز ثم حاول مرة أخرى.', 'iCloud Drive is off on this device. Turn it on in the device settings, then try again.');
     case 'signed-out':
-      return tr('لم يتم تسجيل الدخول إلى حساب Google. حاول مرة أخرى.', 'You are not signed in to Google. Try again.');
+      return tr(`لم يتم تسجيل الدخول إلى حساب ${account}. حاول مرة أخرى.`, `You are not signed in to ${account}. Try again.`);
     case 'revoked':
-      return tr('انتهى إذن الوصول إلى Google Drive. سجّل الدخول مرة أخرى.', 'Access to Google Drive was removed. Sign in again.');
+      return tr(`انتهى إذن الوصول إلى ${cloud}. سجّل الدخول مرة أخرى.`, `Access to ${cloud} was removed. Sign in again.`);
     case 'no-play-services':
       return tr('خدمات Google Play غير متوفرة على هذا الجهاز.', 'Google Play services are not available on this device.');
     case 'unavailable':
@@ -387,14 +414,14 @@ function backupErrorText(e: Exclude<EnableBackupResult, 'ok' | 'cancelled' | 're
   }
 }
 
-function BackupMessage({ note }: { note: BackupNote }) {
+function BackupMessage({ note, provider }: { note: BackupNote; provider: BackupProviderKind }) {
   // 'restore' never gets here: it closes the setup and opens the restore screen.
   if (!note || note === 'cancelled' || note === 'restore') return null;
   if (note === 'ok') return <InfoBanner tone="info" icon="check" text={tr('تم تفعيل النسخ الاحتياطي.', 'Backup is on.')} />;
   if (note === 'off-later') {
     return <InfoBanner tone="info" text={tr('تستطيع إيقاف النسخ الاحتياطي من إعدادات المذكرات.', 'You can turn backup off in the notebook settings.')} />;
   }
-  return <InfoBanner tone="warn" icon="alert" text={backupErrorText(note)} />;
+  return <InfoBanner tone="warn" icon="alert" text={backupErrorText(note, provider)} />;
 }
 
 function SetupRow({ label, sub, children }: { label: string; sub?: string; children: ReactNode }) {

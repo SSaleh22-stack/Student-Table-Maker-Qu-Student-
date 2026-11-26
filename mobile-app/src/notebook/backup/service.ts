@@ -39,6 +39,8 @@
  *   uploads (JSON through writeText, read as saved; assets/audio through upload), checkpoint and
  *   final manifest writes (each saves lastUploaded; the final one the conflicts and libraryUploaded),
  *   library.json = merge(remote library.json, local), deletes (to the Drive trash on Android).
+ *   Then the readable PDF copies in QU Student/PDF (pdfCopies.ts): one PDF per notebook, made again
+ *   when it changed; restore never reads them.
  *   An OPEN notebook's JSON files are copied to a staging folder inside session.withWriteLock (which
  *   flushes first) before they are uploaded, so the upload sees one consistent save and saves are
  *   held only for the disk copy.
@@ -102,6 +104,7 @@ import { createDriveProvider } from './driveProvider';
 import { createIcloudProvider, icloudHelp } from './icloudProvider';
 import { createOneDriveProvider } from './oneDriveProvider';
 import { lastNetwork, readNetwork, subscribeNetwork } from './network';
+import { resetPdfCopies, syncPdfCopies } from './pdfCopies';
 import { buildSnapshot, localFilePath, readUploadText } from './snapshot';
 
 // ===== provider type
@@ -635,6 +638,9 @@ async function runBackup(signal: AbortSignalLike): Promise<void> {
     bytes += e.bytes;
   }
   setBackupSettings({ lastBackupAt: now, lastError: '', lastCount: count, lastBytes: bytes });
+
+  // The readable PDF copies beside the backup (QU Student/PDF). Never fails the backup run.
+  await syncPdfCopies(providerKindNow(), signal);
 }
 
 /**
@@ -1134,6 +1140,8 @@ export const backupService: BackupServiceImpl = {
     running?.abort.abort();
     clearRetry();
     await provider()?.signOut?.();
+    // The next account starts its PDF folder from scratch.
+    await resetPdfCopies();
     failures = 0;
     lastFailureAt = null;
     // Signing out turns backup off (NB-86a); the files in Drive stay.

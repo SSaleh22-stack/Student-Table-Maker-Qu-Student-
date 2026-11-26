@@ -36,9 +36,9 @@ const MAX_RETRIES = 3;
 
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
-/** The Graph URL of Backups/<rel> (rel '' = Backups itself), each segment encoded. */
-function itemUrl(rel: string, suffix = ''): string {
-  const path = [BACKUPS, ...rel.split('/').filter(Boolean)].map(encodeURIComponent).join('/');
+/** The Graph URL of <folder>/<rel> (rel '' = the folder itself), each segment encoded. */
+function itemUrlIn(folder: string, rel: string, suffix = ''): string {
+  const path = [folder, ...rel.split('/').filter(Boolean)].map(encodeURIComponent).join('/');
   return `${APPROOT}:/${path}:${suffix}`;
 }
 
@@ -100,7 +100,14 @@ interface GraphItem {
   '@microsoft.graph.downloadUrl'?: string;
 }
 
-export function createOneDriveProvider(): BackupProvider {
+/**
+ * folder: the folder in the app folder that every `rel` is relative to: 'Backups' (default) for the
+ * backup, 'PDF' for the readable copies.
+ */
+export function createOneDriveProvider(options: { folder?: string } = {}): BackupProvider {
+  const folder = options.folder ?? BACKUPS;
+  const itemUrl = (rel: string, suffix = '') => itemUrlIn(folder, rel, suffix);
+
   async function putSmall(rel: string, body: string | Uint8Array, mime: string): Promise<void> {
     const res = await graph(itemUrl(rel, '/content?@microsoft.graph.conflictBehavior=replace'), {
       method: 'PUT',

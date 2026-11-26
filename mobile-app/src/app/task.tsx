@@ -85,7 +85,8 @@ function confirmDelete(run: () => void) {
 
 export default function TaskScreen() {
   const tablet = useIsTablet();
-  const { id } = useLocalSearchParams<{ id?: string }>();
+  // `course`: a new task for that course (the after-lecture notification opens the editor this way).
+  const { id, course } = useLocalSearchParams<{ id?: string; course?: string }>();
   const { loaded, getTask, addTask, updateTask, deleteTask } = useTasks();
   const { chosen } = useAppData();
   const task = id ? getTask(id) : undefined;
@@ -100,7 +101,7 @@ export default function TaskScreen() {
   // Kept even while another choice is picked, so going back to "مخصص" finds the student's value.
   const [custom, setCustom] = useState<CustomReminder | undefined>(task?.reminderCustom);
   const [repeat, setRepeat] = useState<Repeat>(task?.repeat ?? 'none');
-  const [courseCode, setCourseCode] = useState<string | undefined>(task?.courseCode);
+  const [courseCode, setCourseCode] = useState<string | undefined>(task?.courseCode ?? (id ? undefined : course || undefined));
   const [picker, setPicker] = useState<'date' | 'time' | 'custom' | null>(null);
   const [titleFocused, setTitleFocused] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -157,6 +158,7 @@ export default function TaskScreen() {
   // The student's courses (one chip per code), keeping a linked course that was since removed.
   const codes = [...new Set(chosen.map((c) => c.code))];
   if (task?.courseCode && !codes.includes(task.courseCode)) codes.push(task.courseCode);
+  if (!id && course && !codes.includes(course)) codes.push(course);
 
   const canSave = title.trim().length > 0 && !saving;
   const t = (phone: number, tab: number) => (tablet ? tab : phone);

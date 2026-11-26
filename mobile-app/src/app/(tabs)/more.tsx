@@ -13,6 +13,7 @@ import { SafeAreaView } from '@/components/SafeAreaView';
 import { Button, ScreenHeader } from '@/components/ui';
 import { isEnglish, tr } from '@/lib/i18n';
 import { useIsTablet } from '@/lib/layout';
+import { ensureReminderPermission } from '@/lib/reminders';
 import { row } from '@/lib/rtl';
 import { colors } from '@/lib/theme';
 import { notebookSupported } from '@/notebook/flags';
@@ -45,6 +46,25 @@ const formatDate = (iso?: string) => {
 export default function MoreScreen() {
   const { importedAt, clearAll, settings, setSettings } = useAppData();
   const tablet = useIsTablet();
+
+  /** Turning the after-lecture question on needs notifications; without them it stays off. */
+  const setLectureFollowUp = async (on: boolean) => {
+    if (!on) {
+      setSettings({ lectureFollowUp: false });
+      return;
+    }
+    if (await ensureReminderPermission()) {
+      setSettings({ lectureFollowUp: true });
+      return;
+    }
+    Alert.alert(
+      tr('الإشعارات غير مسموحة', 'Notifications are off'),
+      tr(
+        'اسمح لـ QU Student بإرسال الإشعارات من إعدادات الجهاز، ثم فعّل هذا الخيار مرة أخرى.',
+        'Allow QU Student to send notifications in the device settings, then turn this on again.',
+      ),
+    );
+  };
 
   const confirmClear = () => {
     const run = () => clearAll();
@@ -132,17 +152,32 @@ export default function MoreScreen() {
           />
         </Group>
 
-        {/* The next class card is only on the phone home screen; the iPad one has none. */}
-        {tablet ? null : (
-        <Group title={tr('الإعدادات', 'Settings')}>
-          <ToggleItem
-            icon="sun"
-            title={tr('بطاقة المحاضرة القادمة', 'Next class card')}
-            subtitle={tr('تظهر في أعلى الصفحة الرئيسية', 'Shows at the top of the home screen')}
-            value={settings.showTodayCard}
-            onChange={(on) => setSettings({ showTodayCard: on })}
-          />
-        </Group>
+        {/* The next class card is only on the phone home screen (the iPad one has none), and the
+            after-lecture notification needs the phone apps (no notifications on web). */}
+        {tablet && Platform.OS === 'web' ? null : (
+          <Group title={tr('الإعدادات', 'Settings')}>
+            {tablet ? null : (
+              <ToggleItem
+                icon="sun"
+                title={tr('بطاقة المحاضرة القادمة', 'Next class card')}
+                subtitle={tr('تظهر في أعلى الصفحة الرئيسية', 'Shows at the top of the home screen')}
+                value={settings.showTodayCard}
+                onChange={(on) => setSettings({ showTodayCard: on })}
+              />
+            )}
+            {Platform.OS === 'web' ? null : (
+              <ToggleItem
+                icon="bell"
+                title={tr('اسألني بعد كل محاضرة', 'Ask me after every lecture')}
+                subtitle={tr(
+                  'إشعار عند نهاية المحاضرة: هل هناك ما تضيفه إلى مهامك؟ لا يصل في الإجازات.',
+                  'A notification when a lecture ends: anything to add to your tasks? Not on holidays.',
+                )}
+                value={settings.lectureFollowUp}
+                onChange={(on) => void setLectureFollowUp(on)}
+              />
+            )}
+          </Group>
         )}
 
         <Group title={tr('المساعدة', 'Help')}>

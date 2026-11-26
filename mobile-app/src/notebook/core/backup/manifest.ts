@@ -94,6 +94,8 @@ export interface BackupLocalState {
   /** Notebooks skipped in the last run because another device has a newer copy. */
   conflicts: Id[];
   libraryUploaded?: number;
+  /** The readable PDF copies this device uploaded (core/backup/pdfCopies.ts): id -> rev and path. */
+  pdfUploaded?: Record<Id, { rev: number; path: string }>;
 }
 
 /** The entries this device contributes to one manifest write (see mergeManifest). */
@@ -420,6 +422,18 @@ export function readBackupLocalState(raw: unknown): BackupLocalState | null {
       }
     }
     state.drive = { rootId: d.rootId, backupsId: d.backupsId, folderIds };
+  }
+  if (isRecord(raw.pdfUploaded)) {
+    const pdf: Record<Id, { rev: number; path: string }> = {};
+    for (const id of Object.keys(raw.pdfUploaded)) {
+      const v = raw.pdfUploaded[id];
+      if (!isSafeId(id) || !isRecord(v)) continue;
+      const rev = finiteInt(v.rev);
+      const path = v.path;
+      if (rev === undefined || typeof path !== 'string' || !path || path.length > 400 || path.includes('..')) continue;
+      pdf[id] = { rev, path };
+    }
+    state.pdfUploaded = pdf;
   }
   return state;
 }

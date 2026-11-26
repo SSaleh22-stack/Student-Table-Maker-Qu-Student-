@@ -44,7 +44,7 @@ export function icloudHelp(): string {
   return tr('سجّل الدخول إلى iCloud وفعّل iCloud Drive من الإعدادات', 'Sign in to iCloud and turn on iCloud Drive in Settings');
 }
 
-const at = (rel: string): string => (rel ? `${ROOT}/${rel}` : ROOT);
+const atIn = (folder: string, rel: string): string => (rel ? `${folder}/${rel}` : folder);
 
 function codeOf(e: unknown): BackupError {
   switch (iCloudErrorCode(e)) {
@@ -70,7 +70,13 @@ async function wrap<T>(what: string, fn: () => Promise<T>): Promise<T> {
   }
 }
 
-export function createIcloudProvider(): BackupProvider {
+/**
+ * folder: the folder in "QU Student" that every `rel` is relative to: 'Backups' (default) for the
+ * backup, 'PDF' for the readable copies.
+ */
+export function createIcloudProvider(options: { folder?: string } = {}): BackupProvider {
+  const folder = options.folder ?? ROOT;
+  const at = (rel: string): string => atIn(folder, rel);
   return {
     kind: 'icloud',
 
@@ -83,7 +89,7 @@ export function createIcloudProvider(): BackupProvider {
       }
     },
 
-    ensureRoot: () => wrap('ensureRoot', () => ensureDir(ROOT)),
+    ensureRoot: () => wrap('ensureRoot', () => ensureDir(folder)),
 
     readText: (rel) => wrap('read', () => readText(at(rel))),
 

@@ -1,12 +1,18 @@
 /**
- * 'مذكرة جديدة' (Figma 04, NB-20..NB-22): the name, where to save it ('الحفظ في' location chips),
- * the paper (type, color and size; it starts from the default paper in the settings), then 'أو ابدأ
- * من ملف' with three source tiles that open the import flow for that place instead ('استيراد PDF',
- * 'مسح بالكاميرا', 'من الصور'), and 'إنشاء المذكرة'.
+ * 'مذكرة جديدة' in two steps, so every way to start is in view at once (on phones the file sources
+ * used to sit at the bottom of one long form, out of sight):
  *
- * NbModal: the 620 pt card on tablets, a full-height sheet with a sticky 'إنشاء المذكرة' on phones.
- * The form starts fresh every time it opens. The modal closes before the editor or the import
- * screen opens (MODAL_SWAP_MS), because an open RN Modal would stay above the next screen.
+ *   Step 1 'كيف تريد أن تبدأ؟': four choices, each going straight to step 2:
+ *     'مذكرة فارغة' · 'استيراد PDF' · 'مسح بالكاميرا' · 'من الصور'
+ *   Step 2, empty notebook: the name, where to save it ('الحفظ في' location chips) and the paper
+ *     (type, color and size; it starts from the default paper in the settings), then 'إنشاء المذكرة'.
+ *   Step 2, a file source: where to save it, then the button that opens the picker, the scanner or
+ *     the photos (the import flow for that place).
+ *   'رجوع' in step 2 goes back to the choices (the form keeps what was typed).
+ *
+ * NbModal: the 620 pt card on tablets, a full-height sheet with a sticky footer on phones. The form
+ * starts fresh every time it opens. The modal closes before the editor or the import screen opens
+ * (MODAL_SWAP_MS), because an open RN Modal would stay above the next screen.
  */
 import { useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
@@ -31,12 +37,48 @@ import { libraryErrorText } from './MoveSheet';
 import { afterModal } from './NotebookActionsSheet';
 
 type Source = 'pdf' | 'scan' | 'photos';
+type Start = 'blank' | Source;
 
-const SOURCES: { source: Source; icon: IconName; label: () => string; sub: () => string }[] = [
-  { source: 'pdf', icon: 'fileText', label: () => tr('استيراد PDF', 'Import PDF'), sub: () => tr('من تطبيق الملفات', 'From the Files app') },
-  { source: 'scan', icon: 'scan', label: () => tr('مسح بالكاميرا', 'Scan with camera'), sub: () => tr('حواف وقص تلقائي', 'Auto edges and crop') },
-  { source: 'photos', icon: 'image', label: () => tr('من الصور', 'From photos'), sub: () => tr('صورة أو أكثر', 'One or more photos') },
+interface StartOption {
+  start: Start;
+  icon: IconName;
+  label: () => string;
+  sub: () => string;
+  /** The step 2 button that opens the source. */
+  action?: () => string;
+}
+
+const STARTS: readonly StartOption[] = [
+  {
+    start: 'blank',
+    icon: 'notebookPen',
+    label: () => tr('مذكرة فارغة', 'Empty notebook'),
+    sub: () => tr('اكتب على ورق مسطّر أو مربعات أو فارغ', 'Write on lined, grid or blank paper'),
+  },
+  {
+    start: 'pdf',
+    icon: 'fileText',
+    label: () => tr('استيراد PDF', 'Import PDF'),
+    sub: () => tr('من تطبيق الملفات، واكتب عليه', 'From the Files app, then write on it'),
+    action: () => tr('اختيار ملف PDF', 'Choose a PDF'),
+  },
+  {
+    start: 'scan',
+    icon: 'scan',
+    label: () => tr('مسح بالكاميرا', 'Scan with camera'),
+    sub: () => tr('حواف وقص تلقائي', 'Auto edges and crop'),
+    action: () => tr('فتح الكاميرا', 'Open the camera'),
+  },
+  {
+    start: 'photos',
+    icon: 'image',
+    label: () => tr('من الصور', 'From photos'),
+    sub: () => tr('صورة أو أكثر', 'One or more photos'),
+    action: () => tr('اختيار الصور', 'Choose photos'),
+  },
 ];
+
+const optionOf = (s: Start) => STARTS.find((o) => o.start === s) ?? STARTS[0];
 
 function FieldLabel({ text }: { text: string }) {
   return (
@@ -46,22 +88,27 @@ function FieldLabel({ text }: { text: string }) {
   );
 }
 
-function SourceTile({ icon, label, sub, onPress, compact }: { icon: IconName; label: string; sub: string; onPress: () => void; compact: boolean }) {
+function StartRow({ option, onPress, compact }: { option: StartOption; onPress: () => void; compact: boolean }) {
+  const label = option.label();
+  const sub = option.sub();
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={`${label}، ${sub}`}
-      style={({ pressed }) => [styles.source, compact && styles.sourceCompact, pressed && styles.pressed]}>
-      <View style={styles.sourceIcon}>
-        <Icon name={icon} size={compact ? 22 : 24} color={colors.accent} />
+      accessibilityLabel={`${label}${tr('، ', ', ')}${sub}`}
+      style={({ pressed }) => [styles.start, { flexDirection: row }, compact && styles.startCompact, pressed && styles.pressed]}>
+      <View style={[styles.startIcon, compact && styles.startIconCompact]}>
+        <Icon name={option.icon} size={compact ? 24 : 26} color={colors.accent} />
       </View>
-      <AppText size={compact ? 14 : 15} weight="bold" align="center" numberOfLines={2}>
-        {label}
-      </AppText>
-      <AppText size={12} color={colors.faint} align="center" numberOfLines={2}>
-        {sub}
-      </AppText>
+      <View style={styles.startText}>
+        <AppText size={compact ? 16 : 17} weight="bold">
+          {label}
+        </AppText>
+        <AppText size={13} color={colors.faint}>
+          {sub}
+        </AppText>
+      </View>
+      <Icon name="forward" size={18} color={colors.placeholder} />
     </Pressable>
   );
 }
@@ -77,15 +124,17 @@ export function NewNotebookModal({ visible, onClose, initialLocation }: NewNoteb
   const store = useNotebooks();
   const compact = useWidthClass() === 'compact';
   const start = (): LocationKey => initialLocation ?? { kind: 'unfiled' };
+  const [choice, setChoice] = useState<Start | null>(null);
   const [title, setTitle] = useState('');
   const [location, setLocation] = useState<LocationKey>(start);
   const [paper, setPaper] = useState<PaperSpec>(() => copyPaper(store.settings.defaultPaper));
   const [busy, setBusy] = useState(false);
   const [wasVisible, setWasVisible] = useState(visible);
   if (visible !== wasVisible) {
-    // Each opening starts a fresh form (state adjusted while rendering).
+    // Each opening starts a fresh form on the first step (state adjusted while rendering).
     setWasVisible(visible);
     if (visible) {
+      setChoice(null);
       setTitle('');
       setLocation(start());
       setPaper(copyPaper(store.settings.defaultPaper));
@@ -117,59 +166,83 @@ export function NewNotebookModal({ visible, onClose, initialLocation }: NewNoteb
     afterModal(() => openImport(source, where));
   };
 
+  const back = () => {
+    if (!busy) setChoice(null);
+  };
+
+  // ----- step 1: how to start
+  if (choice === null) {
+    return (
+      <NbModal visible={visible} title={tr('مذكرة جديدة', 'New notebook')} subtitle={tr('كيف تريد أن تبدأ؟', 'How do you want to start?')} onClose={onClose}>
+        <View style={styles.starts}>
+          {STARTS.map((o) => (
+            <StartRow key={o.start} option={o} compact={compact} onPress={() => setChoice(o.start)} />
+          ))}
+        </View>
+      </NbModal>
+    );
+  }
+
+  // ----- step 2: the details for that start
+  const option = optionOf(choice);
+  const blank = choice === 'blank';
+  const backLink = <PillButton label={tr('رجوع', 'Back')} variant="link" onPress={back} disabled={busy} />;
+  const primary = blank ? (
+    <PillButton label={tr('إنشاء المذكرة', 'Create notebook')} icon="check" onPress={() => void create()} loading={busy} block={compact} style={compact ? undefined : styles.primary} />
+  ) : (
+    <PillButton label={option.action?.() ?? option.label()} icon={option.icon} onPress={() => fromSource(choice)} block={compact} style={compact ? undefined : styles.primary} />
+  );
+
   return (
     <NbModal
       visible={visible}
-      title={tr('مذكرة جديدة', 'New notebook')}
+      title={option.label()}
+      subtitle={blank ? tr('الاسم ومكان الحفظ والورق', 'Name, where to save it, and paper') : tr('اختر مكان حفظ المذكرة', 'Choose where to save the notebook')}
       onClose={onClose}
       dismissable={!busy}
       footer={
-        <PillButton
-          label={tr('إنشاء المذكرة', 'Create notebook')}
-          icon="check"
-          onPress={() => void create()}
-          loading={busy}
-          block
-        />
+        compact ? (
+          <View style={styles.footerCompact}>
+            {primary}
+            <View style={styles.backCompact}>{backLink}</View>
+          </View>
+        ) : (
+          <View style={[styles.footerRow, { flexDirection: row }]}>
+            {backLink}
+            <View style={styles.flex} />
+            {primary}
+          </View>
+        )
       }>
       <View style={styles.body}>
-        <View style={styles.field}>
-          <FieldLabel text={tr('اسم المذكرة', 'Notebook name')} />
-          <TextInput
-            value={title}
-            onChangeText={setTitle}
-            placeholder={tr('مثال: محاضرة 6 — المحددات', 'For example: Lecture 6 — Determinants')}
-            placeholderTextColor={colors.placeholder}
-            accessibilityLabel={tr('اسم المذكرة', 'Notebook name')}
-            maxLength={TITLE_MAX}
-            returnKeyType="done"
-            editable={!busy}
-            style={[styles.input, inputDir()]}
-          />
-        </View>
+        {blank ? (
+          <View style={styles.field}>
+            <FieldLabel text={tr('اسم المذكرة', 'Notebook name')} />
+            <TextInput
+              value={title}
+              onChangeText={setTitle}
+              placeholder={tr('مثال: محاضرة 6 — المحددات', 'For example: Lecture 6 — Determinants')}
+              placeholderTextColor={colors.placeholder}
+              accessibilityLabel={tr('اسم المذكرة', 'Notebook name')}
+              maxLength={TITLE_MAX}
+              returnKeyType="done"
+              editable={!busy}
+              style={[styles.input, inputDir()]}
+            />
+          </View>
+        ) : null}
         <View style={styles.field}>
           <FieldLabel text={tr('الحفظ في', 'Save in')} />
           <LocationChips value={loc} onChange={setLocation} />
         </View>
-        <PaperPicker value={paper} onChange={setPaper} />
-        <View style={[styles.or, { flexDirection: row }]}>
-          <View style={styles.rule} />
-          <AppText size={13} weight="medium" color={colors.faint}>
-            {tr('أو ابدأ من ملف', 'Or start from a file')}
-          </AppText>
-          <View style={styles.rule} />
-        </View>
-        <View style={[styles.sources, { flexDirection: row, gap: compact ? 10 : 18 }]}>
-          {SOURCES.map((s) => (
-            <SourceTile key={s.source} icon={s.icon} label={s.label()} sub={s.sub()} compact={compact} onPress={() => fromSource(s.source)} />
-          ))}
-        </View>
+        {blank ? <PaperPicker value={paper} onChange={setPaper} /> : null}
       </View>
     </NbModal>
   );
 }
 
 const styles = StyleSheet.create({
+  flex: { flex: 1 },
   body: { gap: 20 },
   field: { gap: 8 },
   input: {
@@ -183,21 +256,24 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
-  or: { alignItems: 'center', gap: 12 },
-  rule: { flex: 1, height: 1, backgroundColor: colors.border },
-  sources: { alignItems: 'stretch' },
-  source: {
-    flex: 1,
+  starts: { gap: 12 },
+  start: {
     alignItems: 'center',
-    gap: 6,
+    gap: 14,
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: nbRadius.choice,
     paddingVertical: 16,
-    paddingHorizontal: 8,
+    paddingHorizontal: 16,
   },
-  sourceCompact: { paddingVertical: 12, paddingHorizontal: 6 },
-  sourceIcon: { backgroundColor: colors.accentTint, borderRadius: 14, padding: 11 },
+  startCompact: { paddingVertical: 14, paddingHorizontal: 14, gap: 12 },
+  startIcon: { backgroundColor: colors.accentTint, borderRadius: 14, padding: 12 },
+  startIconCompact: { padding: 10 },
+  startText: { flex: 1, gap: 2 },
   pressed: { opacity: 0.85 },
+  footerRow: { alignItems: 'center', gap: 12 },
+  footerCompact: { gap: 6 },
+  backCompact: { alignSelf: 'center' },
+  primary: { minWidth: 220 },
 });

@@ -12,6 +12,7 @@ import { AndroidImportance, IosAuthorizationStatus } from 'expo-notifications';
 import { Platform } from 'react-native';
 
 import { tr } from '@/lib/i18n';
+import { isLectureFollowUp, LECTURE_SLOTS } from '@/lib/lectureFollowUps';
 import {
   cleanCustomReminder,
   daysAheadWords,
@@ -31,8 +32,11 @@ const ACTION_SNOOZE = 'snooze';
 const PREFIX = 'task-';
 const SNOOZE_SUFFIX = '-snooze';
 
-/** iOS keeps at most 64 pending notifications per app; stay under it and keep the soonest. */
-const MAX_SCHEDULED = 60;
+/**
+ * iOS keeps at most 64 pending notifications per app; stay under it and keep the soonest. Part of
+ * that is left for the after-lecture notifications (lectureFollowUps.ts). Android has no such limit.
+ */
+const MAX_SCHEDULED = Platform.OS === 'ios' ? 60 - LECTURE_SLOTS : 60;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -300,7 +304,22 @@ export function setupReminders(handlers: { onDone(id: string): void; onSnooze(id
     const key = `${notification.request.identifier}:${notification.date}:${actionIdentifier}`;
     if (!active || handled.has(key)) return;
     handled.add(key);
-    const taskId = (notification.request.content.data as { taskId?: unknown } | undefined)?.taskId;
+    const data = notification.request.content.data as unknown;
+    // "هل هناك ما تضيفه إلى مهامك؟" after a lecture: a tap opens a new task for that course.
+    if (isLectureFollowUp(data)) {
+      if (actionIdentifier === Notifications.DEFAULT_ACTION_IDENTIFIER) {
+        setTimeout(() => {
+          try {
+            router.push({ pathname: '/task', params: { course: data.courseCode } });
+          } catch {
+            // No navigator yet; the app simply opens where it was.
+          }
+        }, 0);
+      }
+      safely(() => Notifications.clearLastNotificationResponseAsync());
+      return;
+    }
+    const taskId = (data as { taskId?: unknown } | undefined)?.taskId;
     if (typeof taskId !== 'string') return;
     try {
       if (actionIdentifier === ACTION_DONE) handlers.onDone(taskId);

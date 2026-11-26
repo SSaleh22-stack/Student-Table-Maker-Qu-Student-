@@ -23,6 +23,10 @@
  *   (settings and sort), lib.search, lib.courses (the course folders row), lib.folders (the
  *   'مجلداتي' title and row together) and lib.new (the floating 'مذكرة جديدة' button).
  *
+ * Multi-select (NotebookSelection.tsx): a long press on a notebook card starts it; the header band
+ * and the floating button give way to the selection header and the actions bar, and the folder rows
+ * are dimmed and inert meanwhile. The notebooks shown ('بدون مجلد', or the search results) count.
+ *
  * The screen does not run backup (useBackupAutoRun lives in NotebookServices only).
  *
  * Also exports NbScreenHeader, the round-back-button header the section and Recently deleted screens
@@ -64,6 +68,7 @@ import { libraryErrorText } from './MoveSheet';
 import { NewNotebookModal } from './NewNotebookModal';
 import { NotebookActionsSheet, type NotebookActionsTarget } from './NotebookActionsSheet';
 import { CardGrid, NotebookCard, useNow } from './NotebookCard';
+import { SelectionActions, SelectionHeader, useNotebookSelection } from './NotebookSelection';
 import { SearchField } from './SearchField';
 import { SortSheet } from './SortControl';
 import { sampleCourses, sampleFolders, sampleNotebooks } from './tourSamples';
@@ -192,6 +197,13 @@ export default function LibraryScreen() {
   const pad = NB_EDGE;
   const modalOpen = newOpen || newFolderOpen || sortOpen || actions !== null || folderActs !== null;
 
+  // The notebooks on screen are the ones a selection can hold.
+  const shownIds = useMemo(
+    () => (!store.loaded || empty ? [] : searching ? secs.results.map((e) => e.id) : demoNotebooks ? [] : secs.unfiled.items.map((e) => e.id)),
+    [store.loaded, empty, searching, secs, demoNotebooks],
+  );
+  const sel = useNotebookSelection(shownIds);
+
   const openEntry = (e: IndexEntry) => openNotebook(e.id);
   const openActions = (e: IndexEntry, anchor: AnchorRect | null) => setActions({ entry: e, anchor });
   const openFolder = (t: FolderTarget) => openSection(t.kind === 'course' ? encodeLoc({ kind: 'course', code: t.code }) : encodeLoc({ kind: 'folder', id: t.id }));
@@ -221,7 +233,7 @@ export default function LibraryScreen() {
       actionsRef={headerRef}
       actions={
         <>
-          <CircleButton icon="sliders" label={tr('إعدادات المذكرات', 'Notebook settings')} onPress={openNotebookSettings} />
+          <CircleButton icon="settings" label={tr('إعدادات المذكرات', 'Notebook settings')} onPress={openNotebookSettings} />
           {empty ? null : <CircleButton icon="sort" label={tr('ترتيب', 'Sort')} onPress={() => setSortOpen(true)} />}
         </>
       }
@@ -251,7 +263,29 @@ export default function LibraryScreen() {
         <FolderCard key={f.id} target={{ kind: 'folder', id: f.id, name: f.name, count: f.count }} onOpen={openFolder} onActions={setFolderActs} />
       ));
   const notebookCards = (list: IndexEntry[]) =>
-    list.map((e) => <NotebookCard key={e.id} entry={e} now={now} lang={lang} onOpen={openEntry} onActions={openActions} />);
+    list.map((e) => (
+      <NotebookCard
+        key={e.id}
+        entry={e}
+        now={now}
+        lang={lang}
+        onOpen={openEntry}
+        onActions={openActions}
+        onSelectStart={(x) => sel.start(x.id)}
+        onSelect={(x) => sel.toggle(x.id)}
+        selecting={sel.selecting}
+        selected={sel.isSelected(e.id)}
+      />
+    ));
+  /** Folder rows while selecting notebooks: dimmed and out of reach. */
+  const inert = (node: ReactNode) =>
+    sel.selecting && node ? (
+      <View pointerEvents="none" style={styles.inert} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
+        {node}
+      </View>
+    ) : (
+      node
+    );
 
   /** 'عرض الكل (n)' when a section holds more than the 4 cards it shows (NB-10a). */
   const showAll = (total: number, key: string) => (total > 4 ? { showAllCount: total, onShowAll: () => openSection(key) } : {});
@@ -328,13 +362,15 @@ export default function LibraryScreen() {
     const nothing = secs.courses.total === 0 && secs.mine.total === 0 && secs.results.length === 0;
     body = (
       <>
-        {coursesSection}
-        {secs.mine.total > 0 ? (
-          <View style={styles.section}>
-            <SectionTitle title={tr('مجلداتي', 'My folders')} />
-            <CardRow>{folderCards}</CardRow>
-          </View>
-        ) : null}
+        {inert(coursesSection)}
+        {inert(
+          secs.mine.total > 0 ? (
+            <View style={styles.section}>
+              <SectionTitle title={tr('مجلداتي', 'My folders')} />
+              <CardRow>{folderCards}</CardRow>
+            </View>
+          ) : null,
+        )}
         {secs.results.length > 0 ? (
           <View style={styles.section}>
             <SectionTitle title={tr('المذكرات', 'Notebooks')} subtitle={countLabel(secs.results.length, 'notebook', lang)} />
@@ -355,17 +391,17 @@ export default function LibraryScreen() {
   } else {
     body = (
       <>
-        {coursesSection}
-        {foldersSection}
+        {inert(coursesSection)}
+        {inert(foldersSection)}
         {unfiledSection}
-        {deletedRow}
+        {inert(deletedRow)}
       </>
     );
   }
 
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
-      {header}
+      {sel.selecting ? <SelectionHeader selection={sel} /> : header}
       <ScrollView
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
@@ -384,7 +420,11 @@ export default function LibraryScreen() {
         </View>
       </ScrollView>
 
-      {store.loaded && !empty ? <NewNotebookFab label={tr('مذكرة جديدة', 'New notebook')} onPress={() => setNewOpen(true)} targetRef={newRef} /> : null}
+      {sel.selecting ? (
+        <SelectionActions selection={sel} />
+      ) : store.loaded && !empty ? (
+        <NewNotebookFab label={tr('مذكرة جديدة', 'New notebook')} onPress={() => setNewOpen(true)} targetRef={newRef} />
+      ) : null}
 
       <NewNotebookModal visible={newOpen} onClose={() => setNewOpen(false)} />
       <NotebookActionsSheet target={actions} onClose={() => setActions(null)} />
@@ -400,7 +440,7 @@ export default function LibraryScreen() {
         onSubmit={createFolder}
       />
 
-      {store.loaded && !empty ? <LibraryTour enabled={!modalOpen && !searching} /> : null}
+      {store.loaded && !empty ? <LibraryTour enabled={!modalOpen && !searching && !sel.selecting} /> : null}
     </SafeAreaView>
   );
 }
@@ -421,6 +461,7 @@ const styles = StyleSheet.create({
   loading: { marginTop: 60 },
   emptyBody: { gap: 28, paddingTop: 40 },
   fabWrap: { position: 'absolute' },
+  inert: { opacity: 0.4 },
   fab: {
     alignItems: 'center',
     gap: 8,

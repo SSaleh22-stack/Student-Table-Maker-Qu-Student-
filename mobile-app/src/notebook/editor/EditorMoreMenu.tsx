@@ -62,7 +62,7 @@ export function EditorMoreMenu({ visible, anchor, onClose, onAction, readOnly }:
         {readOnly ? null : (
           <ListRow icon="plus" title={tr('إضافة صفحة', 'Add page')} chevron={false} onPress={() => pick('addPage')} />
         )}
-        <ListRow icon="sliders" title={tr('إعدادات المذكرات', 'Notebook settings')} chevron={false} onPress={() => pick('settings')} />
+        <ListRow icon="settings" title={tr('إعدادات المذكرات', 'Notebook settings')} chevron={false} onPress={() => pick('settings')} />
       </View>
     </Popover>
   );

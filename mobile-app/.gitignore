@@ -46,5 +46,5 @@ example
 credentials.json
 credentials/
 
-# Gradle output of the local pdf-render module build
-modules/pdf-render/android/build/
+# Gradle output of local module builds (pdf-render, text-share)
+modules/*/android/build/

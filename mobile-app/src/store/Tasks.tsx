@@ -40,6 +40,10 @@ interface TasksValue {
   addTask: (d: TaskDraft) => Task;
   updateTask: (id: string, d: TaskDraft) => void;
   deleteTask: (id: string) => void;
+  /** Deletes several tasks at once (the tasks list's selection). */
+  deleteTasks: (ids: readonly string[]) => void;
+  /** Puts deleted tasks back as they were (the undo after deleting). Ids already in the list are skipped. */
+  restoreTasks: (tasks: readonly Task[]) => void;
   /** Ticks a task off (or back on). A repeating task moves to its next date and stays open. */
   toggleDone: (id: string) => void;
   /** Reminds again in a few minutes (10 by default); the task itself does not change. */
@@ -190,6 +194,23 @@ export function TasksProvider({ children }: { children: ReactNode }) {
     [commit],
   );
 
+  const deleteTasks = useCallback(
+    (ids: readonly string[]) => {
+      const gone = new Set(ids);
+      commit(latest.current.filter((t) => !gone.has(t.id)));
+    },
+    [commit],
+  );
+
+  const restoreTasks = useCallback(
+    (back: readonly Task[]) => {
+      const known = new Set(latest.current.map((t) => t.id));
+      const missing = back.filter((t) => !known.has(t.id));
+      if (missing.length) commit([...latest.current, ...missing]);
+    },
+    [commit],
+  );
+
   const toggleDone = useCallback(
     (id: string) => {
       commit(
@@ -218,8 +239,8 @@ export function TasksProvider({ children }: { children: ReactNode }) {
   const getTask = useCallback((id: string) => tasks.find((t) => t.id === id), [tasks]);
 
   const value = useMemo<TasksValue>(
-    () => ({ tasks, loaded, addTask, updateTask, deleteTask, toggleDone, snooze, getTask }),
-    [tasks, loaded, addTask, updateTask, deleteTask, toggleDone, snooze, getTask],
+    () => ({ tasks, loaded, addTask, updateTask, deleteTask, deleteTasks, restoreTasks, toggleDone, snooze, getTask }),
+    [tasks, loaded, addTask, updateTask, deleteTask, deleteTasks, restoreTasks, toggleDone, snooze, getTask],
   );
 
   return <TasksContext.Provider value={value}>{children}</TasksContext.Provider>;

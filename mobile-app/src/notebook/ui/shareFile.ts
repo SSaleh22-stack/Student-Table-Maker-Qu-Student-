@@ -15,6 +15,8 @@ import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { Platform } from 'react-native';
 
+import { canShareFilesTogether, shareFilesTogether } from '../../../modules/text-share';
+
 import type { ShareFile, ShareFileOptions } from '@/notebook/contracts/export';
 
 export type { ShareFileOptions } from '@/notebook/contracts/export';
@@ -60,3 +62,29 @@ export const shareFile: ShareFile = async (uri: string, o: ShareFileOptions) => 
     cleanUp(uri);
   }
 };
+
+/**
+ * Shares several exported files, then deletes them like shareFile. They go in ONE share sheet when
+ * this build has the native multi-file share (modules/text-share); otherwise (Expo Go, an older
+ * build) one sheet opens after the other closes.
+ */
+export async function shareFiles(uris: readonly string[], o: ShareFileOptions): Promise<void> {
+  if (uris.length === 0) return;
+  if (uris.length === 1) return shareFile(uris[0], o);
+  if (canShareFilesTogether()) {
+    try {
+      await shareFilesTogether([...uris], { mimeType: o.mimeType, title: o.dialogTitle });
+    } finally {
+      for (const uri of uris) cleanUp(uri);
+    }
+    return;
+  }
+  for (let i = 0; i < uris.length; i++) {
+    try {
+      await shareFile(uris[i], o);
+    } catch (e) {
+      for (const rest of uris.slice(i + 1)) cleanUp(rest);
+      throw e;
+    }
+  }
+}
