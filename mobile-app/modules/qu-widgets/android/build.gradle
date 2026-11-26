@@ -23,6 +23,8 @@ android {
   defaultConfig {
     versionCode 1
     versionName '1.0.0'
+    // Keeps WorkManager's database (Glance runs widget sessions on WorkManager) through R8.
+    consumerProguardFiles 'consumer-rules.pro'
   }
   buildFeatures {
     compose true
@@ -32,5 +34,8 @@ android {
 dependencies {
   implementation 'com.facebook.react:react-android'
   implementation 'androidx.glance:glance-appwidget:1.1.1'
+  // Glance 1.1.1 brings WorkManager 2.7.1 (Room 2.2.5), whose database lost its constructor to R8
+  // in release builds, so the app closed on launch before its first screen (version 18).
+  implementation 'androidx.work:work-runtime-ktx:2.10.1'
   implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2'
 }
