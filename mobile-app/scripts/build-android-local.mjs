@@ -67,6 +67,12 @@ const env = {
   'ORG_GRADLE_PROJECT_android.injected.signing.store.password': ks.keystorePassword,
   'ORG_GRADLE_PROJECT_android.injected.signing.key.alias': ks.keyAlias,
   'ORG_GRADLE_PROJECT_android.injected.signing.key.password': ks.keyPassword,
+  // The same key under the names android/app/build.gradle's release signingConfig reads
+  // (project.property('QU_UPLOAD_…')); without them Gradle stops while configuring the app.
+  ORG_GRADLE_PROJECT_QU_UPLOAD_STORE_FILE: keystoreFile,
+  ORG_GRADLE_PROJECT_QU_UPLOAD_STORE_PASSWORD: ks.keystorePassword,
+  ORG_GRADLE_PROJECT_QU_UPLOAD_KEY_ALIAS: ks.keyAlias,
+  ORG_GRADLE_PROJECT_QU_UPLOAD_KEY_PASSWORD: ks.keyPassword,
 };
 
 // ".\" so it is found even when NoDefaultCurrentDirectoryInExePath is set.
