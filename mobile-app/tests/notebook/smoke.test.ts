@@ -50,7 +50,12 @@ describe('app.json', () => {
       'expo-secure-store',
       // The iOS widget extension (targets/widgets).
       '@bacons/apple-targets',
+      // Automatic crash reports (src/lib/crashReports.ts); Firebase's Apple SDK needs dynamic frameworks.
+      '@react-native-firebase/app',
+      '@react-native-firebase/crashlytics',
+      'expo-build-properties',
     ]);
+    assert.equal(pluginProps(plugins, 'expo-build-properties').ios.useFrameworks, 'dynamic');
   });
 
   test('records in the foreground only, with no background audio', () => {

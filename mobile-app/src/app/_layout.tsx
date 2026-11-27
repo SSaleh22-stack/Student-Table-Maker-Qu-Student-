@@ -19,6 +19,7 @@ import { UpdateGate } from '@/components/UpdateGate';
 import { WidgetSync } from '@/components/WidgetSync';
 import { useLang, useLanguageBoot } from '@/lib/i18n';
 import { markIntroDone } from '@/lib/appTours';
+import { setCrashReportLanguage, startCrashReports } from '@/lib/crashReports';
 import { useIsTablet } from '@/lib/layout';
 import { setupReminders } from '@/lib/reminders';
 import { reminderFireDate } from '@/lib/tasks';
@@ -27,6 +28,9 @@ import { NotebookServices } from '@/notebook/NotebookServices';
 import { NotebooksProvider } from '@/notebook/store/NotebooksProvider';
 import { AppDataProvider } from '@/store/AppData';
 import { TasksProvider, useTasks } from '@/store/Tasks';
+
+// First, so an error anywhere during startup is reported too.
+startCrashReports();
 
 SplashScreen.preventAutoHideAsync();
 
@@ -71,6 +75,7 @@ export default function RootLayout() {
   });
   const langReady = useLanguageBoot();
   const lang = useLang();
+  useEffect(() => setCrashReportLanguage(lang), [lang]);
   // On an iPad the task editor fills the screen (a page sheet there is a small card in the middle).
   const tablet = useIsTablet();
   // The opening animation plays once per app start (not when the language changes).

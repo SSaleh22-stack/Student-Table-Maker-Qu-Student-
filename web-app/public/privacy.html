@@ -111,7 +111,7 @@
         <img src="icon-192.png" alt="" />
         <div>
           <h1>سياسة الخصوصية</h1>
-          <p class="updated">QU Student · آخر تحديث: 23 نوفمبر 2026</p>
+          <p class="updated">QU Student · آخر تحديث: 27 نوفمبر 2026</p>
         </div>
         <a class="lang" href="#english" lang="en">English</a>
       </header>
@@ -121,8 +121,9 @@
         <p>
           QU Student لا يجمع أي بيانات شخصية عنك. لا توجد حسابات، ولا إعلانات، ولا أدوات تتبع أو تحليلات. جدولك ودرجاتك
           وغيابك ومذكراتك تبقى على جهازك. النسخ الاحتياطي للمذكرات اختياري ومغلق حتى تفعّله، ويذهب إلى حسابك أنت في
-          iCloud أو Google Drive، لا إلينا. الاستثناء الوحيد هو رسالة تكتبها بنفسك وترسلها لنا من نموذج المراسلة في «تواصل معنا»، وتصلنا
-          فقط عندما تضغط «إرسال».
+          iCloud أو Google Drive، لا إلينا. ما يصلنا شيئان فقط: تقرير عطل يرسله تطبيق الجوال تلقائياً إذا توقف أو حدث فيه
+          خطأ (بلا جدولك ولا درجاتك ولا أي شيء تكتبه، انظر «تقارير الأعطال»)، ورسالة تكتبها بنفسك وترسلها لنا من نموذج
+          المراسلة في «تواصل معنا»، وتصلنا فقط عندما تضغط «إرسال».
         </p>
       </section>
 
@@ -157,6 +158,7 @@
           <li>iCloud Drive (آيفون وآيباد) أو Google Drive (أندرويد)، فقط إذا فعّلت النسخ الاحتياطي للمذكرات.</li>
           <li>Google Fonts لتحميل الخط عند تصدير الجدول PDF أو طباعته.</li>
           <li>خادم الرسائل على Cloudflare، فقط عندما ترسل لنا رسالة من نموذج المراسلة.</li>
+          <li>Firebase Crashlytics من Google، لإرسال تقارير الأعطال (في تطبيق الجوال فقط).</li>
         </ul>
         <p>
           هذه المواقع تتلقى ما يتلقاه أي موقع تزوره من متصفحك (مثل عنوان IP)، ولكل منها سياسة خصوصية خاصة به. لا يرسل
@@ -180,6 +182,24 @@
           لا يُرفق معها جدولك ولا درجاتك ولا غيابك ولا أي معرّف لجهازك. تمر الرسالة عبر خادم صغير على Cloudflare يمررها
           ولا يحفظها، ثم تصلنا في محادثة خاصة على تيليجرام. نستخدمها فقط لحل المشكلة أو دراسة الاقتراح أو الرد عليك، ولا
           نشاركها مع أحد. لحذف رسالة أرسلتها، راسلنا على البريد أدناه.
+        </p>
+
+        <h3>تقارير الأعطال</h3>
+        <p>
+          إذا توقف تطبيق الجوال عن العمل أو حدث فيه خطأ غير متوقع، يرسل تلقائياً تقرير عطل عبر Firebase Crashlytics من
+          Google، حتى نعرف المشكلة ونصلحها. يحتوي التقرير على:
+        </p>
+        <ul>
+          <li>وصف الخطأ ومكانه في كود التطبيق.</li>
+          <li>
+            إصدار التطبيق، وطراز الجهاز، ونظام التشغيل وإصداره، ولغة التطبيق، وحالة الجهاز وقت العطل (مثل الذاكرة والمساحة
+            المتاحة واتجاه الشاشة).
+          </li>
+          <li>معرّف عشوائي لهذا التثبيت ينشئه Firebase، لنعرف إن تكرر العطل على الجهاز نفسه. لا يرتبط باسمك ولا بأي حساب.</li>
+        </ul>
+        <p>
+          لا يحتوي التقرير على جدولك ولا درجاتك ولا غيابك ولا مهامك ولا مذكراتك ولا أي شيء تكتبه. تحتفظ Google بالتقارير
+          90 يوماً ثم تحذفها، ونستخدمها فقط لإصلاح الأعطال. لا تُرسل تقارير أعطال من الموقع ولا من إضافة المتصفح.
         </p>
 
         <h3>المذكرات (تجريبي)</h3>
@@ -228,8 +248,8 @@
 
         <h3>الأطفال</h3>
         <p>
-          التطبيق موجّه لطلاب الجامعة، ولا يجمع بيانات من أي مستخدم، بمن فيهم الأطفال، إلا الرسائل التي يختار المستخدم
-          إرسالها لنا.
+          التطبيق موجّه لطلاب الجامعة، ولا يجمع بيانات من أي مستخدم، بمن فيهم الأطفال، إلا تقارير الأعطال الموضحة أعلاه
+          والرسائل التي يختار المستخدم إرسالها لنا.
         </p>
 
         <h3>تغييرات هذه السياسة</h3>
@@ -241,14 +261,16 @@
 
       <section class="en" id="english" lang="en">
         <h2>Privacy Policy (English)</h2>
-        <p class="updated">Last updated: November 23, 2026</p>
+        <p class="updated">Last updated: November 27, 2026</p>
 
         <h3>In short</h3>
         <p>
           QU Student does not collect any personal data. There are no accounts, no ads, and no tracking or analytics. Your
           timetable, grades, absences and notebooks stay on your device. Notebook backup is optional and off until you turn
-          it on, and it goes to your own iCloud or Google Drive account, not to us. The only exception is a message you write yourself in the
-          message form under "Contact us", which reaches us only when you tap "Send".
+          it on, and it goes to your own iCloud or Google Drive account, not to us. We receive only two things: a crash
+          report the mobile app sends automatically if it stops or hits an error (without your timetable, grades or anything
+          you write; see "Crash reports"), and a message you write yourself in the message form under "Contact us", which
+          reaches us only when you tap "Send".
         </p>
 
         <p>
@@ -283,6 +305,7 @@
           <li>iCloud Drive (iPhone and iPad) or Google Drive (Android), only if you turn on notebook backup.</li>
           <li>Google Fonts, to load the font when you export or print your timetable as a PDF.</li>
           <li>Our message relay on Cloudflare, only when you send us a message from the message form.</li>
+          <li>Google's Firebase Crashlytics, to send crash reports (mobile app only).</li>
         </ul>
         <p>
           These sites receive what any website you visit receives from your browser (such as your IP address) and have their
@@ -307,6 +330,28 @@
           relay on Cloudflare, which does not store it, and reaches us in a private Telegram chat. We use it only to fix the
           problem, consider the suggestion or reply to you, and we do not share it with anyone. To have a message you sent
           deleted, email us at the address below.
+        </p>
+
+        <h3>Crash reports</h3>
+        <p>
+          If the mobile app stops working or hits an unexpected error, it automatically sends a crash report through Google's
+          Firebase Crashlytics, so we can find and fix the problem. A report contains:
+        </p>
+        <ul>
+          <li>The error and where it happened in the app's code.</li>
+          <li>
+            The app version, device model, operating system and its version, the app language, and the device's state at the
+            time (such as free memory, free storage and screen orientation).
+          </li>
+          <li>
+            A random identifier for this installation, created by Firebase, so we can tell whether a crash repeats on the
+            same device. It is not linked to your name or any account.
+          </li>
+        </ul>
+        <p>
+          A report never contains your timetable, grades, absences, tasks, notebooks or anything you write. Google keeps
+          reports for 90 days and then deletes them, and we use them only to fix crashes. The website and the browser
+          extension send no crash reports.
         </p>
 
         <h3>Notebook (beta)</h3>
@@ -355,7 +400,7 @@
         <h3>Children</h3>
         <p>
           The app is made for university students and does not collect data from any user, including children, other than
-          messages a user chooses to send us.
+          the crash reports described above and messages a user chooses to send us.
         </p>
 
         <h3>Changes</h3>

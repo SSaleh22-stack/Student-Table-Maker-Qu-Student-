@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "302455680992",
+    "project_id": "qu-student",
+    "storage_bucket": "qu-student.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:302455680992:android:3143c259cc3b10943b4585",
+        "android_client_info": {
+          "package_name": "net.qustudent.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCkS5pBqHrxkBY4SYyVHWDYIcuex5ERkDs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:302455680992:android:7b8e721042a5d7153b4585",
+        "android_client_info": {
+          "package_name": "net.qustudent.app.test"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCkS5pBqHrxkBY4SYyVHWDYIcuex5ERkDs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

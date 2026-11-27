@@ -10,6 +10,7 @@
     "backgroundColor": "#EEF3F8",
     "ios": {
       "bundleIdentifier": "net.qustudent.app",
+      "googleServicesFile": "./GoogleService-Info.plist",
       "appleTeamId": "4264PT4468",
       "supportsTablet": true,
       "infoPlist": {
@@ -79,6 +80,7 @@
     },
     "android": {
       "package": "net.qustudent.app",
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#0E7490",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -220,7 +222,17 @@
       ],
       "./plugins/withNotebookNative",
       "expo-secure-store",
-      "@bacons/apple-targets"
+      "@bacons/apple-targets",
+      "@react-native-firebase/app",
+      "@react-native-firebase/crashlytics",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "useFrameworks": "dynamic"
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

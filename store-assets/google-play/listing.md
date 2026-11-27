@@ -136,7 +136,15 @@ Suggestions and feedback: qu4611@gmail.com
 
 ## Before you submit
 
-- **Data safety form:** "Does your app collect or share any of the required user data types?" → **No**.
-  Data is stored on the device only and never sent off it.
+- **Data safety form:** "Does your app collect or share any of the required user data types?" → **Yes**, only for
+  automatic crash reports (Firebase Crashlytics, src/lib/crashReports.ts). The timetable, grades, absences, tasks
+  and notebooks stay on the device and are never sent.
+  - **Encrypted in transit:** Yes (HTTPS). **Users can request deletion:** Yes (email qu4611@gmail.com).
+  - **App info and performance → Crash logs:** Collected, not shared. Required (always on). Purpose: Analytics.
+  - **App info and performance → Diagnostics:** Collected, not shared. Required. Purpose: Analytics. (Device model,
+    OS version, free memory and storage at the time of the crash.)
+  - **Device or other IDs:** Collected, not shared. Required. Purpose: Analytics. (The random Crashlytics and
+    Firebase installation IDs, used to count how many installs a crash affects.)
+  - Firebase's own list of what Crashlytics collects: https://firebase.google.com/docs/android/play-data-disclosure
 - **Ads:** No ads.
 - **Target audience:** 18 and over.
