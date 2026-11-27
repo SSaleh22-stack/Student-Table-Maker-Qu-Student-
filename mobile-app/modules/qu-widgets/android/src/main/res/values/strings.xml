@@ -3,7 +3,7 @@
   <string name="qw_timetable_label">Timetable</string>
   <string name="qw_timetable_desc">Today\'s lectures, with the next one highlighted</string>
   <string name="qw_tasks_label">My tasks</string>
-  <string name="qw_tasks_desc">Today\'s tasks. Tap a circle to tick one off</string>
+  <string name="qw_tasks_desc">All your tasks, overdue and today\'s first. Tap a circle to tick one off</string>
   <string name="qw_countdown_label">Next lecture</string>
   <string name="qw_countdown_desc">Minutes until your next lecture, and its room</string>
 </resources>

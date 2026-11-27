@@ -84,9 +84,15 @@ function confirmDelete(run: () => void) {
 }
 
 export default function TaskScreen() {
-  const tablet = useIsTablet();
   // `course`: a new task for that course (the after-lecture notification opens the editor this way).
   const { id, course } = useLocalSearchParams<{ id?: string; course?: string }>();
+  // A link that arrives while the editor is open (the widget's +) reuses this screen with new
+  // params: the key starts a fresh editor, so one task's fields never carry over into another.
+  return <TaskEditor key={id ? `edit:${id}` : `new:${course ?? ''}`} id={id} course={course} />;
+}
+
+function TaskEditor({ id, course }: { id?: string; course?: string }) {
+  const tablet = useIsTablet();
   const { loaded, getTask, addTask, updateTask, deleteTask } = useTasks();
   const { chosen } = useAppData();
   const task = id ? getTask(id) : undefined;

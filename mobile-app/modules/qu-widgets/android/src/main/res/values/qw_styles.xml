@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <!--
+    Glance draws every widget list (the مهامي list scrolls) with this style; it is empty in Glance so
+    apps can restyle it. The scrollbar goes on the left, the side Arabic reading ends on (the phone's
+    own direction would put it on the right of a phone set to English).
+  -->
+  <style name="Glance.AppWidget.List" parent="">
+    <item name="android:verticalScrollbarPosition">left</item>
+  </style>
+</resources>

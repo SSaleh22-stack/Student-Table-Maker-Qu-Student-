@@ -37,7 +37,7 @@ struct STask: Codable {
   var done: Bool
   var completedAt: String?
   var repeatRule: String?
-  /// A repeating task ticked on the widget: the app will move it to its next date.
+  /// No longer set (a repeating task ticked on the widget moves to its next date); still decoded.
   var movedOn: Bool?
 
   enum CodingKeys: String, CodingKey {
@@ -152,7 +152,9 @@ enum Store {
     }
   }
 
-  /// The app's snapshot with the widget ticks the app has not picked up yet laid over it.
+  /// The app's snapshot with the widget ticks the app has not picked up yet laid over it, in the
+  /// order they were made. A ticked repeating task moves to its next date and stays open, like in
+  /// the app (lib/tasks.ts nextOccurrence, at the time of the tick).
   static func load() -> Snapshot? {
     guard let json = defaults?.string(forKey: snapshotKey), let data = json.data(using: .utf8),
           var snap = try? JSONDecoder().decode(Snapshot.self, from: data) else { return nil }
@@ -160,9 +162,10 @@ enum Store {
     if ticks.isEmpty { return snap }
     var tasks = snap.tasks ?? []
     for t in ticks {
-      guard let i = tasks.firstIndex(where: { $0.id == t.id }) else { continue }
-      if t.done && tasks[i].repeats && tasks[i].date != nil {
-        tasks[i].movedOn = true
+      // A second tap before the widget redrew carries the old state: skip it, as the app does.
+      guard let i = tasks.firstIndex(where: { $0.id == t.id }), tasks[i].done != t.done, tasks[i].date == t.date else { continue }
+      if t.done, let next = tasks[i].nextDate(tickedAt: parseISO(t.at) ?? Date()) {
+        tasks[i].date = next
         tasks[i].completedAt = t.at
       } else if t.done {
         tasks[i].done = true
@@ -170,7 +173,6 @@ enum Store {
       } else {
         tasks[i].done = false
         tasks[i].completedAt = nil
-        tasks[i].movedOn = false
       }
     }
     snap.tasks = tasks
@@ -256,27 +258,53 @@ extension Snapshot {
 
 // MARK: - Tasks
 
-struct TaskDay {
-  /// Overdue, then today's, then those without a date, then those finished today (struck through).
-  let today: [STask]
-  let upcoming: [STask]
-  let doneCount: Int
-  let total: Int
-  var open: [STask] { today.filter { !$0.done } }
+/// The groups of the مهامي widget, in the order it lists them.
+enum TaskGroup: Hashable { case overdue, today, noDate, upcoming }
+
+struct TaskSection: Identifiable {
+  let group: TaskGroup
+  let tasks: [STask]
+  var id: TaskGroup { group }
+}
+
+/// Every open task: overdue first, then today's, then those without a date, then the nearest dates.
+struct TaskList {
+  let sections: [TaskSection]
+  var all: [STask] { sections.flatMap { $0.tasks } }
 }
 
 extension STask {
-  var dueAt: Date? {
+  /// The start (local midnight) of the task's day.
+  var dayStart: Date? {
     guard let date = date else { return nil }
     let p = date.split(separator: "-").compactMap { Int($0) }
-    guard p.count == 3, let day = gregorian.date(from: DateComponents(year: p[0], month: p[1], day: p[2])) else { return nil }
+    guard p.count == 3 else { return nil }
+    return gregorian.date(from: DateComponents(year: p[0], month: p[1], day: p[2]))
+  }
+
+  var dueAt: Date? {
+    guard let day = dayStart else { return nil }
     if let t = time { return day.addingTimeInterval(TimeInterval(minutesOf(t) * 60)) }
     return addDays(day, 1)
   }
 
+  /// Late from its due moment on, so the timeline entry at that moment (Ui.swift; midnight for a
+  /// task without a time) already shows it late.
   func isOverdue(_ now: Date) -> Bool {
     guard !done, !isMovedOn, let due = dueAt else { return false }
-    return due < now
+    return due <= now
+  }
+
+  /// The date a repeating task moves on to when ticked off at `tickedAt` (lib/tasks.ts
+  /// nextOccurrence): a day or a week on, past the day of the tick. Nil if it does not repeat.
+  func nextDate(tickedAt: Date) -> String? {
+    guard repeats, let day = dayStart else { return nil }
+    let step = repeatRule == "daily" ? 1 : 7
+    let tickDay = dateKey(tickedAt)
+    var next = addDays(day, step)
+    // Keys compare correctly as strings ('YYYY-MM-DD').
+    while dateKey(next) <= tickDay { next = addDays(next, step) }
+    return dateKey(next)
   }
 }
 
@@ -287,29 +315,20 @@ private func soonest(_ a: STask, _ b: STask) -> Bool {
 }
 
 extension Snapshot {
-  func taskDay(_ now: Date) -> TaskDay {
+  /// Ticked tasks leave the list at once (a repeating one moves to its next date, see Store.load).
+  func taskList(_ now: Date) -> TaskList {
     let today = dateKey(now)
-    let all = tasks ?? []
-    let completedToday: (STask) -> Bool = { t in
-      guard let d = parseISO(t.completedAt) else { return false }
-      return dateKey(d) == today
-    }
-    let open = all.filter { !$0.done && !$0.isMovedOn }
+    let open = (tasks ?? []).filter { !$0.done && !$0.isMovedOn }
     let overdue = open.filter { $0.isOverdue(now) }.sorted(by: soonest)
     let onTime = open.filter { !$0.isOverdue(now) }
     let dueToday = onTime.filter { $0.date == today }.sorted(by: soonest)
     let noDate = onTime.filter { $0.date == nil }
-    let doneToday = all.filter { t in
-      t.done && (t.date == today || (completedToday(t) && (t.date == nil || t.date! < today)))
-    }
-    let repeatDone = all.filter { t in !t.done && t.repeats && (t.isMovedOn || completedToday(t)) }.count
-    let upcoming = onTime.filter { $0.date != nil && $0.date! > today }.sorted(by: soonest)
-    let doneCount = doneToday.count + repeatDone
-    return TaskDay(
-      today: overdue + dueToday + noDate + doneToday,
-      upcoming: upcoming,
-      doneCount: doneCount,
-      total: overdue.count + dueToday.count + noDate.count + doneCount
-    )
+    let upcoming = onTime.filter { ($0.date ?? "") > today }.sorted(by: soonest)
+    return TaskList(sections: [
+      TaskSection(group: .overdue, tasks: overdue),
+      TaskSection(group: .today, tasks: dueToday),
+      TaskSection(group: .noDate, tasks: noDate),
+      TaskSection(group: .upcoming, tasks: upcoming),
+    ].filter { !$0.tasks.isEmpty })
   }
 }

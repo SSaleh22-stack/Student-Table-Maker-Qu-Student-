@@ -38,6 +38,8 @@ interface Persisted {
 interface TasksValue {
   tasks: Task[];
   loaded: boolean;
+  /** The saved list was really read (false while a failed read is retried, or if it never works). */
+  saved: boolean;
   addTask: (d: TaskDraft) => Task;
   updateTask: (id: string, d: TaskDraft) => void;
   deleteTask: (id: string) => void;
@@ -60,14 +62,17 @@ interface TasksValue {
 const REMINDERS: readonly ReminderOffset[] = ['atTime', '10m', '1h', '1d', 'morning', 'custom'];
 const REPEATS: readonly Repeat[] = ['none', 'daily', 'weekly'];
 
-/** The task ticked off (or back on). A repeating task moves to its next date and stays open. */
-const flipped = (t: Task): Task => {
+/**
+ * The task ticked off (or back on) at `when` (now, or when it was ticked on a widget). A repeating
+ * task moves to its next date after that day and stays open.
+ */
+const flipped = (t: Task, when: Date = new Date()): Task => {
   if (!t.done) {
     // Like phone reminder apps: finishing one occurrence moves the task to the next one.
-    const next = nextOccurrence(t);
-    // completedAt records that today's occurrence was finished (for the summary card).
-    if (next) return { ...t, date: next, completedAt: new Date().toISOString() };
-    return { ...t, done: true, completedAt: new Date().toISOString() };
+    const next = nextOccurrence(t, when);
+    // completedAt records which day's occurrence was finished (for the summary card).
+    if (next) return { ...t, date: next, completedAt: when.toISOString() };
+    return { ...t, done: true, completedAt: when.toISOString() };
   }
   return { ...t, done: false, completedAt: undefined };
 };
@@ -110,6 +115,7 @@ const TasksContext = createContext<TasksValue | null>(null);
 export function TasksProvider({ children }: { children: ReactNode }) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [saved, setSaved] = useState(false);
   // The latest list, so actions called one after another (or from a notification) see each other's changes.
   const latest = useRef<Task[]>([]);
   // What the reminders were last synced against, to reschedule only the tasks that changed.
@@ -153,6 +159,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
       }
       if (!alive) return;
       readOk.current = true;
+      setSaved(true);
       // Keep anything added while the save was still loading. Always a new list, so the save and
       // the reminder effects run now that writing is allowed.
       const known = new Set(list.map((t) => t.id));
@@ -244,7 +251,8 @@ export function TasksProvider({ children }: { children: ReactNode }) {
         list = list.map((t) => {
           if (t.id !== w.id || t.done === w.done || (t.date ?? null) !== w.date) return t;
           changed = true;
-          return flipped(t);
+          // At the tick's own time: a daily task ticked Monday and applied Wednesday moves to Tuesday.
+          return flipped(t, w.at ? new Date(w.at) : new Date());
         });
       }
       if (changed) commit(list);
@@ -264,6 +272,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
     () => ({
       tasks,
       loaded,
+      saved,
       addTask,
       updateTask,
       deleteTask,
@@ -274,7 +283,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
       applyWidgetToggles,
       getTask,
     }),
-    [tasks, loaded, addTask, updateTask, deleteTask, deleteTasks, restoreTasks, toggleDone, snooze, applyWidgetToggles, getTask],
+    [tasks, loaded, saved, addTask, updateTask, deleteTask, deleteTasks, restoreTasks, toggleDone, snooze, applyWidgetToggles, getTask],
   );
 
   return <TasksContext.Provider value={value}>{children}</TasksContext.Provider>;

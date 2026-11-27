@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The المحاضرة القادمة widget (2×1) in the widget picker: a made-up example. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent"
+  android:background="@drawable/qw_preview_card"
+  android:gravity="center_vertical"
+  android:orientation="horizontal"
+  android:padding="12dp">
+
+  <LinearLayout
+    android:layout_width="44dp"
+    android:layout_height="wrap_content"
+    android:gravity="center_horizontal"
+    android:orientation="vertical">
+    <TextView
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:text="25"
+      android:textColor="@color/qw_accent"
+      android:textSize="22sp"
+      android:textStyle="bold"
+      android:maxLines="1"
+      android:ellipsize="end" />
+    <TextView
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:text="@string/qw_ex_minutes"
+      android:textColor="@color/qw_muted"
+      android:textSize="10sp"
+      android:maxLines="1"
+      android:ellipsize="end" />
+  </LinearLayout>
+
+  <FrameLayout
+    android:layout_width="1dp"
+    android:layout_height="match_parent"
+    android:layout_marginHorizontal="8dp"
+    android:background="@drawable/qw_preview_divider" />
+
+  <LinearLayout
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    android:layout_weight="1"
+    android:orientation="vertical">
+    <TextView
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:text="@string/qw_ex_calc"
+      android:textAlignment="viewStart"
+      android:textColor="@color/qw_text"
+      android:textSize="13sp"
+      android:textStyle="bold"
+      android:maxLines="2" />
+    <TextView
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:text="@string/qw_ex_calc_where"
+      android:textAlignment="viewStart"
+      android:textColor="@color/qw_muted"
+      android:textSize="10sp"
+      android:maxLines="1"
+      android:ellipsize="end" />
+  </LinearLayout>
+</LinearLayout>

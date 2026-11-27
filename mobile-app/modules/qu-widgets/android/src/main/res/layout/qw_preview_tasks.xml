@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The مهامي widget in the widget picker: a made-up example (values*/qw_preview_strings.xml). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent"
+  android:background="@drawable/qw_preview_card"
+  android:orientation="vertical"
+  android:padding="14dp">
+
+  <LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="8dp"
+    android:gravity="center_vertical"
+    android:orientation="horizontal">
+    <FrameLayout
+      android:layout_width="20dp"
+      android:layout_height="20dp"
+      android:background="@drawable/qw_preview_mark">
+      <ImageView
+        android:layout_width="12dp"
+        android:layout_height="12dp"
+        android:layout_gravity="center"
+        android:src="@drawable/qw_calendar"
+        android:tint="@color/qw_on_accent" />
+    </FrameLayout>
+    <TextView
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      android:layout_marginStart="6dp"
+      android:layout_weight="1"
+      android:text="@string/qw_tasks_label"
+      android:textAlignment="viewStart"
+      android:textColor="@color/qw_accent"
+      android:textSize="14sp"
+      android:textStyle="bold"
+      android:maxLines="1"
+      android:ellipsize="end" />
+    <FrameLayout
+      android:layout_width="26dp"
+      android:layout_height="26dp"
+      android:background="@drawable/qw_preview_add">
+      <ImageView
+        android:layout_width="16dp"
+        android:layout_height="16dp"
+        android:layout_gravity="center"
+        android:src="@drawable/qw_plus"
+        android:tint="@color/qw_on_accent" />
+    </FrameLayout>
+  </LinearLayout>
+
+  <LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:orientation="horizontal">
+    <FrameLayout
+      android:layout_width="20dp"
+      android:layout_height="20dp"
+      android:background="@drawable/qw_preview_ring" />
+    <LinearLayout
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      android:layout_marginStart="8dp"
+      android:layout_weight="1"
+      android:orientation="vertical">
+      <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/qw_ex_task1"
+        android:textColor="@color/qw_text"
+        android:textSize="12sp"
+        android:fontFamily="sans-serif-medium"
+        android:textAlignment="viewStart"
+        android:maxLines="1"
+        android:ellipsize="end" />
+      <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+        <FrameLayout
+          android:layout_width="6dp"
+          android:layout_height="6dp"
+          android:background="@drawable/qw_preview_dot_blue" />
+        <TextView
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_marginStart="4dp"
+          android:text="CS 214"
+          android:textColor="@color/qw_muted"
+          android:textSize="10sp"
+          android:textStyle="bold"
+      android:maxLines="1"
+      android:ellipsize="end" />
+        <TextView
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:text=" · "
+          android:textColor="@color/qw_faint"
+          android:textSize="10sp"
+      android:maxLines="1"
+      android:ellipsize="end" />
+        <TextView
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:text="@string/qw_ex_task1_when"
+          android:textColor="@color/qw_now"
+          android:textSize="10sp"
+      android:maxLines="1"
+      android:ellipsize="end" />
+      </LinearLayout>
+    </LinearLayout>
+  </LinearLayout>
+
+  <LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="8dp"
+    android:gravity="center_vertical"
+    android:orientation="horizontal">
+    <FrameLayout
+      android:layout_width="20dp"
+      android:layout_height="20dp"
+      android:background="@drawable/qw_preview_ring" />
+    <LinearLayout
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      android:layout_marginStart="8dp"
+      android:layout_weight="1"
+      android:orientation="vertical">
+      <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/qw_ex_task2"
+        android:textColor="@color/qw_text"
+        android:textSize="12sp"
+        android:fontFamily="sans-serif-medium"
+        android:textAlignment="viewStart"
+        android:maxLines="1"
+        android:ellipsize="end" />
+      <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+        <TextView
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:text="@string/qw_ex_task2_when"
+          android:textColor="@color/qw_faint"
+          android:textSize="10sp"
+      android:maxLines="1"
+      android:ellipsize="end" />
+      </LinearLayout>
+    </LinearLayout>
+  </LinearLayout>
+
+  <LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="8dp"
+    android:gravity="center_vertical"
+    android:orientation="horizontal">
+    <FrameLayout
+      android:layout_width="20dp"
+      android:layout_height="20dp"
+      android:background="@drawable/qw_preview_ring" />
+    <LinearLayout
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      android:layout_marginStart="8dp"
+      android:layout_weight="1"
+      android:orientation="vertical">
+      <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/qw_ex_task3"
+        android:textColor="@color/qw_text"
+        android:textSize="12sp"
+        android:fontFamily="sans-serif-medium"
+        android:textAlignment="viewStart"
+        android:maxLines="1"
+        android:ellipsize="end" />
+      <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+        <TextView
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:text="@string/qw_ex_task3_when"
+          android:textColor="@color/qw_faint"
+          android:textSize="10sp"
+      android:maxLines="1"
+      android:ellipsize="end" />
+      </LinearLayout>
+    </LinearLayout>
+  </LinearLayout>
+</LinearLayout>

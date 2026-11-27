@@ -268,7 +268,11 @@ const handled = new Set<string>();
  * taps: a button calls the handler, a tap on the notification opens the tasks tab. Call once the
  * tasks are loaded, so a button pressed before the app started finds its task. Returns cleanup.
  */
-export function setupReminders(handlers: { onDone(id: string): void; onSnooze(id: string): void }): () => void {
+export function setupReminders(handlers: {
+  /** `deliveredMs`: when the reminder rang (ms), to tell which occurrence it was for. */
+  onDone(id: string, deliveredMs?: number): void;
+  onSnooze(id: string): void;
+}): () => void {
   if (!enabled) return () => {};
   let active = true;
 
@@ -322,7 +326,11 @@ export function setupReminders(handlers: { onDone(id: string): void; onSnooze(id
     const taskId = (data as { taskId?: unknown } | undefined)?.taskId;
     if (typeof taskId !== 'string') return;
     try {
-      if (actionIdentifier === ACTION_DONE) handlers.onDone(taskId);
+      if (actionIdentifier === ACTION_DONE) {
+        // Seconds on some platforms, milliseconds on others.
+        const delivered = typeof notification.date === 'number' && notification.date > 0 ? notification.date : undefined;
+        handlers.onDone(taskId, delivered === undefined ? undefined : delivered < 1e11 ? delivered * 1000 : delivered);
+      }
       else if (actionIdentifier === ACTION_SNOOZE) handlers.onSnooze(taskId);
       else if (actionIdentifier === Notifications.DEFAULT_ACTION_IDENTIFIER) {
         // Wait a tick so the navigator is mounted when the app was opened by this tap.

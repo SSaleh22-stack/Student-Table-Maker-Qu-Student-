@@ -28,7 +28,9 @@ export function WidgetSync() {
 
 function Sync() {
   const { ready, chosen } = useAppData();
-  const { loaded, tasks, applyWidgetToggles } = useTasks();
+  // `saved`, not `loaded`: while the saved tasks could not be read, the widget ticks stay queued and
+  // no empty list is written over the widgets.
+  const { saved, tasks, applyWidgetToggles } = useTasks();
   const lang = useLang();
   const [wake, setWake] = useState(0);
   const apply = useRef(applyWidgetToggles);
@@ -45,13 +47,13 @@ function Sync() {
 
   // Widget ticks first, so the snapshot written next already has them.
   useEffect(() => {
-    if (!loaded) return;
+    if (!saved) return;
     const toggles = takeWidgetToggles();
     if (toggles.length) apply.current(toggles);
-  }, [loaded, wake]);
+  }, [saved, wake]);
 
   useEffect(() => {
-    if (!ready || !loaded) return;
+    if (!ready || !saved) return;
     let cancelled = false;
     const timer = setTimeout(async () => {
       const calendar = await readSavedCalendarSections();
@@ -62,7 +64,7 @@ function Sync() {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [ready, loaded, chosen, tasks, lang, wake]);
+  }, [ready, saved, chosen, tasks, lang, wake]);
 
   return null;
 }

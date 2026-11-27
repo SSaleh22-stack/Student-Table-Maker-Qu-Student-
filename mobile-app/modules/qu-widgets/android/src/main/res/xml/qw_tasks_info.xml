@@ -2,6 +2,7 @@
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
   android:description="@string/qw_tasks_desc"
   android:initialLayout="@layout/glance_default_loading_layout"
+  android:previewLayout="@layout/qw_preview_tasks"
   android:minWidth="110dp"
   android:minHeight="110dp"
   android:targetCellWidth="2"

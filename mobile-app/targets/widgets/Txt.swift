@@ -15,11 +15,12 @@ struct Txt {
   var noLectures: String { t("لا محاضرات متبقية اليوم", "No more lectures today") }
   var addTimetable: String { t("أضف جدولك من التطبيق", "Add your timetable in the app") }
   var tomorrow: String { t("غدًا", "Tomorrow") }
+  var yesterday: String { t("أمس", "Yesterday") }
   var myTasks: String { t("مهامي", "My tasks") }
   var today: String { t("اليوم", "Today") }
   var upcoming: String { t("القادمة", "Upcoming") }
-  var allDone: String { t("أنجزت كل مهام اليوم", "All done for today") }
-  var nothingToday: String { t("لا مهام لليوم", "Nothing due today") }
+  var noDate: String { t("بدون تاريخ", "No date") }
+  var noTasks: String { t("لا مهام متبقية", "No tasks left") }
   var newTask: String { t("مهمة جديدة", "New task") }
   var overdue: String { t("متأخرة", "Overdue") }
   var section: String { t("شعبة", "Section") }
@@ -60,7 +61,6 @@ struct Txt {
   }
 
   func left(_ n: Int, _ total: Int) -> String { t("\(n) من \(total) متبقية", "\(n) of \(total) left") }
-  func doneOf(_ done: Int, _ total: Int) -> String { t("\(done) من \(total) منجزة", "\(done) of \(total) done") }
   func more(_ n: Int) -> String { t("+\(n) أخرى", "+\(n) more") }
   func remainingTasks(_ n: Int) -> String {
     if !ar { return "\(n) left" }
@@ -70,12 +70,13 @@ struct Txt {
     return "\(n) مهمة متبقية"
   }
 
-  func upcomingCount(_ n: Int) -> String {
-    if !ar { return "\(n) upcoming" }
-    if n == 1 { return "مهمة قادمة" }
-    if n == 2 { return "مهمتان قادمتان" }
-    if (3...10).contains(n) { return "\(n) مهام قادمة" }
-    return "\(n) مهمة قادمة"
+  func group(_ g: TaskGroup) -> String {
+    switch g {
+    case .overdue: return overdue
+    case .today: return today
+    case .noDate: return noDate
+    case .upcoming: return upcoming
+    }
   }
 
   /// "19 د", "1 س 20 د" / "19 min", "1 h 20 min"
@@ -113,20 +114,23 @@ struct Txt {
     return m < 12 * 60 ? t("\(base) ص", "\(base) AM") : t("\(base) م", "\(base) PM")
   }
 
-  /// The short "when" under a task: overdue, its time today, or its day.
-  func taskWhen(_ task: STask, _ now: Date) -> String {
+  /// The short "when" under a task: overdue, its time today, or its day (the weekday within the
+  /// coming week, else the date; like Txt.kt).
+  /// Without `labelOverdue` (rows under the متأخرة title) a late task shows when it was due instead.
+  func taskWhen(_ task: STask, _ now: Date, labelOverdue: Bool = true) -> String {
     guard let date = task.date else { return "" }
-    if task.isOverdue(now) { return overdue }
+    if labelOverdue && task.isOverdue(now) { return overdue }
     let todayKey = dateKey(now)
     var day = ""
     if date == todayKey {
       day = task.time == nil ? today : ""
     } else if date == dateKey(addDays(now, 1)) {
       day = tomorrow
-    } else if let due = task.dueAt, due < addDays(startOfDay(now), 8) {
-      day = dayName(dayKey(due.addingTimeInterval(-1)))
-    } else if let due = task.dueAt {
-      day = self.date(due.addingTimeInterval(-1))
+    } else if date == dateKey(addDays(now, -1)) {
+      day = yesterday
+    } else if let d = task.dayStart {
+      let near = d < addDays(startOfDay(now), 7) && d > addDays(startOfDay(now), -7)
+      day = near ? dayName(dayKey(d)) : self.date(d)
     }
     let time = task.time.map { taskTime($0) } ?? ""
     return [day, time].filter { !$0.isEmpty }.joined(separator: " ")

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Widget-picker previews (layout/qw_preview_*.xml): the colors of Pal in Ui.kt. -->
+<resources>
+  <color name="qw_bg">#FF18222D</color>
+  <color name="qw_text">#FFEEF3F8</color>
+  <color name="qw_muted">#FFAAB6C4</color>
+  <color name="qw_faint">#FF8794A3</color>
+  <color name="qw_accent">#FF7FD3E3</color>
+  <color name="qw_on_accent">#FF0B1A22</color>
+  <color name="qw_divider">#FF2A3644</color>
+  <color name="qw_now">#FFFF7A7A</color>
+  <color name="qw_ex_blue_bg">#383B82F6</color>
+  <color name="qw_ex_blue_text">#FFEEF3F8</color>
+  <color name="qw_ex_blue_bar">#FF3B82F6</color>
+  <color name="qw_ex_green_bg">#3810B981</color>
+  <color name="qw_ex_green_text">#FFEEF3F8</color>
+  <color name="qw_ex_green_bar">#FF10B981</color>
+  <color name="qw_ex_orange_bar">#FFF59E0B</color>
+</resources>

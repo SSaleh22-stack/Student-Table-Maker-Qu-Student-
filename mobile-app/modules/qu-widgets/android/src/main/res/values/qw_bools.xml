@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The widgets use java.time (Android 8+): on Android 7 they are not offered at all. -->
+<resources>
+  <bool name="qw_widgets_enabled">false</bool>
+</resources>

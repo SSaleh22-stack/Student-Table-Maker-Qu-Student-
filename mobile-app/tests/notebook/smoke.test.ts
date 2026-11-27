@@ -48,6 +48,8 @@ describe('app.json', () => {
       './plugins/withNotebookNative',
       // OneDrive backup: the refresh token in the keychain / keystore.
       'expo-secure-store',
+      // The iOS widget extension (targets/widgets).
+      '@bacons/apple-targets',
     ]);
   });
 

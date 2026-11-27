@@ -41,6 +41,9 @@ import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import androidx.glance.color.ColorProvider as DayNight
 
+/** Every widget text is drawn this much bigger than the sizes written in the layouts. */
+const val TEXT_SCALE = 1.2f
+
 /** Colors from mobile-app/src/lib/theme.ts (light) and the dark designs in Figma. */
 object Pal {
   val bg = DayNight(day = Color(0xFFFFFFFF), night = Color(0xFF18222D))
@@ -98,12 +101,14 @@ fun T(
   modifier: GlanceModifier = GlanceModifier,
 ) {
   Text(
-    text = text,
+    // Glance's text views take their direction from the phone's language: an isolate in the app's
+    // direction keeps Arabic in the right order on an English phone (and the other way round).
+    text = if (d.rtl) "\u2067$text\u2069" else "\u2066$text\u2069",
     modifier = modifier,
     maxLines = lines,
     style = TextStyle(
       color = color,
-      fontSize = size,
+      fontSize = (size.value * TEXT_SCALE).sp,
       fontWeight = if (bold) FontWeight.Bold else if (medium) FontWeight.Medium else FontWeight.Normal,
       textAlign = if (center) TextAlign.Center else d.align,
       textDecoration = if (strike) TextDecoration.LineThrough else TextDecoration.None,

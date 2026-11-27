@@ -14,11 +14,12 @@ class Txt(val ar: Boolean) {
   val noLectures get() = t("لا محاضرات متبقية اليوم", "No more lectures today")
   val addTimetable get() = t("أضف جدولك من التطبيق", "Add your timetable in the app")
   val tomorrow get() = t("غدًا", "Tomorrow")
+  val yesterday get() = t("أمس", "Yesterday")
   val myTasks get() = t("مهامي", "My tasks")
   val today get() = t("اليوم", "Today")
   val upcoming get() = t("القادمة", "Upcoming")
-  val allDone get() = t("أنجزت كل مهام اليوم", "All done for today")
-  val nothingToday get() = t("لا مهام لليوم", "Nothing due today")
+  val noDate get() = t("بدون تاريخ", "No date")
+  val noTasks get() = t("لا مهام متبقية", "No tasks left")
   val newTask get() = t("مهمة جديدة", "New task")
   val overdue get() = t("متأخرة", "Overdue")
   val section get() = t("شعبة", "Section")
@@ -51,14 +52,13 @@ class Txt(val ar: Boolean) {
   }
 
   fun left(n: Int, total: Int) = t("$n من $total متبقية", "$n of $total left")
-  fun doneOf(done: Int, total: Int) = t("$done من $total منجزة", "$done of $total done")
   fun more(n: Int) = t("+$n أخرى", "+$n more")
 
-  fun upcomingCount(n: Int): String = if (!ar) "$n upcoming" else when {
-    n == 1 -> "مهمة قادمة"
-    n == 2 -> "مهمتان قادمتان"
-    n in 3..10 -> "$n مهام قادمة"
-    else -> "$n مهمة قادمة"
+  fun group(g: TaskGroup) = when (g) {
+    TaskGroup.OVERDUE -> overdue
+    TaskGroup.TODAY -> today
+    TaskGroup.NO_DATE -> noDate
+    TaskGroup.UPCOMING -> upcoming
   }
 
   /** "19 د", "1 س 20 د" / "19 min", "1 h 20 min" */
@@ -95,10 +95,13 @@ class Txt(val ar: Boolean) {
     return if (h < 12) t("$base ص", "$base AM") else t("$base م", "$base PM")
   }
 
-  /** The short "when" under a task: overdue, its time today, or its day. */
-  fun taskWhen(task: WTask, now: LocalDateTime): String {
+  /**
+   * The short "when" under a task: overdue, its time today, or its day. Without `labelOverdue`
+   * (rows under the متأخرة title) a late task shows when it was due instead.
+   */
+  fun taskWhen(task: WTask, now: LocalDateTime, labelOverdue: Boolean = true): String {
     val date = task.date ?: return ""
-    if (task.isOverdue(now)) return overdue
+    if (labelOverdue && task.isOverdue(now)) return overdue
     val d = try {
       LocalDate.parse(date)
     } catch (_: Exception) {
@@ -108,7 +111,8 @@ class Txt(val ar: Boolean) {
     val day = when {
       d == today -> if (task.time != null) "" else this.today
       d == today.plusDays(1) -> tomorrow
-      d.isBefore(today.plusDays(7)) -> dayName(dayKey(d))
+      d == today.minusDays(1) -> yesterday
+      d.isBefore(today.plusDays(7)) && d.isAfter(today.minusDays(7)) -> dayName(dayKey(d))
       else -> date(d)
     }
     val time = task.time?.let { taskTime(it) } ?: ""

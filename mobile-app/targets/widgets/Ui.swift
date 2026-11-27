@@ -10,14 +10,21 @@ struct QEntry: TimelineEntry {
 
 /// One timeline for every widget. Countdown widgets get an entry every minute for the next three
 /// hours (entries cost nothing; only reloads are limited), the others one at each lecture start and
-/// end. The app reloads every widget whenever its data changes.
+/// end and when each open task falls due. The app reloads every widget whenever its data changes.
 struct QProvider: TimelineProvider {
   let perMinute: Bool
 
-  func placeholder(in context: Context) -> QEntry { QEntry(date: Date(), snap: nil) }
+  /// Shown redacted while a widget loads: the example day (Sample.swift) gives it its shape.
+  func placeholder(in context: Context) -> QEntry { Sample.entry() }
 
+  /// The widget gallery shows the example day, so every widget looks the way it will with a
+  /// timetable and tasks, whatever the student has added yet.
   func getSnapshot(in context: Context, completion: @escaping (QEntry) -> Void) {
-    completion(QEntry(date: Date(), snap: Store.load()))
+    if context.isPreview {
+      completion(Sample.entry())
+    } else {
+      completion(QEntry(date: Date(), snap: Store.load()))
+    }
   }
 
   func getTimeline(in context: Context, completion: @escaping (Timeline<QEntry>) -> Void) {
@@ -31,10 +38,16 @@ struct QProvider: TimelineProvider {
           dates.append(at(now, minute: m))
         }
       }
+      // A task turns late at its due time.
+      for t in s.tasks ?? [] where !t.done {
+        if let due = t.dueAt, due > now, due <= midnight { dates.append(due) }
+      }
     }
     var until = midnight
     if perMinute {
-      let firstMinute = gregorian.date(bySetting: .second, value: 0, of: now.addingTimeInterval(60)) ?? now.addingTimeInterval(60)
+      // The start of the next minute.
+      let firstMinute = gregorian.dateInterval(of: .minute, for: now)?.end
+        ?? Date(timeIntervalSince1970: (floor(now.timeIntervalSince1970 / 60) + 1) * 60)
       let end = now.addingTimeInterval(3 * 3600)
       var d = firstMinute
       while d < end {
@@ -49,6 +62,14 @@ struct QProvider: TimelineProvider {
     completion(Timeline(entries: entries, policy: .after(until)))
   }
 }
+
+// MARK: - Text size
+
+/// Every widget text is drawn this much bigger than the sizes written in the views.
+let textScale: CGFloat = 1.2
+
+/// A font size from the views, scaled by textScale (whole points).
+func qs(_ size: CGFloat) -> CGFloat { (size * textScale).rounded() }
 
 // MARK: - Colors
 
@@ -78,6 +99,11 @@ struct Pal {
   var track: Color { dark ? Color(red: 0.173, green: 0.224, blue: 0.278) : Color(red: 0.89, green: 0.914, blue: 0.941) }
   var now: Color { dark ? Color(red: 1, green: 0.478, blue: 0.478) : Color(red: 0.898, green: 0.282, blue: 0.302) }
   var background: Color { dark ? Color(red: 0.094, green: 0.133, blue: 0.176) : .white }
+
+  /// An accent shape with a glyph or text on it. Tinted, the shape (alone marked widgetAccentable)
+  /// is see-through and the glyph full strength, or the system would draw one blank tinted shape.
+  var accentFill: Color { tinted ? accent.opacity(0.35) : accent }
+  var onAccentFill: Color { tinted ? Color.primary : onAccent }
 
   func bar(_ hex: String?) -> Color { hexColor(hex, Color.gray) }
   func courseBg(_ l: SLecture) -> Color {
@@ -111,26 +137,25 @@ struct PillView: View {
   let p: Pal
   var body: some View {
     Text(text)
-      .font(.system(size: 10, weight: .bold))
-      .foregroundStyle(p.onAccent)
+      .font(.system(size: qs(10), weight: .bold))
+      .foregroundStyle(p.onAccentFill)
       .lineLimit(1)
       .padding(.horizontal, 8)
       .padding(.vertical, 2)
-      .background(Capsule().fill(p.accent))
-      .widgetAccentable()
+      .background(Capsule().fill(p.accentFill).widgetAccentable())
   }
 }
 
+/// Tinted, the icon takes the tint and the tile stays a faint shape behind it.
 struct IconTile: View {
   let system: String
   let size: CGFloat
   let p: Pal
   var body: some View {
     RoundedRectangle(cornerRadius: size * 0.32, style: .continuous)
-      .fill(p.soft)
+      .fill(p.tinted ? Color.primary.opacity(0.12) : p.soft)
       .frame(width: size, height: size)
-      .overlay(Image(systemName: system).font(.system(size: size * 0.45, weight: .semibold)).foregroundStyle(p.accent))
-      .widgetAccentable()
+      .overlay(Image(systemName: system).font(.system(size: qs(size * 0.45), weight: .semibold)).foregroundStyle(p.accent).widgetAccentable())
   }
 }
 
@@ -159,13 +184,13 @@ struct MessageView: View {
     VStack(spacing: big ? 10 : 6) {
       IconTile(system: icon, size: big ? 64 : 42, p: p)
       Text(title)
-        .font(.system(size: big ? 18 : 14, weight: .bold))
+        .font(.system(size: qs(big ? 18 : 14), weight: .bold))
         .foregroundStyle(p.text)
         .multilineTextAlignment(.center)
         .lineLimit(2)
         .minimumScaleFactor(0.8)
       if let sub = sub {
-        Text(sub).font(.system(size: 12)).foregroundStyle(p.muted).multilineTextAlignment(.center).lineLimit(1)
+        Text(sub).font(.system(size: qs(12))).foregroundStyle(p.muted).multilineTextAlignment(.center).lineLimit(1)
       }
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity)

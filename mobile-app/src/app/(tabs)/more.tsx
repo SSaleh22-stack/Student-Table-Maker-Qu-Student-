@@ -11,10 +11,12 @@ import { Icon, type IconName } from '@/components/Icon';
 import { Logo } from '@/components/Logo';
 import { SafeAreaView } from '@/components/SafeAreaView';
 import { Button, ScreenHeader } from '@/components/ui';
-import { isEnglish, tr } from '@/lib/i18n';
+import { arabicDate } from '@/lib/export/dates';
+import { tr } from '@/lib/i18n';
 import { useIsTablet } from '@/lib/layout';
 import { ensureReminderPermission } from '@/lib/reminders';
 import { row } from '@/lib/rtl';
+import { formatTime } from '@/lib/tasks';
 import { colors } from '@/lib/theme';
 import { notebookSupported } from '@/notebook/flags';
 import { useAppData } from '@/store/AppData';
@@ -33,14 +35,13 @@ const shareMessage = () =>
     `${tr('أندرويد', 'Android')}: ${PLAY_STORE_URL}`,
   ].join('\n');
 
+/** "آخر استيراد: 27 نوفمبر 2026، 5:34 ص", with Western digits like every other date in the app. */
 const formatDate = (iso?: string) => {
   if (!iso) return tr('لم تستورد بعد', 'Not imported yet');
-  try {
-    const when = new Date(iso).toLocaleString(isEnglish() ? 'en-GB' : 'ar-SA', { dateStyle: 'medium', timeStyle: 'short' });
-    return tr(`آخر استيراد: ${when}`, `Last import: ${when}`);
-  } catch {
-    return tr('آخر استيراد: —', 'Last import: —');
-  }
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return tr('آخر استيراد: —', 'Last import: —');
+  const time = formatTime(`${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`);
+  return tr(`آخر استيراد: ${arabicDate(d)}، ${time}`, `Last import: ${arabicDate(d)}, ${time}`);
 };
 
 export default function MoreScreen() {

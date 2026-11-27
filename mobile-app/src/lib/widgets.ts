@@ -1,8 +1,8 @@
 /**
  * The data the home-screen and lock-screen widgets show (الجدول، مهامي، المحاضرة القادمة), as one
  * JSON snapshot written by modules/qu-widgets. The widgets work out "now" themselves (the current
- * and next lecture, today's tasks), so the snapshot only changes when the timetable, the tasks, the
- * calendar or the language change.
+ * and next lecture, which tasks are overdue), so the snapshot only changes when the timetable, the
+ * tasks, the calendar or the language change.
  *
  * Read by targets/widgets/Store.swift (iOS) and modules/qu-widgets/android/.../WidgetData.kt
  * (Android): keep the field names in step with both.
@@ -58,10 +58,11 @@ export interface WidgetSnapshot {
   tasks: WidgetTask[];
 }
 
-/** Open tasks kept in the snapshot, soonest first (the biggest widget shows far fewer). */
-const MAX_OPEN_TASKS = 60;
-/** Finished tasks stay this long, so "1 من 4 منجزة" and the struck-through rows are right today. */
-const DONE_KEEP_DAYS = 2;
+/**
+ * Open tasks kept in the snapshot, in the widget's order. Well above any real list, so the counts
+ * (lock screen, "+N أخرى") stay right; it only guards the snapshot's size.
+ */
+const MAX_OPEN_TASKS = 500;
 
 const toWidgetTask = (t: Task): WidgetTask => ({
   id: t.id,
@@ -75,11 +76,21 @@ const toWidgetTask = (t: Task): WidgetTask => ({
   repeat: t.repeat,
 });
 
-/** Undated last; then by date and time. */
-const bySoonest = (a: Task, b: Task): number => {
-  const ka = `${a.date ?? '9999-99-99'} ${a.time ?? '99:99'}`;
-  const kb = `${b.date ?? '9999-99-99'} ${b.time ?? '99:99'}`;
-  return ka < kb ? -1 : ka > kb ? 1 : 0;
+/**
+ * The مهامي widget's order: overdue and today's (by date and time), then those without a date (in
+ * the app's order), then the later dates. Only decides which tasks the cap keeps: the widgets sort
+ * again at the moment they draw (a task due at 2:00 is overdue from 2:00).
+ */
+const widgetOrder = (today: string) => {
+  const rank = (t: Task) => (!t.date ? 1 : t.date <= today ? 0 : 2);
+  const key = (t: Task) => `${t.date ?? ''} ${t.time ?? '99:99'}`;
+  return (a: Task, b: Task): number => {
+    const r = rank(a) - rank(b);
+    if (r !== 0 || rank(a) === 1) return r;
+    const ka = key(a);
+    const kb = key(b);
+    return ka < kb ? -1 : ka > kb ? 1 : 0;
+  };
 };
 
 export function buildWidgetSnapshot(p: {
@@ -113,12 +124,8 @@ export function buildWidgetSnapshot(p: {
   });
   lectures.sort((a, b) => (a.start < b.start ? -1 : a.start > b.start ? 1 : 0));
 
-  const cutoff = dateKey(new Date(now.getTime() - DONE_KEEP_DAYS * 86_400_000));
-  const open = p.tasks.filter((t) => !t.done).sort(bySoonest).slice(0, MAX_OPEN_TASKS);
-  // Done tasks, and repeating ones finished recently (they moved on, only completedAt tells).
-  const recent = p.tasks.filter(
-    (t) => t.done && !!t.completedAt && dateKey(new Date(t.completedAt)) >= cutoff,
-  );
+  // A ticked task leaves the widget at once, so only open tasks are needed.
+  const open = p.tasks.filter((t) => !t.done).sort(widgetOrder(dateKey(now))).slice(0, MAX_OPEN_TASKS);
 
   return {
     v: 1,
@@ -126,6 +133,6 @@ export function buildWidgetSnapshot(p: {
     hasTimetable: p.chosen.length > 0,
     lectures,
     noClass: noClassRanges(p.calendar),
-    tasks: [...open, ...recent].map(toWidgetTask),
+    tasks: open.map(toWidgetTask),
   };
 }

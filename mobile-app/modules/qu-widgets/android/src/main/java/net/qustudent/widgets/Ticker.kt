@@ -7,8 +7,11 @@ import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import androidx.datastore.preferences.core.longPreferencesKey
+import androidx.glance.appwidget.GlanceAppWidget
+import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
-import androidx.glance.appwidget.updateAll
+import androidx.glance.appwidget.state.updateAppWidgetState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -18,8 +21,8 @@ import java.time.ZoneId
 
 /**
  * Keeps the widgets current without the app: an alarm redraws them every minute while a lecture
- * is on or starts within the hour (the countdown), otherwise when the next lecture starts or ends,
- * and at midnight. The alarm is not a wake-up alarm, so a sleeping phone is not woken for it; the
+ * is on or still ahead today and a countdown or timetable widget is placed, otherwise when the next
+ * lecture starts or ends or a task falls due, and at midnight. The alarm is not a wake-up alarm, so a sleeping phone is not woken for it; the
  * widgets catch up when the screen comes on. Widget hosts also ask for an update every 30 minutes.
  */
 object Ticker {
@@ -33,11 +36,13 @@ object Ticker {
       PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
     )
 
-  fun hasWidgets(c: Context): Boolean {
+  private fun placed(c: Context, vararg receivers: Class<*>): Boolean {
     val m = AppWidgetManager.getInstance(c) ?: return false
-    return listOf(TimetableWidgetReceiver::class.java, TasksWidgetReceiver::class.java, CountdownWidgetReceiver::class.java)
-      .any { m.getAppWidgetIds(ComponentName(c, it)).isNotEmpty() }
+    return receivers.any { m.getAppWidgetIds(ComponentName(c, it)).isNotEmpty() }
   }
+
+  fun hasWidgets(c: Context): Boolean =
+    placed(c, TimetableWidgetReceiver::class.java, TasksWidgetReceiver::class.java, CountdownWidgetReceiver::class.java)
 
   fun schedule(c: Context) {
     val am = c.getSystemService(AlarmManager::class.java) ?: return
@@ -46,15 +51,24 @@ object Ticker {
       am.cancel(pi)
       return
     }
-    val next = nextRefresh(WidgetStore.load(c), LocalDateTime.now())
+    val minutes = placed(c, TimetableWidgetReceiver::class.java, CountdownWidgetReceiver::class.java)
+    val next = nextRefresh(WidgetStore.load(c), LocalDateTime.now(), minutes)
     val at = next.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
     am.set(AlarmManager.RTC, maxOf(at, System.currentTimeMillis() + 15_000), pi)
   }
 
   suspend fun redrawAll(c: Context) {
-    TimetableWidget().updateAll(c)
-    TasksWidget().updateAll(c)
-    CountdownWidget().updateAll(c)
+    redraw(c, TimetableWidget())
+    redraw(c, TasksWidget())
+    redraw(c, CountdownWidget())
+  }
+
+  /** Redraws every placed widget of one kind with the latest snapshot (see DataVersion). */
+  suspend fun redraw(c: Context, widget: GlanceAppWidget) {
+    for (id in GlanceAppWidgetManager(c).getGlanceIds(widget.javaClass)) {
+      updateAppWidgetState(c, id) { it[DataVersion] = (it[DataVersion] ?: 0L) + 1 }
+      widget.update(c, id)
+    }
   }
 
   /** Redraws every widget and schedules the next redraw (from the app or a broadcast). */
@@ -72,6 +86,12 @@ object Ticker {
     }
   }
 }
+
+/**
+ * Bumped before every redraw. Each widget reads it in its content, so a Glance session that is still
+ * running (they stay up for about 45 s) loads the snapshot again instead of showing the old one.
+ */
+internal val DataVersion = longPreferencesKey("qw_data_version")
 
 class TickReceiver : BroadcastReceiver() {
   override fun onReceive(context: Context, intent: Intent) {

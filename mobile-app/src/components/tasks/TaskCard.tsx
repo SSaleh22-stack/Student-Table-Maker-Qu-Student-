@@ -75,6 +75,11 @@ export function TaskCard({ task, showDate, now, tablet, onToggle, onPress, onLon
     return (
       <Pressable
         onPress={onPress}
+        // Kept while selecting: the long press that started the selection ends on this card, and
+        // without a long-press handler React Native counts the release as a tap, which unpicked
+        // the task and ended the selection at once.
+        onLongPress={onLongPress}
+        delayLongPress={350}
         accessibilityRole="checkbox"
         accessibilityLabel={a11y}
         accessibilityHint={tr('تحديد المهمة', 'Selects the task')}

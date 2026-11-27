@@ -8,11 +8,12 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 
 /**
  * The snapshot written by the app (src/lib/widgets.ts) and the rules that turn it into what a
- * widget shows at a given moment: today's lectures and which one is next, and today's tasks.
- * Same rules as the app (lib/tasks.ts groupTasks 'today', calendar/classDays.ts).
+ * widget shows at a given moment: today's lectures and which one is next, and the open tasks.
+ * Same rules as the iOS widgets (targets/widgets/Store.swift) and the app (calendar/classDays.ts).
  */
 
 data class Lecture(
@@ -65,6 +66,19 @@ private fun minutesOf(hhmm: String): Int {
   return (p.getOrNull(0)?.toIntOrNull() ?: 0) * 60 + (p.getOrNull(1)?.toIntOrNull() ?: 0)
 }
 
+/** The task's next date after the day of `atIso` (when it was ticked): daily +1, weekly +7. */
+private fun nextOccurrence(t: WTask, atIso: String): String? {
+  val step = if (t.repeat == "daily") 1L else 7L
+  return try {
+    val tickDay = Instant.parse(atIso).atZone(ZoneId.systemDefault()).toLocalDate()
+    var next = LocalDate.parse(t.date).plusDays(step)
+    while (!next.isAfter(tickDay)) next = next.plusDays(step)
+    next.toString()
+  } catch (_: Exception) {
+    null
+  }
+}
+
 private fun JSONObject.str(key: String): String? = if (has(key) && !isNull(key)) optString(key).ifEmpty { null } else null
 
 object WidgetStore {
@@ -97,7 +111,7 @@ object WidgetStore {
         .put("id", id)
         .put("done", done)
         .put("date", date ?: JSONObject.NULL)
-        .put("at", Instant.now().toString()),
+        .put("at", Instant.now().truncatedTo(ChronoUnit.MILLIS).toString()),
     )
     prefs(c).edit().putString(PENDING, list.toString()).commit()
   }
@@ -121,12 +135,17 @@ object WidgetStore {
       val p = pending.optJSONObject(i) ?: continue
       val id = p.optString("id")
       val done = p.optBoolean("done")
-      val at = p.optString("at").ifEmpty { Instant.now().toString() }
+      val at = p.optString("at").ifEmpty { Instant.now().truncatedTo(ChronoUnit.MILLIS).toString() }
       val idx = tasks.indexOfFirst { it.id == id }
       if (idx < 0) continue
       val t = tasks[idx]
+      // A second tap before the widget redrew carries the old state: skip it, as the app does.
+      if (t.done == done || t.date != p.str("date")) continue
       tasks[idx] = when {
-        done && t.repeat != "none" && t.date != null -> t.copy(movedOn = true, completedAt = at)
+        // Like the app (lib/tasks.ts nextOccurrence, at the tick's time): the task moves to its next
+        // date after the day it was ticked and stays open.
+        done && t.repeat != "none" && t.date != null -> nextOccurrence(t, at)?.let { t.copy(date = it, completedAt = at) }
+          ?: t.copy(done = true, completedAt = at)
         done -> t.copy(done = true, completedAt = at)
         else -> t.copy(done = false, completedAt = null, movedOn = false)
       }
@@ -245,33 +264,34 @@ fun minutesUntil(now: LocalDateTime, minuteOfDay: Int): Int {
   return maxOf(0, (secs + 59) / 60)
 }
 
-/** When the widgets should be drawn again: every minute near a lecture, else at the next change. */
-fun nextRefresh(s: Snapshot?, now: LocalDateTime): LocalDateTime {
+/**
+ * When the widgets should be drawn again. With `minutes` (a countdown or timetable widget is placed):
+ * every minute while a lecture is on or still ahead today, since both show the minutes left.
+ * Otherwise at the next lecture mark, when a task falls due today (it turns overdue), or at midnight.
+ */
+fun nextRefresh(s: Snapshot?, now: LocalDateTime, minutes: Boolean = true): LocalDateTime {
   val midnight = now.toLocalDate().plusDays(1).atStartOfDay()
   if (s == null) return midnight
   val m = now.hour * 60 + now.minute
   val today = s.lecturesOn(now.toLocalDate())
-  val minuteTicks = today.any { (it.start <= m && m < it.end) || (it.start > m && it.start - m <= 60) }
-  if (minuteTicks) return now.withSecond(0).withNano(0).plusMinutes(1)
-  val marks = today.flatMap { listOf(it.start - 60, it.start, it.end) }.filter { it > m }
+  if (minutes && today.any { m < it.end }) return now.withSecond(0).withNano(0).plusMinutes(1)
+  val todayKey = now.toLocalDate().toString()
+  val dueTimes = s.tasks.filter { !it.done && it.date == todayKey && it.time != null }.map { minutesOf(it.time!!) }
+  val marks = (today.flatMap { listOf(it.start - 60, it.start, it.end) } + dueTimes).filter { it > m }
   val next = marks.minOrNull() ?: return midnight
   return now.toLocalDate().atStartOfDay().plusMinutes(next.toLong())
 }
 
 // ---------- tasks ----------
 
-data class TaskDay(
-  /** Overdue, then today's, then the ones without a date, then those finished today (struck through). */
-  val today: List<WTask>,
-  val upcoming: List<WTask>,
-  val doneCount: Int,
-  val total: Int,
-)
+/** The groups of the مهامي widget, in the order it lists them. */
+enum class TaskGroup { OVERDUE, TODAY, NO_DATE, UPCOMING }
 
-private fun localDayOf(iso: String?): String? = try {
-  if (iso == null) null else Instant.parse(iso).atZone(ZoneId.systemDefault()).toLocalDate().toString()
-} catch (_: Exception) {
-  null
+data class TaskSection(val group: TaskGroup, val tasks: List<WTask>)
+
+/** Every open task: overdue first, then today's, then those without a date, then the nearest dates. */
+data class TaskList(val sections: List<TaskSection>) {
+  val all: List<WTask> get() = sections.flatMap { it.tasks }
 }
 
 private fun WTask.dueAt(): LocalDateTime? {
@@ -288,22 +308,21 @@ fun WTask.isOverdue(now: LocalDateTime): Boolean = !done && !movedOn && (dueAt()
 
 private val bySoonest = compareBy<WTask>({ it.date ?: "9999-99-99" }, { it.time ?: "99:99" })
 
-fun Snapshot.taskDay(now: LocalDateTime): TaskDay {
+/** Ticked tasks (and repeating ones ticked on the widget, which move on) leave the list at once. */
+fun Snapshot.taskList(now: LocalDateTime): TaskList {
   val today = now.toLocalDate().toString()
   val open = tasks.filter { !it.done && !it.movedOn }
   val overdue = open.filter { it.isOverdue(now) }.sortedWith(bySoonest)
   val onTime = open.filter { !it.isOverdue(now) }
   val dueToday = onTime.filter { it.date == today }.sortedWith(bySoonest)
   val noDate = onTime.filter { it.date == null }
-  val doneToday = tasks.filter { t ->
-    t.done && (t.date == today || (localDayOf(t.completedAt) == today && (t.date == null || t.date < today)))
-  }
-  // Repeating tasks finished today moved on to a later date: only completedAt tells.
-  val repeatDone = tasks.count { t ->
-    !t.done && t.repeat != "none" && (t.movedOn || localDayOf(t.completedAt) == today)
-  }
-  val upcoming = onTime.filter { it.date != null && it.date > today && !it.movedOn }.sortedWith(bySoonest)
-  val list = overdue + dueToday + noDate + doneToday
-  val doneCount = doneToday.size + repeatDone
-  return TaskDay(list, upcoming, doneCount, overdue.size + dueToday.size + noDate.size + doneCount)
+  val upcoming = onTime.filter { it.date != null && it.date > today }.sortedWith(bySoonest)
+  return TaskList(
+    listOf(
+      TaskSection(TaskGroup.OVERDUE, overdue),
+      TaskSection(TaskGroup.TODAY, dueToday),
+      TaskSection(TaskGroup.NO_DATE, noDate),
+      TaskSection(TaskGroup.UPCOMING, upcoming),
+    ).filter { it.tasks.isNotEmpty() },
+  )
 }

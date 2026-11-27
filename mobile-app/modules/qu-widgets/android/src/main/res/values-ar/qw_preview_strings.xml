@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The made-up example in the widget picker (same as targets/widgets/Sample.swift). -->
+<resources>
+  <string name="qw_ex_day">الأحد</string>
+  <string name="qw_ex_in25">بعد 25 د</string>
+  <string name="qw_ex_calc">تفاضل وتكامل 2</string>
+  <string name="qw_ex_calc_time">⁦10:00–11:15⁩</string>
+  <string name="qw_ex_calc_room">مبنى 9 · 210</string>
+  <string name="qw_ex_calc_where">10:00 · مبنى 9 · 210</string>
+  <string name="qw_ex_phys">فيزياء عامة</string>
+  <string name="qw_ex_phys_time">12:30</string>
+  <string name="qw_ex_minutes">دقيقة</string>
+  <string name="qw_ex_task1">تقرير المختبر</string>
+  <string name="qw_ex_task1_when">متأخرة</string>
+  <string name="qw_ex_task2">حل الواجب الثالث</string>
+  <string name="qw_ex_task2_when">2:00 م</string>
+  <string name="qw_ex_task3">مراجعة الفصل الرابع</string>
+  <string name="qw_ex_task3_when">اليوم</string>
+</resources>

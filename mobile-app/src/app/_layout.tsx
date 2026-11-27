@@ -21,6 +21,7 @@ import { useLang, useLanguageBoot } from '@/lib/i18n';
 import { markIntroDone } from '@/lib/appTours';
 import { useIsTablet } from '@/lib/layout';
 import { setupReminders } from '@/lib/reminders';
+import { reminderFireDate } from '@/lib/tasks';
 import { colors } from '@/lib/theme';
 import { NotebookServices } from '@/notebook/NotebookServices';
 import { NotebooksProvider } from '@/notebook/store/NotebooksProvider';
@@ -45,9 +46,14 @@ function TaskReminderActions() {
   useEffect(() => {
     if (!loaded) return;
     return setupReminders({
-      onDone: (id) => {
+      onDone: (id, deliveredMs) => {
         const task = latest.current.getTask(id);
-        if (task && !task.done) latest.current.toggleDone(id);
+        if (!task || task.done) return;
+        // A repeating task ticked on a widget keeps its daily or weekly reminder, which may still
+        // ring for the occurrence already finished: its "done" must not move the task again.
+        const fire = reminderFireDate(task)?.getTime();
+        if (task.repeat !== 'none' && deliveredMs && fire && fire > deliveredMs + 60_000) return;
+        latest.current.toggleDone(id);
       },
       onSnooze: (id) => latest.current.snooze(id),
     });

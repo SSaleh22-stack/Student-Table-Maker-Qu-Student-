@@ -3,6 +3,7 @@
   <application>
     <receiver
       android:name="net.qustudent.widgets.TimetableWidgetReceiver"
+      android:enabled="@bool/qw_widgets_enabled"
       android:exported="true"
       android:label="@string/qw_timetable_label">
       <intent-filter>
@@ -15,6 +16,7 @@
 
     <receiver
       android:name="net.qustudent.widgets.TasksWidgetReceiver"
+      android:enabled="@bool/qw_widgets_enabled"
       android:exported="true"
       android:label="@string/qw_tasks_label">
       <intent-filter>
@@ -27,6 +29,7 @@
 
     <receiver
       android:name="net.qustudent.widgets.CountdownWidgetReceiver"
+      android:enabled="@bool/qw_widgets_enabled"
       android:exported="true"
       android:label="@string/qw_countdown_label">
       <intent-filter>
@@ -40,6 +43,7 @@
     <!-- Redraws the widgets when a lecture starts or ends, every minute close to one, and at midnight. -->
     <receiver
       android:name="net.qustudent.widgets.TickReceiver"
+      android:enabled="@bool/qw_widgets_enabled"
       android:exported="false">
       <intent-filter>
         <action android:name="android.intent.action.BOOT_COMPLETED" />

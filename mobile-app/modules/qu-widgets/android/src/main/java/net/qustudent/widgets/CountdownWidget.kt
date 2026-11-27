@@ -2,11 +2,13 @@ package net.qustudent.widgets
 
 import android.content.Context
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.LocalContext
+import androidx.glance.currentState
 import androidx.glance.LocalSize
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.SizeMode
@@ -25,9 +27,14 @@ class CountdownWidget : GlanceAppWidget() {
   override val sizeMode = SizeMode.Responsive(SIZES)
 
   override suspend fun provideGlance(context: Context, id: GlanceId) {
-    val snap = WidgetStore.load(context)
-    val now = LocalDateTime.now()
-    provideContent { CountdownContent(snap, now) }
+    provideContent {
+      // A running session is not started again by update(): the version (Ticker.redraw) is what
+      // makes it read the snapshot and the time again.
+      val version = currentState(DataVersion) ?: 0L
+      val snap = remember(version) { WidgetStore.load(context) }
+      val now = remember(version) { LocalDateTime.now() }
+      CountdownContent(snap, now)
+    }
   }
 }
 
@@ -85,7 +92,7 @@ private fun CountdownContent(s: Snapshot?, now: LocalDateTime) {
 
 @Composable
 private fun OneLine(d: Dir, content: @Composable () -> Unit) {
-  Box(modifier = GlanceModifier.fillMaxSize(), contentAlignment = Alignment.CenterStart) { content() }
+  Box(modifier = GlanceModifier.fillMaxSize(), contentAlignment = Alignment(d.startH, Alignment.Vertical.CenterVertically)) { content() }
 }
 
 @Composable
@@ -111,8 +118,9 @@ private fun Tiny(f: Focus, x: Txt, d: Dir) {
   val (num, unit) = x.bigCountdown(f.minutes)
   DRow(d, GlanceModifier.fillMaxSize(), items = listOf(
     {
-      Column(modifier = GlanceModifier.width(40.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-        T(ltr(num), d, size = 22.sp, color = Pal.accent, bold = true, center = true)
+      Column(modifier = GlanceModifier.width(44.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        // "1:20" does not fit 44dp at 22sp, nor "10:30" at 16sp.
+        T(ltr(num), d, size = if (num.length > 4) 13.sp else if (num.contains(':')) 16.sp else 22.sp, color = Pal.accent, bold = true, center = true)
         T(unit, d, size = 10.sp, color = Pal.muted, center = true)
       }
     },
@@ -122,7 +130,8 @@ private fun Tiny(f: Focus, x: Txt, d: Dir) {
     {
       Column(modifier = GlanceModifier.defaultWeight(), horizontalAlignment = d.startH) {
         if (f.now) Pill(x.now, d)
-        T(f.lecture.name, d, size = 13.sp, bold = true, lines = 2, modifier = GlanceModifier.fillMaxWidth())
+        // With the "now" pill above it the name keeps to one line, so the time line still fits.
+        T(f.lecture.name, d, size = 13.sp, bold = true, lines = if (f.now) 1 else 2, modifier = GlanceModifier.fillMaxWidth())
         T(whereWhen(f, x), d, size = 10.sp, color = Pal.muted, modifier = GlanceModifier.fillMaxWidth())
       }
     },
@@ -155,7 +164,8 @@ private fun Square(f: Focus, x: Txt, d: Dir) {
     DRow(d, GlanceModifier.fillMaxWidth(), items = listOf(
       { AppMark() },
       { HGap(6.dp) },
-      { if (f.now) { Pill(x.now, d); HGap(6.dp) } },
+      { if (f.now) Pill(x.now, d) },
+      { if (f.now) HGap(6.dp) },
       { T(label(f, x), d, size = 11.sp, color = Pal.muted, medium = true, modifier = GlanceModifier.defaultWeight()) },
     ))
     Box(GlanceModifier.defaultWeight()) {}
@@ -173,7 +183,8 @@ private fun Wide(f: Focus, x: Txt, d: Dir) {
   val l = f.lecture
   DRow(d, GlanceModifier.fillMaxSize(), vertical = Alignment.Top, items = listOf(
     {
-      Column(modifier = GlanceModifier.width(112.dp).fillMaxHeight(), horizontalAlignment = d.startH) {
+      // Wide enough for "1:20 ساعة" at the widget text size.
+      Column(modifier = GlanceModifier.width(136.dp).fillMaxHeight(), horizontalAlignment = d.startH) {
         DRow(d, items = listOf(
           { AppMark() },
           { HGap(6.dp) },

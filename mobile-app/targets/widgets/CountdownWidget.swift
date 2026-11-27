@@ -52,20 +52,20 @@ struct CountdownView: View {
       } else {
         ZStack {
           AccessoryWidgetBackground()
-          Image(systemName: "calendar.badge.checkmark").font(.system(size: 20))
+          Image(systemName: "calendar.badge.checkmark").font(.system(size: qs(20)))
         }
       }
     case .accessoryRectangular:
       if let f = f {
         VStack(alignment: .leading, spacing: 1) {
           Label(f.isNow ? c.x.endsIn + " " + c.x.duration(f.minutes) : c.x.inDuration(f.minutes), systemImage: "clock")
-            .font(.system(size: 12, weight: .bold)).lineLimit(1)
-          Text(f.lecture.name).font(.system(size: 15, weight: .bold)).lineLimit(1)
-          Text(whereWhen(f, c)).font(.system(size: 12)).opacity(0.8).lineLimit(1)
+            .font(.system(size: qs(12), weight: .bold)).lineLimit(1)
+          Text(f.lecture.name).font(.system(size: qs(15), weight: .bold)).lineLimit(1)
+          Text(whereWhen(f, c)).font(.system(size: qs(12))).opacity(0.8).lineLimit(1)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
       } else {
-        Text(c.x.noLectures).font(.system(size: 14, weight: .semibold)).lineLimit(2)
+        Text(c.x.noLectures).font(.system(size: qs(14), weight: .semibold)).lineLimit(2)
           .frame(maxWidth: .infinity, alignment: .leading)
       }
     default:
@@ -92,9 +92,11 @@ struct BigNumber: View {
   var body: some View {
     let big = c.x.bigCountdown(f.minutes)
     HStack(alignment: .lastTextBaseline, spacing: 4) {
-      Text(Txt.ltr(big.0)).font(.system(size: size, weight: .bold, design: .rounded)).foregroundStyle(c.p.accent).widgetAccentable()
+      // An hour count ("1:20") shrinks a little if it must; the unit never wraps.
+      Text(Txt.ltr(big.0)).font(.system(size: qs(size), weight: .bold, design: .rounded)).foregroundStyle(c.p.accent).widgetAccentable()
+        .lineLimit(1).minimumScaleFactor(0.8)
         .contentTransition(.numericText(countsDown: true))
-      Text(big.1).font(.system(size: size * 0.32, weight: .semibold)).foregroundStyle(c.p.muted)
+      Text(big.1).font(.system(size: qs(size * 0.32), weight: .semibold)).foregroundStyle(c.p.muted).lineLimit(1).fixedSize()
     }
   }
 }
@@ -103,15 +105,15 @@ struct CountdownSmall: View {
   let c: Ctx
   let f: Focus
   var body: some View {
-    VStack(alignment: .leading, spacing: 4) {
+    VStack(alignment: .leading, spacing: 2) {
       HStack(spacing: 6) {
         if f.isNow { PillView(text: c.x.now, p: c.p) } else { Circle().fill(c.p.bar(f.lecture.bar)).frame(width: 8, height: 8) }
-        Text(f.isNow ? c.x.endsIn : c.x.nextLecture).font(.system(size: 11, weight: .semibold)).foregroundStyle(c.p.muted).lineLimit(1)
+        Text(f.isNow ? c.x.endsIn : c.x.nextLecture).font(.system(size: qs(11), weight: .semibold)).foregroundStyle(c.p.muted).lineLimit(1)
       }
       Spacer(minLength: 0)
       BigNumber(c: c, f: f, size: 40)
-      Text(f.lecture.name).font(.system(size: 14, weight: .bold)).foregroundStyle(c.p.text).lineLimit(1)
-      Text(whereWhen(f, c)).font(.system(size: 11)).foregroundStyle(c.p.muted).lineLimit(1)
+      Text(f.lecture.name).font(.system(size: qs(14), weight: .bold)).foregroundStyle(c.p.text).lineLimit(1)
+      Text(whereWhen(f, c)).font(.system(size: qs(11))).foregroundStyle(c.p.muted).lineLimit(1)
       ProgressBar(value: f.progress, p: c.p).padding(.top, 2)
     }
   }
@@ -126,32 +128,32 @@ struct CountdownMedium: View {
       VStack(alignment: .leading, spacing: 4) {
         HStack(spacing: 6) {
           if f.isNow { PillView(text: c.x.now, p: c.p) }
-          Text(f.isNow ? c.x.endsIn : c.x.nextLecture).font(.system(size: 11, weight: .semibold)).foregroundStyle(c.p.muted).lineLimit(1)
+          Text(f.isNow ? c.x.endsIn : c.x.nextLecture).font(.system(size: qs(11), weight: .semibold)).foregroundStyle(c.p.muted).lineLimit(1)
         }
         Spacer(minLength: 0)
         BigNumber(c: c, f: f, size: 44)
-        Text(f.isNow ? c.x.until(c.x.clock(l.endMin)) : c.x.starts(c.x.clock(l.startMin))).font(.system(size: 11)).foregroundStyle(c.p.muted)
+        Text(f.isNow ? c.x.until(c.x.clock(l.endMin)) : c.x.starts(c.x.clock(l.startMin))).font(.system(size: qs(11))).foregroundStyle(c.p.muted)
         ProgressBar(value: f.progress, p: c.p)
       }
       .frame(width: 112, alignment: .leading)
       Rectangle().fill(c.p.divider).frame(width: 1)
       VStack(alignment: .leading, spacing: 4) {
-        Text(l.name).font(.system(size: 17, weight: .bold)).foregroundStyle(c.p.text).lineLimit(2).minimumScaleFactor(0.85)
+        Text(l.name).font(.system(size: qs(17), weight: .bold)).foregroundStyle(c.p.text).lineLimit(2).minimumScaleFactor(0.85)
         Text([l.code, (l.section ?? "").isEmpty ? "" : "\(c.x.section) \(l.section ?? "")", l.kind ?? ""].filter { !$0.isEmpty }.joined(separator: " · "))
-          .font(.system(size: 11)).foregroundStyle(c.p.faint).lineLimit(1)
+          .font(.system(size: qs(11))).foregroundStyle(c.p.faint).lineLimit(1)
         if !l.roomText.isEmpty {
-          Label(l.roomText, systemImage: "mappin.and.ellipse").font(.system(size: 12)).foregroundStyle(c.p.muted).lineLimit(1)
+          Label(l.roomText, systemImage: "mappin.and.ellipse").font(.system(size: qs(12))).foregroundStyle(c.p.muted).lineLimit(1)
         }
         if let who = l.instructor, !who.isEmpty {
-          Label(who, systemImage: "person").font(.system(size: 12)).foregroundStyle(c.p.muted).lineLimit(1)
+          Label(who, systemImage: "person").font(.system(size: qs(12))).foregroundStyle(c.p.muted).lineLimit(1)
         }
         Spacer(minLength: 0)
         if let a = f.after {
           Rectangle().fill(c.p.divider).frame(height: 1)
           HStack(spacing: 6) {
-            Text(c.x.then).font(.system(size: 11, weight: .bold)).foregroundStyle(c.p.accent).widgetAccentable()
+            Text(c.x.then).font(.system(size: qs(11), weight: .bold)).foregroundStyle(c.p.accent).widgetAccentable()
             Circle().fill(c.p.bar(a.bar)).frame(width: 6, height: 6)
-            Text("\(a.name) · \(Txt.ltr(c.x.clock(a.startMin)))").font(.system(size: 11)).foregroundStyle(c.p.muted).lineLimit(1)
+            Text("\(a.name) · \(Txt.ltr(c.x.clock(a.startMin)))").font(.system(size: qs(11))).foregroundStyle(c.p.muted).lineLimit(1)
           }
         }
       }

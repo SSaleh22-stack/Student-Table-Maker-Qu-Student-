@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The made-up example in the widget picker (same as targets/widgets/Sample.swift). -->
+<resources>
+  <string name="qw_ex_day">Sunday</string>
+  <string name="qw_ex_in25">in 25 min</string>
+  <string name="qw_ex_calc">Calculus 2</string>
+  <string name="qw_ex_calc_time">⁦10:00–11:15⁩</string>
+  <string name="qw_ex_calc_room">Bldg 9 · 210</string>
+  <string name="qw_ex_calc_where">10:00 · Bldg 9 · 210</string>
+  <string name="qw_ex_phys">General Physics</string>
+  <string name="qw_ex_phys_time">12:30</string>
+  <string name="qw_ex_minutes">min</string>
+  <string name="qw_ex_task1">Lab report</string>
+  <string name="qw_ex_task1_when">Overdue</string>
+  <string name="qw_ex_task2">Homework 3</string>
+  <string name="qw_ex_task2_when">2:00 PM</string>
+  <string name="qw_ex_task3">Review chapter 4</string>
+  <string name="qw_ex_task3_when">Today</string>
+</resources>

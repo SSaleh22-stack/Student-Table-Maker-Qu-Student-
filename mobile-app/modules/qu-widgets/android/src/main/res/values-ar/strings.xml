@@ -3,7 +3,7 @@
   <string name="qw_timetable_label">الجدول</string>
   <string name="qw_timetable_desc">محاضرات اليوم، مع تمييز المحاضرة القادمة</string>
   <string name="qw_tasks_label">مهامي</string>
-  <string name="qw_tasks_desc">مهام اليوم. اضغط الدائرة لإنجاز المهمة</string>
+  <string name="qw_tasks_desc">كل مهامك، المتأخرة ومهام اليوم أولًا. اضغط الدائرة لإنجاز المهمة</string>
   <string name="qw_countdown_label">المحاضرة القادمة</string>
   <string name="qw_countdown_desc">الدقائق المتبقية على محاضرتك القادمة وقاعتها</string>
 </resources>

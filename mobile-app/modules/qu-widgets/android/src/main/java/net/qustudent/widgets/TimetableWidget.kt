@@ -2,12 +2,14 @@ package net.qustudent.widgets
 
 import android.content.Context
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.LocalContext
+import androidx.glance.currentState
 import androidx.glance.LocalSize
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.SizeMode
@@ -28,12 +30,17 @@ import java.time.LocalDateTime
 
 /** الجدول: today's lectures. 2×2 (next lecture card), 4×2 (day + list), 4×4 (timeline). */
 class TimetableWidget : GlanceAppWidget() {
-  override val sizeMode = SizeMode.Responsive(SIZES)
+  override val sizeMode = SizeMode.Responsive(SIZES + DpSize(250.dp, 280.dp) + DpSize(250.dp, 300.dp))
 
   override suspend fun provideGlance(context: Context, id: GlanceId) {
-    val snap = WidgetStore.load(context)
-    val now = LocalDateTime.now()
-    provideContent { TimetableContent(snap, now) }
+    provideContent {
+      // A running session is not started again by update(): the version (Ticker.redraw) is what
+      // makes it read the snapshot and the time again.
+      val version = currentState(DataVersion) ?: 0L
+      val snap = remember(version) { WidgetStore.load(context) }
+      val now = remember(version) { LocalDateTime.now() }
+      TimetableContent(snap, now)
+    }
   }
 }
 
@@ -51,11 +58,11 @@ private fun TimetableContent(s: Snapshot?, now: LocalDateTime) {
     val day = s?.today(now).orEmpty()
     val left = day.filter { it.state != LState.DONE }
     when {
-      s == null || !s.hasTimetable -> Message(d, R.drawable.qw_calendar, x.addTimetable, null, big = size.height > 250.dp)
+      s == null || !s.hasTimetable -> Message(d, R.drawable.qw_calendar, x.addTimetable, null, big = size.height >= 250.dp)
       left.isEmpty() -> Message(
         d, R.drawable.qw_calendar_check, x.noLectures,
         x.dayName(dayKey(now.toLocalDate())) + " " + x.date(now.toLocalDate()),
-        big = size.width > 250.dp,
+        big = size.width >= 250.dp && size.height >= 170.dp,
       )
       size.width < 250.dp -> Small(s, day, now, x, d)
       size.height < 250.dp -> Medium(day, now, x, d)
@@ -76,9 +83,8 @@ private fun Small(s: Snapshot, day: List<DayLecture>, now: LocalDateTime, x: Txt
   val first = left.first()
   val l = first.lecture
   Column(modifier = GlanceModifier.fillMaxSize()) {
+    // No app mark here: the day name needs the room beside the pill.
     DRow(d, GlanceModifier.fillMaxWidth(), items = listOf(
-      { AppMark() },
-      { HGap(6.dp) },
       { T(x.dayName(dayKey(now.toLocalDate())), d, size = 13.sp, color = Pal.accent, bold = true, modifier = GlanceModifier.defaultWeight()) },
       { pillFor(first, now, x)?.let { Pill(it, d) } },
     ))
@@ -88,10 +94,11 @@ private fun Small(s: Snapshot, day: List<DayLecture>, now: LocalDateTime, x: Txt
       horizontalAlignment = d.startH,
     ) {
       T(l.name, d, size = 14.sp, color = Pal.courseText(l), bold = true, lines = 2, modifier = GlanceModifier.fillMaxWidth())
-      T(x.range(l.start, l.end), d, size = 11.sp, color = Pal.courseText(l), modifier = GlanceModifier.fillMaxWidth())
-      if (l.room.isNotEmpty()) T(l.room, d, size = 11.sp, color = Pal.courseText(l), modifier = GlanceModifier.fillMaxWidth())
+      // Time and room on one line, so two more lectures still fit under a two-line name.
+      T(x.range(l.start, l.end) + if (l.room.isNotEmpty()) " · " + l.room else "", d, size = 11.sp, color = Pal.courseText(l), modifier = GlanceModifier.fillMaxWidth())
     }
-    for (o in left.drop(1).take(2)) {
+    // One more lecture under the card: two no longer fit a 2×2 at the widget text size.
+    for (o in left.drop(1).take(1)) {
       Gap(6.dp)
       DRow(d, GlanceModifier.fillMaxWidth(), items = listOf(
         { Dot(Pal.bar(o.lecture.bar)) },
@@ -121,7 +128,8 @@ private fun LectureRow(dl: DayLecture, pill: String?, x: Txt, d: Dir) {
         T(meta, d, size = 11.sp, color = if (hl) Pal.courseText(l) else Pal.muted, modifier = GlanceModifier.fillMaxWidth())
       }
     },
-    { if (pill != null) { HGap(6.dp); Pill(pill, d) } },
+    { if (pill != null) HGap(6.dp) },
+    { if (pill != null) Pill(pill, d) },
   ))
 }
 
@@ -130,10 +138,10 @@ private fun Medium(day: List<DayLecture>, now: LocalDateTime, x: Txt, d: Dir) {
   val left = day.filter { it.state != LState.DONE }
   DRow(d, GlanceModifier.fillMaxSize(), vertical = Alignment.Top, items = listOf(
     {
-      Column(modifier = GlanceModifier.width(84.dp).fillMaxHeight(), horizontalAlignment = d.startH) {
+      Column(modifier = GlanceModifier.width(78.dp).fillMaxHeight(), horizontalAlignment = d.startH) {
         AppMark()
         Gap(4.dp)
-        T(x.dayName(dayKey(now.toLocalDate())), d, size = 20.sp, bold = true)
+        T(x.dayName(dayKey(now.toLocalDate())), d, size = 16.sp, bold = true)
         T(x.date(now.toLocalDate()), d, size = 12.sp, color = Pal.muted)
         Box(GlanceModifier.defaultWeight()) {}
         T(x.left(left.size, day.size), d, size = 10.sp, color = Pal.faint, lines = 2)
@@ -176,7 +184,8 @@ private fun TimelineRow(dl: DayLecture, now: LocalDateTime, x: Txt, d: Dir) {
             T(listOf(l.room, l.kind).filter { it.isNotEmpty() }.joinToString(" · "), d, size = 11.sp, color = fg, modifier = GlanceModifier.fillMaxWidth())
           }
         },
-        { if (pill != null) { HGap(6.dp); Pill(pill, d) } },
+        { if (pill != null) HGap(6.dp) },
+        { if (pill != null) Pill(pill, d) },
       ))
     },
   ))
@@ -198,11 +207,14 @@ private fun Large(s: Snapshot, day: List<DayLecture>, now: LocalDateTime, x: Txt
     ))
     Gap(8.dp)
     Column(modifier = GlanceModifier.fillMaxWidth().defaultWeight()) {
-      // Up to 4 lectures (Glance allows 10 children per column): the first ones still to come,
-      // with the last finished one above the "now" line.
+      // As many lectures as the height holds at the widget text size (4 from 300dp, 3 from 280dp,
+      // else 2; Glance allows 10 children per column): the first ones still to come, with the last
+      // finished one above the "now" line.
+      val h = LocalSize.current.height
+      val rows = if (h >= 300.dp) 4 else if (h >= 280.dp) 3 else 2
       val doneCount = day.count { it.state == LState.DONE }
-      val startAt = maxOf(0, minOf(doneCount - 1, day.size - 4))
-      day.drop(startAt).take(4).forEachIndexed { i, dl ->
+      val startAt = maxOf(0, minOf(doneCount - 1, day.size - rows))
+      day.drop(startAt).take(rows).forEachIndexed { i, dl ->
         if (i > 0) Gap(6.dp)
         TimelineRow(dl, now, x, d)
         val nextIdx = startAt + i + 1
@@ -227,10 +239,11 @@ private fun Large(s: Snapshot, day: List<DayLecture>, now: LocalDateTime, x: Txt
   }
 }
 
+/** The layouts switch at 250dp wide and 250dp tall, so the sizes start there too. */
 internal val SIZES = setOf(
   DpSize(150.dp, 80.dp),
   DpSize(150.dp, 170.dp),
-  DpSize(300.dp, 80.dp),
-  DpSize(300.dp, 170.dp),
-  DpSize(300.dp, 300.dp),
+  DpSize(250.dp, 80.dp),
+  DpSize(250.dp, 170.dp),
+  DpSize(250.dp, 250.dp),
 )
