@@ -283,14 +283,22 @@ export default function HomeScreen() {
     );
   }
 
+  // The same side margin on both sides (the camera cutout of a phone on its side is on one of them):
+  // the page keeps clear of it while the teal header still runs to the screen's edges.
+  const side = Math.max(insets.left, insets.right);
   return (
-    <SafeAreaView style={styles.screen} edges={['left', 'right']}>
-      <ScrollView contentContainerStyle={{ paddingBottom: t(28, 32) }}>
-        {/* Teal header, running up under the status bar */}
+    <SafeAreaView style={styles.screen} edges={[]}>
+      <ScrollView contentContainerStyle={{ paddingBottom: t(28, 32), paddingHorizontal: side }}>
+        {/* Teal header, running up under the status bar and out to both edges */}
         <View
           style={[
             styles.hero,
-            { paddingTop: insets.top + t(14, 22), paddingHorizontal: sidePad + t(4, 8), paddingBottom: t(56, 72) },
+            {
+              marginHorizontal: -side,
+              paddingTop: insets.top + t(14, 22),
+              paddingHorizontal: side + sidePad + t(4, 8),
+              paddingBottom: t(56, 72),
+            },
           ]}>
           {/* Teal above the page too, so pulling down past the top doesn't show a gap */}
           <View style={styles.overscroll} />
@@ -509,10 +517,13 @@ function TabletHome({
   onGridWidth: (w: number) => void;
 }) {
   const tourRefOf = useFeatureTourRefs();
+  // As on phones: one side margin for both sides, and the header out to the screen's edges.
+  const insets = useSafeAreaInsets();
+  const side = Math.max(insets.left, insets.right);
   return (
-    <SafeAreaView style={styles.screen} edges={['left', 'right']}>
-      <ScrollView contentContainerStyle={{ flexGrow: 1, paddingBottom: 28 }}>
-        <View style={[tabStyles.hero, { paddingTop: top + 18, paddingHorizontal: sidePad + 8 }]}>
+    <SafeAreaView style={styles.screen} edges={[]}>
+      <ScrollView contentContainerStyle={{ flexGrow: 1, paddingBottom: 28, paddingHorizontal: side }}>
+        <View style={[tabStyles.hero, { marginHorizontal: -side, paddingTop: top + 18, paddingHorizontal: side + sidePad + 8 }]}>
           {/* Teal above the page too, so pulling down past the top shows no gap */}
           <View style={[styles.overscroll, { backgroundColor: GRAD_TOP }]} />
           <Svg style={StyleSheet.absoluteFill} preserveAspectRatio="none" viewBox="0 0 100 100">

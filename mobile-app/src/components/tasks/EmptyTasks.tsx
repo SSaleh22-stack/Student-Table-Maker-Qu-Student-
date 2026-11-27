@@ -2,7 +2,7 @@
  * What the tasks tab shows when the chosen filter has nothing in it. Each filter says something
  * different, so an empty "done" list doesn't read like the student has no tasks at all.
  */
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
 import { Icon } from '@/components/Icon';
@@ -58,15 +58,17 @@ export function EmptyTasks({
 }) {
   const t = (phone: number, tab: number) => (tablet ? tab : phone);
   const { title, body } = texts(filter, hasTasks);
-  const ring = t(128, 156);
-  const inner = t(88, 108);
+  // A phone on its side is short: a smaller picture, so the add button shows without scrolling.
+  const short = useWindowDimensions().height < 520;
+  const ring = short ? 84 : t(128, 156);
+  const inner = short ? 58 : t(88, 108);
 
   return (
-    <View style={styles.wrap}>
+    <View style={[styles.wrap, short && styles.wrapShort]}>
       <View style={{ width: ring + 8, height: ring + 8, alignItems: 'center', justifyContent: 'center' }}>
         <View style={[styles.ring, { width: ring, height: ring, borderRadius: ring / 2 }]}>
           <View style={[styles.inner, { width: inner, height: inner, borderRadius: inner / 2 }]}>
-            <Icon name={filter === 'done' ? 'check' : 'clipboardCheck'} size={t(40, 48)} color={colors.accent} />
+            <Icon name={filter === 'done' ? 'check' : 'clipboardCheck'} size={short ? 28 : t(40, 48)} color={colors.accent} />
           </View>
         </View>
         {/* Small bell badge on the ring's top corner: tasks come with reminders */}
@@ -94,6 +96,7 @@ export function EmptyTasks({
 
 const styles = StyleSheet.create({
   wrap: { alignItems: 'center', paddingVertical: 40, paddingHorizontal: 16 },
+  wrapShort: { paddingVertical: 12 },
   ring: { backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' },
   inner: { backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
   // A top corner of the ring (the design shows it top-right; either side reads fine)

@@ -4,7 +4,7 @@
  * - regular (>= 600 pt window): the 620 pt centered card: radius 28, padding 28, gap 20, a header with
  *   the title (22 bold), an optional subtitle (14 faint) and a round close button; the body scrolls when
  *   the screen is short; the footer (the primary button) sits under the body.
- * - compact (< 600 pt): a full-height bottom sheet (it shrinks above the keyboard) with a top grabber, safe-area padding, the same
+ * - compact (< 600 pt wide, or < 520 pt tall like a phone in landscape): a full-height bottom sheet (it shrinks above the keyboard) with a top grabber, safe-area padding, the same
  *   header, a scrolling body and a sticky footer for the primary button above the home indicator.
  *
  * The scrolling body gets an EXPLICIT width (nbModalBodyWidth): on the iPad the body's content was
@@ -45,6 +45,8 @@ export const NB_MODAL_WIDTH = 620;
 /** Card padding on tablets and the sheet's side padding on phones. */
 const CARD_PAD = 28;
 const SHEET_PAD_X = 20;
+/** Windows shorter than this (a phone in landscape) use the sheet whatever their width. */
+const SHORT_WINDOW = 520;
 
 /**
  * Width of the modal's content column (inside the padding): the card's inner width on regular windows,
@@ -105,9 +107,11 @@ export function NbModal({
   scroll = true,
   style,
 }: NbModalProps) {
-  const compact = useWidthClass() === 'compact';
   const insets = useSafeAreaInsets();
   const win = useWindowDimensions();
+  // A phone on its side is wide but short (about 380 pt): the centered card had no room left for its
+  // body, so short windows get the full-height sheet too.
+  const compact = useWidthClass() === 'compact' || win.height < SHORT_WINDOW;
   const close = () => {
     if (dismissable) onClose();
   };

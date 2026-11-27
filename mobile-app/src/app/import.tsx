@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { tr } from '@/lib/i18n';
 import { goBack } from '@/lib/nav';
 import { useMemo, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
 import { Icon } from '@/components/Icon';
@@ -27,7 +27,14 @@ import { useAppData } from '@/store/AppData';
 
 type Step = 1 | 2 | 3;
 
+/** A window this short (a phone on its side) puts the help panel beside the page, not under it. */
+const SHORT_WINDOW = 520;
+
 export default function ImportScreen() {
+  const win = useWindowDimensions();
+  const short = win.height < SHORT_WINDOW;
+  // Only a short window scrolls the panel; elsewhere it keeps its own height under the page.
+  const PanelBody = short ? ScrollView : View;
   const { importCourses } = useAppData();
   const frame = useRef<WebFrameHandle>(null);
   const [url, setUrl] = useState(MYQU_LOGIN_URL);
@@ -107,6 +114,7 @@ export default function ImportScreen() {
         <StepPill n={3} label={tr('الاستخراج', 'Extract')} state={step === 3 ? 'current' : 'todo'} />
       </View>
 
+      <View style={[styles.body, { flexDirection: short ? row : 'column' }]}>
       <View style={styles.webWrap}>
         <WebFrame
           ref={frame}
@@ -121,7 +129,11 @@ export default function ImportScreen() {
         />
       </View>
 
-      <View style={[styles.panel, shadow]}>
+      <View style={[styles.panel, shadow, short && styles.panelSide]}>
+        <PanelBody
+          {...(short
+            ? { style: styles.panelScroll, contentContainerStyle: styles.panelBody, showsVerticalScrollIndicator: false }
+            : { style: styles.panelBody })}>
         {error ? (
           <View style={[styles.alert, { flexDirection: row }]}>
             <Icon name="alert" size={16} color={colors.clash} />
@@ -172,15 +184,20 @@ export default function ImportScreen() {
         )}
         <View style={[styles.privacy, { flexDirection: row }]}>
           <Icon name="lock" size={12} color={colors.muted} />
-          <AppText size={11.5} color={colors.muted}>
+          {/* The whole row's width: shrink-wrapped, Android drew the line a little wider than it
+              measured, and the last word wrapped out of sight. */}
+          <AppText size={11.5} color={colors.muted} style={styles.privacyText}>
             {tr('تسجيل الدخول يتم في موقع الجامعة، ولا نحتفظ بكلمة المرور', 'You sign in on the university website; we never keep your password')}
           </AppText>
         </View>
+        </PanelBody>
+      </View>
       </View>
 
       {result ? (
         <ImportedSheet
           courses={result}
+          short={short}
           // Straight to the timetable to pick sections (wherever the import was opened from).
           onDone={() => router.dismissTo('/timetable')}
           onAgain={() => setResult(null)}
@@ -215,11 +232,26 @@ function StepPill({ n, label, state }: { n: number; label: string; state: 'done'
   );
 }
 
-function ImportedSheet({ courses, onDone, onAgain }: { courses: Course[]; onDone: () => void; onAgain: () => void }) {
+function ImportedSheet({
+  courses,
+  short,
+  onDone,
+  onAgain,
+}: {
+  courses: Course[];
+  /** A short window (phone on its side): the whole sheet scrolls, so the list and buttons stay reachable. */
+  short: boolean;
+  onDone: () => void;
+  onAgain: () => void;
+}) {
   const groups = groupCourses(courses);
+  // Short window: one scroll for the whole sheet (the list inside does not scroll); else as before.
+  const List = short ? View : ScrollView;
+  const Body = short ? ScrollView : View;
   return (
     <View style={styles.dim}>
-      <View style={styles.sheet}>
+      <View style={[styles.sheet, short && styles.sheetShort]}>
+        <Body {...(short ? { style: styles.sheetScroll, bounces: false } : { style: styles.sheetPlain })}>
         <View style={styles.okCircle}>
           <Icon name="check" size={28} color={colors.accent} strokeWidth={2.6} />
         </View>
@@ -229,7 +261,7 @@ function ImportedSheet({ courses, onDone, onAgain }: { courses: Course[]; onDone
         <AppText size={13} color={colors.muted} align="center">
           {coursesLabel(groups.length)} · {courses.length} {tr('شعبة', 'sections')}
         </AppText>
-        <ScrollView style={styles.list} contentContainerStyle={{ paddingVertical: 2 }}>
+        <List style={styles.list} {...(short ? {} : { contentContainerStyle: { paddingVertical: 2 } })}>
           {groups.map((g) => {
             const theme = getCourseTheme(g.code);
             const noTime = g.sections.every((s) => !hasSchedule(s));
@@ -249,7 +281,7 @@ function ImportedSheet({ courses, onDone, onAgain }: { courses: Course[]; onDone
               </View>
             );
           })}
-        </ScrollView>
+        </List>
         <View style={[styles.info, { flexDirection: row }]}>
           <Icon name="clock" size={16} color={colors.muted} />
           <AppText size={12.5} color={colors.muted} style={{ flex: 1 }}>
@@ -258,6 +290,7 @@ function ImportedSheet({ courses, onDone, onAgain }: { courses: Course[]; onDone
         </View>
         <Button label={tr('ابدأ بناء الجدول', 'Start building the timetable')} onPress={onDone} style={{ marginTop: 12 }} />
         <Button label={tr('إعادة الاستخراج', 'Extract again')} variant="ghost" onPress={onAgain} />
+        </Body>
       </View>
     </View>
   );
@@ -287,6 +320,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
   },
   stepDot: { width: 18, height: 18, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
+  body: { flex: 1 },
   webWrap: {
     flex: 1,
     marginHorizontal: 12,
@@ -302,8 +336,11 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 26,
     borderTopRightRadius: 26,
     padding: 16,
-    gap: 12,
   },
+  panelBody: { gap: 12 },
+  // Beside the page on a short window: a rounded card the height of the page, its content scrolling.
+  panelSide: { width: 340, marginTop: 0, marginHorizontal: 12, marginBottom: 12, borderRadius: 20 },
+  panelScroll: { flexGrow: 0 },
   panelRow: { alignItems: 'center', gap: 12 },
   panelIcon: {
     width: 44,
@@ -314,7 +351,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   alert: { gap: 8, padding: 10, borderRadius: 12, backgroundColor: colors.clashSoft, alignItems: 'flex-start' },
-  privacy: { alignItems: 'center', justifyContent: 'center', gap: 6 },
+  privacy: { alignItems: 'center', gap: 6 },
+  privacyText: { flex: 1 },
   dim: {
     position: 'absolute',
     top: 0,
@@ -332,6 +370,9 @@ const styles = StyleSheet.create({
     paddingBottom: 28,
     maxHeight: '86%',
   },
+  sheetShort: { maxHeight: '94%', paddingBottom: 12 },
+  sheetScroll: { flexGrow: 0 },
+  sheetPlain: { flexShrink: 1, minHeight: 0 },
   okCircle: {
     alignSelf: 'center',
     width: 58,
