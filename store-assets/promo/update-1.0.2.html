@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>QU Student 1.0.2 — تحديث جديد</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* The X post image for version 1.0.2 (1600×900, 16:9). Rendered with headless Chrome. */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1600px; height: 900px; overflow: hidden; }
+  body {
+    font-family: 'IBM Plex Sans Arabic', sans-serif;
+    color: #fff;
+    position: relative;
+    background:
+      radial-gradient(900px 600px at 90% 0%, rgba(127, 211, 227, .28), transparent 60%),
+      radial-gradient(800px 600px at 0% 100%, rgba(251, 191, 36, .10), transparent 60%),
+      linear-gradient(160deg, #1288a6 0%, #0E7490 40%, #0A4A5C 80%, #083a49 100%);
+  }
+  .ring { position: absolute; border-radius: 50%; border: 2px solid rgba(255,255,255,.07); }
+  .ring.a { width: 900px; height: 900px; left: -260px; top: -120px; }
+  .ring.b { width: 1300px; height: 1300px; left: -480px; top: -320px; }
+
+  .text { position: absolute; top: 70px; right: 80px; width: 740px; }
+  .brand { display: flex; align-items: center; gap: 18px; }
+  .brand img { width: 80px; height: 80px; border-radius: 22px; box-shadow: 0 8px 24px rgba(0,0,0,.25); outline: 3px solid rgba(255,255,255,.18); background: #fff; }
+  .brand .name { font-size: 38px; font-weight: 700; line-height: 1.1; direction: ltr; text-align: right; }
+  .brand .uni { font-size: 21px; font-weight: 500; color: #CFEAF0; margin-top: 2px; }
+  .badge {
+    display: inline-block; margin-top: 44px;
+    font-size: 24px; font-weight: 600; padding: 8px 24px; border-radius: 999px;
+    background: #FBBF24; color: #3b2a00;
+  }
+  h1 { font-size: 56px; font-weight: 700; line-height: 1.3; margin-top: 18px; }
+  ul { list-style: none; margin-top: 30px; display: grid; gap: 18px; }
+  li { display: flex; align-items: center; gap: 16px; font-size: 27px; font-weight: 500; line-height: 1.35; }
+  li .dot {
+    flex: none; width: 46px; height: 46px; border-radius: 14px;
+    background: rgba(255,255,255,.14); border: 1.5px solid rgba(255,255,255,.22);
+    display: grid; place-items: center; font-size: 24px;
+  }
+  li b { font-weight: 700; }
+  .foot { position: absolute; bottom: 54px; right: 80px; font-size: 22px; color: #CFEAF0; display: flex; gap: 28px; }
+  .foot span { direction: ltr; }
+
+  /* Widgets, cut from the real designs (design-options/widgets-previews/iOS · فاتح.png, 1842×1440). */
+  .w {
+    position: absolute; overflow: hidden; border-radius: 30px;
+    box-shadow: 0 24px 60px rgba(0,0,0,.35), 0 0 0 1px rgba(255,255,255,.4);
+    background: #fff;
+  }
+  .w img { position: absolute; width: calc(1842px * var(--s)); height: calc(1440px * var(--s)); left: calc(var(--x) * -1px * var(--s)); top: calc(var(--y) * -1px * var(--s)); }
+</style>
+</head>
+<body>
+  <div class="ring a"></div>
+  <div class="ring b"></div>
+
+  <div class="text">
+    <div class="brand">
+      <img src="../../public/icons/logo.svg" alt="">
+      <div>
+        <div class="name">QU Student</div>
+        <div class="uni">جامعة القصيم</div>
+      </div>
+    </div>
+    <div class="badge">تحديث جديد · 1.0.2</div>
+    <h1>مهامك ومذكراتك وجدولك<br>في مكان واحد</h1>
+    <ul>
+      <li><span class="dot">✓</span><span><b>مهامي:</b> مهام بتاريخ ووقت وتذكيرات</span></li>
+      <li><span class="dot">✎</span><span><b>المذكرات (تجريبي):</b> اكتب على الورق وملفات PDF</span></li>
+      <li><span class="dot">▦</span><span><b>ويدجت:</b> الجدول ومهامي والمحاضرة القادمة</span></li>
+      <li><span class="dot">⟳</span><span>تحسين الوضع الأفقي وإصلاح أعطال</span></li>
+    </ul>
+  </div>
+
+  <div class="foot"><span>App Store</span><span>Google Play</span><span>@QUStud</span></div>
+
+  <!-- Large tasks widget (364×382 at 816,688) -->
+  <div class="w" style="--x:816; --y:688; --s:1.32; width:calc(364px*1.32); height:calc(382px*1.32); left:300px; top:330px; transform: rotate(-3deg);">
+    <img src="../../design-options/widgets-previews/iOS · فاتح.png" alt="">
+  </div>
+  <!-- Medium timetable widget (364×170 at 1216,188) -->
+  <div class="w" style="--x:1216; --y:188; --s:1.32; width:calc(364px*1.32); height:calc(170px*1.32); left:70px; top:70px; transform: rotate(2deg);">
+    <img src="../../design-options/widgets-previews/iOS · فاتح.png" alt="">
+  </div>
+  <!-- Small next-lecture widget (170×170 at 1616,1186) -->
+  <div class="w" style="--x:1616; --y:1186; --s:1.32; width:calc(170px*1.32); height:calc(170px*1.32); left:70px; top:520px; transform: rotate(4deg);">
+    <img src="../../design-options/widgets-previews/iOS · فاتح.png" alt="">
+  </div>
+</body>
+</html>
